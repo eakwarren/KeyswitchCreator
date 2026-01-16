@@ -1,4 +1,3 @@
-
 //===============================================================================
 //  Keyswitch Creator for MuseScore Studio articulation & technique text
 //  Creates keyswitch notes on the staff below based on articulation symbols &
@@ -13,71 +12,61 @@
 //===============================================================================
 
 import QtQuick
+import QtQuick.Dialogs
 import MuseScore 3.0
 
 MuseScore {
     title: qsTr("Keyswitch Creator")
-    description: qsTr("Creates keyswitch notes (on the staff below) from articulations & technique text.")
-    version: "0.10.3"  // micro patch: order Generic fields
+    description: qsTr("Creates keyswitch notes on the keyswitch staff of the same instrument/part.")
+    version: "0.10.14"  // Fix: ReferenceError n not defined; tighten line breaks; keep v0.10.12 behavior
     categoryCode: "Keyswitch Creator"
     thumbnailName: "keyswitch_creator.png"
 
-    // ---------- DEBUG ----------
+    // ------------------ DEBUG ------------------
     property bool debugEnabled: true
     function dbg(msg)  { if (debugEnabled) console.log("[KS] " + msg) }
     function dbg2(k,v) { if (debugEnabled) console.log("[KS] " + k + ": " + v) }
 
-    // ---------- GLOBAL DEFAULTS ----------
+    // ------------------ SETTINGS (trimmed) ------------------
     property var defaultGlobalSettings: ({
-        "priority": ["accent", "staccato", "tenuto", "marcato"],
-        "durationPolicy": "source",
-        "techniqueAliases": {
-            "pizz": ["pizz", "pizz.", "pizzicato"],
-            "con sord": ["con sord", "con sord.", "con sordino"],
-            "sul pont": ["sul pont", "sul pont.", "sul ponticello"]
-        }
-    })
+                                             "priority": ["accent","staccato","tenuto","marcato"],
+                                             "durationPolicy": "source",
+                                             "techniqueAliases": { "pizz":["pizz","pizz.","pizzicato"], "con sord":["con sord","con sord.","con sordino"], "sul pont":["sul pont","sul pont.","sul ponticello"] }
+                                         })
     property var globalSettings: defaultGlobalSettings
-
-    // ---------- USER CONFIG (fallback maps for "Generic") ----------
-    property var techniqueKeyMap: ({
-        "pizz": 24, "arco": 25, "tremolo": 26, "con sord": 27, "sordino": 27,
-        "senza sord": 28, "sul pont": 29, "sul tasto": 30, "harmonic": 31,
-        "col legno": 32, "legato": 33, "spiccato": 34
-    })
-    property var articulationKeyMap: ({
-        // Default articulation KS per user-provided mapping (Generic)
-        "staccato": 31, "staccatissimo": 32, "tenuto": 37,
-        "accent": 38, "marcato": 39, "loure": 40, "fermata": 41, "sforzato": 42
-    })
-
-    // Fixed KS duration (fallback)
-    property int  ksNumerator: 1
-    property int  ksDenominator: 16
-    property bool useSourceDuration: true  // legacy fallback when policy missing
+    property var techniqueKeyMap: ({ "pizz":24, "arco":25, "tremolo":26, "con sord":27, "sordino":27, "senza sord":28, "sul pont":29, "sul tasto":30, "harmonic":31, "col legno":32, "legato":33, "spiccato":34 })
+    property var articulationKeyMap: ({ "staccato":31, "staccatissimo":32, "tenuto":37, "accent":38, "marcato":39, "loure":40, "fermata":41, "sforzato":42 })
+    property int ksNumerator: 1
+    property int ksDenominator: 16
     property bool hideKeyswitchNotes: false
     property bool skipIfExists: true
-
-    // Deduping & voice preference
+    property bool useSourceDuration: true
     property bool dedupeAcrossVoices: true
     property int  preferVoiceForKSInsertion: 0
     property var  emittedCross: ({})
-    property var  emittedKS:   ({})  // "staffIdx:tick:pitch" -> true
+    property var  emittedKS: ({})
 
-    // ---------- INTERNAL ----------
+    // ------------------ INTERNAL ------------------
     property var savedSelection: false
-    property var globalStart: fraction(0, 1)
-    property var globalEnd:   fraction(0, 1)
+    property bool preflightFailed: false
+    property bool promptShown: false
+    property bool sawIneligible: false
+    property int  firstIneligibleStaffIdx: -1
 
-    // ---------- Keyswitch set registry ----------
+    // Within-part and multi-part handling
+    property string rangeScopeMode: "staff"     // "staff" or "part"
+    property string selectionPartMode: "anchor" // "anchor" or "all"
+    property bool warnOnPartialSuccess: true
+
+    // Registry & settings store
     property var defaultKeyswitchSets: ({
-        "Generic": {
-            articulationKeyMap: { "staccato": 31, "staccatissimo": 32, "tenuto": 37, "accent": 38, "marcato": 39 },
-            techniqueKeyMap:    { "pizz": 24, "arco": 25, "harmonic": 31, "con sord": 27, "senza sord": 28, "sul pont": 29 }
-        }
-    })
-    property var staffToSet: ({})
+                                            "Generic": { articulationKeyMap: { "staccato":31, "staccatissimo":32, "tenuto":37, "accent":38, "marcato":39 },
+                                                techniqueKeyMap:   { "pizz":24, "arco":25, "harmonic":31, "con sord":27, "senza sord":28, "sul pont":29 } }
+                                        })
+    property var keyswitchSets: defaultKeyswitchSets
     property var setTagTimeline: ({})
+    property var staffToSet: ({})
+
     Settings {
         id: ksPrefs
         category: "Keyswitch Creator"
@@ -85,425 +74,341 @@ MuseScore {
         property string staffToSetJSON: ""
         property string globalJSON: ""
     }
-    property var keyswitchSets: defaultKeyswitchSets
 
     function loadRegistryAndAssignments() {
-        var sets;   try { sets = ksPrefs.setsJSON ? JSON.parse(ksPrefs.setsJSON) : defaultKeyswitchSets } catch(e) { sets = defaultKeyswitchSets }
+        var sets; try { sets = ksPrefs.setsJSON ? JSON.parse(ksPrefs.setsJSON) : defaultKeyswitchSets } catch(e) { sets = defaultKeyswitchSets }
         keyswitchSets = sets
-        var a;      try { a    = ksPrefs.staffToSetJSON ? JSON.parse(ksPrefs.staffToSetJSON) : {} } catch(e2)     { a = {} }
+        var a;   try { a = ksPrefs.staffToSetJSON ? JSON.parse(ksPrefs.staffToSetJSON) : {} } catch(e2) { a = {} }
         staffToSet = a
-        var g;      try { g    = ksPrefs.globalJSON ? JSON.parse(ksPrefs.globalJSON) : defaultGlobalSettings } catch(e3) { g = defaultGlobalSettings }
+        var g;   try { g = ksPrefs.globalJSON ? JSON.parse(ksPrefs.globalJSON) : defaultGlobalSettings } catch(e3) { g = defaultGlobalSettings }
         globalSettings = g
+        dbg2("plugin version", version)
         dbg2("registry keys", Object.keys(keyswitchSets).join(", "))
     }
-    function saveRegistryAndAssignments() {
-        ksPrefs.setsJSON       = JSON.stringify(keyswitchSets)
-        ksPrefs.staffToSetJSON = JSON.stringify(staffToSet)
-        ksPrefs.globalJSON     = JSON.stringify(globalSettings)
-    }
 
-    // ---------- Normalization + manual tag parsing ----------
-    function normalizeTextBasic(s) {
-        var t = (s || "").toString()
-        // Smart quotes -> straight quotes; NBSP -> space; collapse whitespace
-        t = t.replace(/“|”/g, '"').replace(/‘|’/g, "'")
-        t = t.replace(/ /g, " ").replace(/\s+/g, " ")
-        return t
-    }
+    // ------------------ Helpers ------------------
+    function staffIdxFromTrack(track) { return Math.floor(track / 4) }
 
-    function parseSetTag(rawText) {
-        var s = normalizeTextBasic(rawText)
-        // Case-insensitive find of 'KS:Set'
-        var lower = s.toLowerCase()
-        var idx = lower.indexOf("ks:set")
-        if (idx < 0) return ""
-
-        var i = idx + 6
-        // skip spaces
-        while (i < s.length && s[i] === " ") i++
-        // optional '=' then spaces
-        if (i < s.length && s[i] === "=") {
-            i++
-            while (i < s.length && s[i] === " ") i++
+    function partInfoForStaff(staffIdx) {
+        if (!curScore || !curScore.parts) return null
+        var t = staffIdx*4
+        for (var i=0; i<curScore.parts.length; ++i) {
+            var p = curScore.parts[i]
+            if (t >= p.startTrack && t < p.endTrack) return { index:i, start:p.startTrack, end:p.endTrack, part:p }
         }
-        if (i >= s.length) return ""
+        return null
+    }
+    function partCount() { return curScore && curScore.parts ? curScore.parts.length : 0 }
 
-        var ch = s[i]
-        var name = ""
-        if (ch === '"' || ch === "'") {
-            var quote = ch
-            i++
-            var j = s.indexOf(quote, i)
-            if (j === -1) name = s.substring(i).trim()
-            else          name = s.substring(i, j).trim()
-        } else {
-            var j = i
-            while (j < s.length && s[j] !== " ") j++
-            name = s.substring(i, j).trim()
+    function nameForPartByRange(staffIdx, tick) {
+        var pi = partInfoForStaff(staffIdx); if (!pi) return qsTr("this part")
+        var p = pi.part
+        var nm = (p.longName && p.longName.length) ? p.longName : (p.partName && p.partName.length) ? p.partName : (p.shortName && p.shortName.length) ? p.shortName : ""
+        if (!nm && p.instrumentAtTick) { var inst = p.instrumentAtTick(tick||0); if (inst && inst.longName && inst.longName.length) nm = inst.longName }
+        if (!nm) nm = qsTr("this part")
+        return nm
+    }
+
+    function targetStaffForKeyswitch(srcStaffIdx) {
+        if (!curScore || !curScore.staves || srcStaffIdx < 0 || srcStaffIdx >= curScore.staves.length) return -1
+        var pi = partInfoForStaff(srcStaffIdx); if (!pi) { dbg("target: no part for src="+srcStaffIdx); return -1 }
+        var last = srcStaffIdx
+        for (var i = srcStaffIdx + 1; i < curScore.staves.length; ++i) {
+            var pj = partInfoForStaff(i)
+            if (!pj || pj.index !== pi.index) break
+            last = i
         }
-        return name
+        dbg(qsTr("targetStaffForKeyswitch(range): src=%1 -> target=%2").arg(srcStaffIdx).arg(last))
+        return (last > srcStaffIdx) ? last : -1
     }
+    function isEligibleSourceStaff(staffIdx) { return targetStaffForKeyswitch(staffIdx) !== -1 }
 
-    // ---------- Score scanning ----------
-    function staffBelowTrackOf(track) { return track + 4 }               // 4 tracks per staff
-    function staffExistsForTrack(track) {
-        var belowIdx = Math.floor(track / 4) + 1
-        return belowIdx < curScore.staves.length
-    }
+    function normalizeTextBasic(s) { var t=(s||"").toString(); t=t.replace(/“\n”/g,'"').replace(/‘\n’/g,"'"); t=t.replace(/\u00A0/g," ").replace(/\s+/g," "); return t }
+    function sameStaff(trackA, trackB) { return Math.floor(trackA/4) === Math.floor(trackB/4) }
 
-    // Collect KS:Set tags from SCORE START to selection end (tags *before* range apply),
-    // scanning both segment annotations and note-attached text.
     function collectSetTagsInRange() {
         setTagTimeline = {}
-
         var endTick = curScore.lastSegment ? (curScore.lastSegment.tick + 1) : 0
-        // scan all staves to be safe; resolver still uses chord's staff timeline
-        var staffStart = 0
-        var staffEnd   = curScore.staves.length - 1
-
-        if (curScore.selection && curScore.selection.isRange) {
+        if (curScore.selection && curScore.selection.isRange)
             endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : endTick
-        }
-
-        dbg("collectSetTagsInRange: scan staffs " + staffStart + "–" + staffEnd + ", ticks 0→" + endTick)
-
-        for (var s = staffStart; s <= staffEnd; ++s) {
-            var c = curScore.newCursor()
-            c.track = s * 4
-            c.rewind(Cursor.SCORE_START)
-
+        dbg("collectSetTagsInRange: begin -> endTick="+endTick)
+        for (var s = 0; s < curScore.staves.length; ++s) {
+            var c = curScore.newCursor(); c.track = s*4; c.rewind(Cursor.SCORE_START)
             while (c.segment && c.tick <= endTick) {
                 var seg = c.segment
-
-                // A) Segment annotations
-                if (seg && seg.annotations) {
-                    for (var ai in seg.annotations) {
-                        var ann = seg.annotations[ai]
-                        var annStaff = (ann.track == -1) ? s : Math.floor(ann.track/4) // accept system-level
-                        var snippet = normalizeTextBasic(ann.text || "")
-                        if (snippet.length) {
-                            dbg("Text(annotation): staff " + annStaff + " tick " + seg.tick +
-                                " type=" + ann.type + ' text="' + snippet.substring(0,80) + '"')
-                        }
-                        if ((ann.type == Element.STAFF_TEXT || ann.type == Element.SYSTEM_TEXT || ann.type == Element.EXPRESSION_TEXT)
-                            && annStaff == s) {
-                            var tName = parseSetTag(ann.text || "")
-                            if (tName.length) {
-                                if (!setTagTimeline[s]) setTagTimeline[s] = []
-                                setTagTimeline[s].push({ tick: seg.tick, setName: tName })
-                                dbg('Tag(annotation): staff ' + s + ' tick ' + seg.tick + ' -> ' + tName +
-                                    (keyswitchSets[tName] ? ' (OK)' : ' (not in registry)'))
+                if (seg) {
+                    if (seg.annotations) {
+                        for (var ai in seg.annotations) {
+                            var ann = seg.annotations[ai]
+                            var annStaff = (ann.track == -1) ? s : Math.floor(ann.track/4)
+                            if ((ann.type == Element.STAFF_TEXT || ann.type == Element.SYSTEM_TEXT || ann.type == Element.EXPRESSION_TEXT) && annStaff == s) {
+                                var tName = parseSetTag(ann.text || ""); if (tName.length) { if (!setTagTimeline[s]) setTagTimeline[s] = []; setTagTimeline[s].push({tick: seg.tick, setName: tName}); }
                             }
                         }
                     }
-                }
-
-                // B) Note-attached TEXT on the same segment for all voices on this staff
-                for (var v = 0; v < 4; ++v) {
-                    var el = seg.elementAt(s * 4 + v)
-                    if (el && el.type == Element.CHORD && el.notes) {
-                        for (var ni in el.notes) {
-                            var note = el.notes[ni]
-                            if (!note.elements) continue
-                            for (var ei in note.elements) {
-                                var nel = note.elements[ei]
-                                if (nel.type == Element.TEXT) {
-                                    var raw = nel.text || ""
-                                    var snippet2 = normalizeTextBasic(raw)
-                                    if (snippet2.length) {
-                                        dbg('Text(note): staff ' + s + ' tick ' + seg.tick +
-                                            ' voice ' + v + ' text="' + snippet2.substring(0,80) + '"')
-                                    }
-                                    var tn = parseSetTag(raw)
-                                    if (tn.length) {
-                                        if (!setTagTimeline[s]) setTagTimeline[s] = []
-                                        setTagTimeline[s].push({ tick: seg.tick, setName: tn })
-                                        dbg('Tag(note-text): staff ' + s + ' tick ' + seg.tick + ' -> ' + tn +
-                                            (keyswitchSets[tn] ? ' (OK)' : ' (not in registry)'))
+                    for (var v = 0; v < 4; ++v) {
+                        var el = seg.elementAt ? seg.elementAt(s*4+v) : null
+                        if (el && el.type == Element.CHORD && el.notes) {
+                            for (var ni in el.notes) {
+                                var note = el.notes[ni]
+                                if (!note.elements) continue
+                                for (var ei in note.elements) {
+                                    var nel = note.elements[ei]
+                                    if (nel.type == Element.TEXT) {
+                                        var tn = parseSetTag(nel.text || "")
+                                        if (tn.length) { if (!setTagTimeline[s]) setTagTimeline[s] = []; setTagTimeline[s].push({ tick: seg.tick, setName: tn }) }
                                     }
                                 }
                             }
                         }
                     }
                 }
-
                 if (!c.next()) break
             }
-
-            if (setTagTimeline[s]) {
-                setTagTimeline[s].sort(function(a,b){ return a.tick - b.tick })
-                dbg2("timeline[" + s + "] count", setTagTimeline[s].length)
-            }
+            if (setTagTimeline[s]) setTagTimeline[s].sort(function(a,b){ return a.tick - b.tick })
         }
+        dbg("collectSetTagsInRange: end")
     }
 
-    // Resolve active set: newest tag <= tick if present; else staff assignment; else "Generic".
-    function activeSetNameFor(staffIdx, tick) {
-        var tl = setTagTimeline[staffIdx] || []
-        for (var i = tl.length - 1; i >= 0; --i) {
-            if (tl[i].tick <= tick) {
-                var name = tl[i].setName
-                if (keyswitchSets[name]) return name
-                dbg("activeSetNameFor: tag '" + name + "' not in registry, falling back")
-                break
+    function parseSetTag(rawText) {
+        var s = normalizeTextBasic(rawText)
+        var lower = s.toLowerCase(); var idx = lower.indexOf("ks:set"); if (idx < 0) return ""
+        var i = idx+6; while (i < s.length && s[i]===" ") i++
+        if (i < s.length && s[i] === "=") { i++; while (i < s.length && s[i]===" ") i++ }
+        if (i >= s.length) return ""
+        var ch = s[i], name=""
+        if (ch==='"' || ch==="'") { var q=ch; i++; var j = s.indexOf(q,i); name = (j===-1) ? s.substring(i).trim() : s.substring(i,j).trim() }
+        else { var j2=i; while (j2<s.length && s[j2]!==" ") j2++; name = s.substring(i,j2).trim() }
+        return name
+    }
+
+    // ---- KS:Scope / KS:Parts ----
+    function parseScopeTag(rawText) {
+        var s = normalizeTextBasic(rawText).toLowerCase()
+        var idx = s.indexOf("ks:scope"); if (idx < 0) return ""
+        var i = idx + 8; while (i < s.length && s[i] === ' ') i++
+        if (i < s.length && s[i] === '=') { i++; while (i < s.length && s[i] === ' ') i++ }
+        var val = s.substring(i).trim(); if (!val) return ""
+        if (val[0]=='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
+        return (val==="part"||val==="staff") ? val : ""
+    }
+    function parsePartsTag(rawText) {
+        var s = normalizeTextBasic(rawText).toLowerCase()
+        var idx = s.indexOf("ks:parts"); if (idx < 0) return ""
+        var i = idx + 8; while (i < s.length && s[i] === ' ') i++
+        if (i < s.length && s[i] === '=') { i++; while (i < s.length && s[i] === ' ') i++ }
+        var val = s.substring(i).trim(); if (!val) return ""
+        if (val[0]=='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
+        return (val==="all"||val==="anchor") ? val : ""
+    }
+    function scopeOverrideInSelection(startStaff, endStaff, startTick, endTick) {
+        var scopeVal = "", partsVal = ""
+        for (var s = startStaff; s <= endStaff; ++s) {
+            var c = curScore.newCursor(); c.track = s*4; c.rewindToTick(startTick)
+            while (c.tick < endTick) {
+                var seg = c.segment
+                if (seg) {
+                    if (seg.annotations) {
+                        for (var ai in seg.annotations) {
+                            var ann = seg.annotations[ai]
+                            var annStaff = (ann.track == -1) ? s : Math.floor(ann.track/4)
+                            if ((ann.type == Element.STAFF_TEXT || ann.type == Element.SYSTEM_TEXT || ann.type == Element.EXPRESSION_TEXT) && annStaff == s) {
+                                if (!scopeVal) scopeVal = parseScopeTag(ann.text || "")
+                                if (!partsVal) partsVal = parsePartsTag(ann.text || "")
+                                if (scopeVal && partsVal) return { scope: scopeVal, parts: partsVal }
+                            }
+                        }
+                    }
+                    for (var v=0; v<4; ++v) {
+                        var el = seg.elementAt ? seg.elementAt(s*4+v) : null
+                        if (el && el.type == Element.CHORD && el.notes) {
+                            for (var ni in el.notes) {
+                                var note = el.notes[ni]; if (!note.elements) continue
+                                for (var ei in note.elements) {
+                                    var nel = note.elements[ei]
+                                    if (nel.type == Element.TEXT) {
+                                        if (!scopeVal) scopeVal = parseScopeTag(nel.text || "")
+                                        if (!partsVal) partsVal = parsePartsTag(nel.text || "")
+                                        if (scopeVal && partsVal) return { scope: scopeVal, parts: partsVal }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!c.next()) break
             }
         }
+        return { scope: scopeVal, parts: partsVal }
+    }
+
+    function activeSetNameFor(staffIdx, tick) {
+        var tl = setTagTimeline[staffIdx] || []
+        for (var i = tl.length - 1; i >= 0; --i) { if (tl[i].tick <= tick) { var name = tl[i].setName; if (keyswitchSets[name]) return name; break } }
         var assigned = staffToSet[staffIdx.toString()]
         return (assigned && keyswitchSets[assigned]) ? assigned : "Generic"
     }
 
-    // ---------- Selection I/O ----------
-    function readSelection() {
-        if (!curScore.selection.elements.length) return false
-        if (curScore.selection.isRange) {
-            var obj = {
-                isRange: true,
-                startSegment: curScore.selection.startSegment.tick,
-                endSegment: curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1,
-                startStaff: curScore.selection.startStaff,
-                endStaff: curScore.selection.endStaff
-            }
-            dbg("readSelection: range ticks " + obj.startSegment + "→" + obj.endSegment + ", staffs " + obj.startStaff + "–" + obj.endStaff)
-            return obj
-        }
-        var list = { isRange: false, elements: [] }
-        for (var i in curScore.selection.elements)
-            list.elements.push(curScore.selection.elements[i])
-        dbg("readSelection: list with " + list.elements.length + " elements")
-        return list
-    }
-    function writeSelection(sel) {
-        if (sel == false) return
-        if (sel.isRange) {
-            dbg("writeSelection: restoring range")
-            curScore.selection.selectRange(sel.startSegment, sel.endSegment, sel.startStaff, sel.endStaff)
-            return
-        }
-        dbg("writeSelection: restoring list with " + sel.elements.length + " elements")
-        for (var i in sel.elements)
-            curScore.selection.select(sel.elements[i], true)
-    }
-
-    // ---------- Technique text & articulations ----------
-    function sameStaff(trackA, trackB) { return Math.floor(trackA / 4) === Math.floor(trackB / 4) }
-
-    function normalizeForTechnique(s) {
-        var t = normalizeTextBasic(s)
-        return t.toLowerCase().trim()
-    }
-
     function segmentTechniqueTexts(chord) {
-        var out = []
-        var seg = chord.parent
-
-        // Segment annotations
+        var out=[]; var seg=chord.parent
         if (seg && seg.annotations) {
             for (var i in seg.annotations) {
                 var ann = seg.annotations[i]
-                if (ann.type == Element.STAFF_TEXT || ann.type == Element.SYSTEM_TEXT || ann.type == Element.EXPRESSION_TEXT) {
+                if (ann.type==Element.STAFF_TEXT || ann.type==Element.SYSTEM_TEXT || ann.type==Element.EXPRESSION_TEXT) {
                     if (ann.type != Element.STAFF_TEXT || sameStaff(ann.track, chord.track)) {
-                        var norm = normalizeForTechnique(ann.text)
-                        if (norm.indexOf("keyswitch creator:") === 0) continue
-                        if (norm.length) out.push(norm)
+                        var norm = normalizeTextBasic(ann.text).toLowerCase().trim(); if (norm.indexOf("keyswitch creator:")===0) continue; if (norm.length) out.push(norm)
                     }
                 }
             }
         }
-        // Note-attached TEXT on chord
-        if (chord.notes) {
-            for (var j in chord.notes) {
-                var note = chord.notes[j]
-                if (!note.elements) continue
-                for (var k in note.elements) {
-                    var nel = note.elements[k]
-                    if (nel.type == Element.TEXT) {
-                        var txt = normalizeForTechnique(nel.text)
-                        if (txt.indexOf("keyswitch creator:") === 0) continue
-                        if (txt.length) out.push(txt)
-                    }
-                }
-            }
-        }
+        if (chord.notes) { for (var j in chord.notes) { var note=chord.notes[j]; if (!note.elements) continue; for (var k in note.elements) { var nel=note.elements[k]; if (nel.type==Element.TEXT) { var txt=normalizeTextBasic(nel.text).toLowerCase().trim(); if (txt.indexOf("keyswitch creator:")===0) continue; if (txt.length) out.push(txt) } } } }
         return out
     }
 
     function chordArticulationNames(chord) {
-        var names = []
-        if (!chord.articulations) return names
+        var names=[]; if (!chord.articulations) return names
         for (var i in chord.articulations) {
-            var a = chord.articulations[i]
-            var an = (typeof a.articulationName === "function") ? a.articulationName() : ""
-            var un = (typeof a.userName         === "function") ? a.userName()         : ""
-            var sn = (typeof a.subtypeName      === "function") ? a.subtypeName()      : ""
-            var rawLower = (an + " " + un + " " + sn).toLowerCase()
-            var n = ""
-            if (rawLower.indexOf("staccatissimo") >= 0) n = "staccatissimo"
-            else if (rawLower.indexOf("staccat") >= 0)  n = "staccato"
-            else if (rawLower.indexOf("tenuto")  >= 0)  n = "tenuto"
-            else if (rawLower.indexOf("accent")  >= 0)  n = "accent"
-            else if (rawLower.indexOf("marcato") >= 0)  n = "marcato"
-            else if (rawLower.indexOf("sforzato")>= 0 || rawLower.indexOf("sfz") >= 0) n = "sforzato"
-            if (!n) n = "unknown"
-            names.push(n)
+            var a=chord.articulations[i]
+            var raw=((a.articulationName?a.articulationName():"")+" "+(a.userName?a.userName():"")+" "+(a.subtypeName?a.subtypeName():"")).toLowerCase()
+            var n=""; if (raw.indexOf("staccatissimo")>=0) n="staccatissimo"; else if (raw.indexOf("staccat")>=0) n="staccato"; else if (raw.indexOf("tenuto")>=0) n="tenuto"; else if (raw.indexOf("accent")>=0) n="accent"; else if (raw.indexOf("marcato")>=0) n="marcato"; else if (raw.indexOf("sforzato")>=0 || raw.indexOf("sfz")>=0) n="sforzato"; if (!n) n="unknown"; names.push(n)
         }
         return names
     }
 
     function ensureWritableSlot(c, num, den) {
-        var t = c.fraction
-        c.setDuration(num, den)
-        c.addRest()
+        var t=c.fraction
+        c.setDuration(num,den)
+        try { c.addRest() } catch(e) { dbg("ensureWritableSlot: addRest failed at "+t.numerator+"/"+t.denominator) }
         c.rewindToFraction(t)
     }
-
-    // Safe regex-escape implementation
-    function escapeRegex(s) {
-        return s.replace(/[-\/\^$*+?.()|[\]{}]/g, '\$&')
-    }
+    function escapeRegex(s) { return s.replace(/[\-\/\\^$*+?.()\[\]{}]/g,'\\$&') }
 
     function findTechniqueKeyswitches(texts, techMap, aliasMap) {
-        var pitches = []
-        if (!techMap) return pitches
-        var aliasFor = aliasMap || {}
-        for (var key in techMap) {
-            var pitch = techMap[key]
-            var aliases = aliasFor[key] || [key]
-            // Build regexes once
-            var regexes = []
-            for (var i = 0; i < aliases.length; ++i) {
-                var a = aliases[i]
-                // word-boundary-ish match
-                var r = new RegExp('\b' + escapeRegex(a) + '\b')
-                regexes.push(r)
-            }
-            for (var ti = 0; ti < texts.length; ++ti) {
-                var t = texts[ti]
-                for (var ri = 0; ri < regexes.length; ++ri) {
-                    if (regexes[ri].test(t)) { pitches.push(pitch); break }
-                }
-            }
-        }
+        var pitches=[]; if (!techMap) return pitches; var aliasFor=aliasMap||{};
+        for (var key in techMap){ var pitch=techMap[key]; var aliases=aliasFor[key]||[key]; var rx=[]; for (var i=0;i<aliases.length;++i) rx.push(new RegExp('\\b'+escapeRegex(aliases[i])+'\\b')); for (var ti=0;ti<texts.length;++ti){ var t=texts[ti]; for (var ri=0;ri<rx.length;++ri){ if (rx[ri].test(t)){ pitches.push(pitch); break } } } }
         return pitches
     }
 
+    // FIX: remove stray 'n' usage; map known aliases explicitly
     function findArticulationKeyswitches(artiNames, artiMap) {
-        var pitches = []
-        if (!artiMap) return pitches
-        for (var i in artiNames) {
-            var k = artiNames[i]
-            if (artiMap.hasOwnProperty(k))      pitches.push(artiMap[k])
-            else if (k.indexOf("tenuto") >= 0 && artiMap.tenuto)      pitches.push(artiMap.tenuto)
-            else if (k.indexOf("stacc")  >= 0 && artiMap.staccato)    pitches.push(artiMap.staccato)
-            else if (k.indexOf("accent") >= 0 && artiMap.accent)      pitches.push(artiMap.accent)
-            else if (k.indexOf("marcato")>= 0 && artiMap.marcato)     pitches.push(artiMap.marcato)
+        var pitches=[]; if (!artiMap) return pitches;
+        for (var i=0; i<artiNames.length; ++i) {
+            var k=artiNames[i];
+            if (artiMap.hasOwnProperty(k)) pitches.push(artiMap[k]);
+            else if (k.indexOf("tenuto")>=0 && artiMap.tenuto) pitches.push(artiMap.tenuto);
+            else if (k.indexOf("stacc")>=0 && artiMap.staccato) pitches.push(artiMap.staccato);
+            else if (k.indexOf("accent")>=0 && artiMap.accent) pitches.push(artiMap.accent);
+            else if (k.indexOf("marcato")>=0 && artiMap.marcato) pitches.push(artiMap.marcato);
         }
         return pitches
     }
 
-    function keyswitchExistsAt(cursor, pitch) {
-        if (!cursor.element || cursor.element.type != Element.CHORD) return false
-        var chord = cursor.element
-        for (var i in chord.notes) if (chord.notes[i].pitch == pitch) return true
-        return false
-    }
+    function keyswitchExistsAt(cursor, pitch) { if (!cursor.element || cursor.element.type != Element.CHORD) return false; var chord=cursor.element; for (var i in chord.notes) if (chord.notes[i].pitch==pitch) return true; return false }
 
     function addKeyswitchNoteAt(sourceChord, pitch, firstOfChord, activeSet) {
-        var track     = sourceChord.track
+        var track = sourceChord.track
         var startFrac = sourceChord.fraction
+        var srcStaff = staffIdxFromTrack(track)
+        var tgtStaff = targetStaffForKeyswitch(srcStaff)
+        if (tgtStaff < 0) { preflightFailed = true; return false }
 
-        if (!staffExistsForTrack(track)) return false
+        var c = curScore.newCursor(); c.track = tgtStaff*4; c.rewindToFraction(startFrac)
 
-        var c = curScore.newCursor()
-        c.track = staffBelowTrackOf(track)
-        c.rewindToFraction(startFrac)
-
-        var sidx = c.staffIdx
-        var tkey = c.tick
-
-        var policy = (activeSet && activeSet.durationPolicy) ? activeSet.durationPolicy
-                    : (globalSettings && globalSettings.durationPolicy) ? globalSettings.durationPolicy
-                    : (useSourceDuration ? "source" : "fixed")
-
+        var policy = (activeSet && activeSet.durationPolicy) ? activeSet.durationPolicy : (globalSettings && globalSettings.durationPolicy) ? globalSettings.durationPolicy : (useSourceDuration ? "source" : "fixed")
         var dur = sourceChord.actualDuration
-        var num = (policy === "source" && dur) ? dur.numerator   : ksNumerator
+        var num = (policy === "source" && dur) ? dur.numerator : ksNumerator
         var den = (policy === "source" && dur) ? dur.denominator : ksDenominator
-
-        // EXTRA GUARD: fallback if invalid
         if (!num || !den) { num = ksNumerator; den = ksDenominator }
 
         c.setDuration(num, den)
-
-        if (dedupeAcrossVoices && firstOfChord && wasEmittedCross(sidx, tkey)) return false
-
+        if (dedupeAcrossVoices && firstOfChord && wasEmittedCross(c.staffIdx, c.tick)) return false
         ensureWritableSlot(c, num, den)
 
         if (skipIfExists && keyswitchExistsAt(c, pitch)) return false
-
-        // Keep second parameter (addToChord=false) per MU4.5 API
-        c.addNote(pitch, false)
-
-        if (dedupeAcrossVoices && firstOfChord) markEmittedCross(sidx, tkey)
-
+        try { c.addNote(pitch, false) } catch(e) { dbg("addNote failed at tick="+c.tick+" pitch="+pitch); return false }
         c.rewindToFraction(startFrac)
+        if (!keyswitchExistsAt(c, pitch)) { dbg("post-add verification failed at tick="+c.tick+" pitch="+pitch); return false }
 
-        // Safer hiding: hide only the inserted note(s)
-        if (hideKeyswitchNotes && c.element && c.element.type == Element.CHORD) {
-            var ch = c.element
-            if (ch.notes) {
-                for (var i in ch.notes) {
-                    var nn = ch.notes[i]
-                    if (nn.pitch == pitch) {
-                        try { nn.visible = false } catch (e) {}
-                    }
-                }
-            }
+        if (dedupeAcrossVoices && firstOfChord) markEmittedCross(c.staffIdx, c.tick)
+
+        if (hideKeyswitchNotes && c.element && c.element.type==Element.CHORD) {
+            var ch=c.element; if (ch.notes) { for (var i in ch.notes) { var nn=ch.notes[i]; if (nn.pitch==pitch) { try { nn.visible=false } catch(e){} } } }
         }
         return true
     }
 
-    function ksKey(staffIdx, tick, pitch)        { return staffIdx + ":" + tick + ":" + pitch }
-    function wasEmitted(staffIdx, tick, pitch)    { return emittedKS.hasOwnProperty(ksKey(staffIdx,tick,pitch)) }
-    function markEmitted(staffIdx, tick, pitch)   { emittedKS[ksKey(staffIdx,tick,pitch)] = true }
-    function crossKey(staffIdx, tick)             { return staffIdx + ":" + tick }
-    function wasEmittedCross(staffIdx, tick)      { return emittedCross.hasOwnProperty(crossKey(staffIdx,tick)) }
-    function markEmittedCross(staffIdx, tick)     { emittedCross[crossKey(staffIdx,tick)] = true }
+    function ksKey(staffIdx, tick, pitch) { return staffIdx+":"+tick+":"+pitch }
+    function wasEmitted(staffIdx, tick, pitch) { return emittedKS.hasOwnProperty(ksKey(staffIdx,tick,pitch)) }
+    function markEmitted(staffIdx, tick, pitch) { emittedKS[ksKey(staffIdx,tick,pitch)] = true }
+    function crossKey(staffIdx, tick) { return staffIdx+":"+tick }
+    function wasEmittedCross(staffIdx, tick) { return emittedCross.hasOwnProperty(crossKey(staffIdx,tick)) }
+    function markEmittedCross(staffIdx, tick) { emittedCross[crossKey(staffIdx,tick)] = true }
+
+    function computeAllowedSourceStaves(startStaff, endStaff, effScope, effPartsMode) {
+        var allowed = {}
+        var anchorPartIdx = -1
+        var piAnchor = partInfoForStaff(startStaff); if (piAnchor) anchorPartIdx = piAnchor.index
+        dbg("parts: effective='"+effPartsMode+"' anchorPartIdx="+anchorPartIdx)
+
+        if (startStaff === endStaff) { allowed[startStaff] = true; return allowed }
+
+        var perPart = {}
+        for (var s=startStaff; s<=endStaff; ++s) {
+            var pi = partInfoForStaff(s); if (!pi) continue
+            if (effPartsMode === "anchor" && pi.index !== anchorPartIdx) continue
+            var arr = perPart[pi.index]; if (!arr) { arr=[]; perPart[pi.index]=arr }
+            arr.push(s)
+        }
+
+        for (var pidx in perPart) {
+            var arr = perPart[pidx]
+            if (effScope === "part") { for (var i=0;i<arr.length;++i) allowed[arr[i]] = true }
+            else { var minS=arr[0]; for (var i2=1;i2<arr.length;++i2) if (arr[i2] < minS) minS=arr[i2]; allowed[minS] = true }
+        }
+        return allowed
+    }
 
     function processSelection() {
-        // Reset cross-run state maps
-        emittedCross = ({})
-        emittedKS    = ({})
+        emittedCross = ({}); emittedKS = ({}); preflightFailed=false; sawIneligible=false; firstIneligibleStaffIdx=-1
+        var ineligiblePartIdx = {}    // partIdx -> true
+        dbg("processSelection: begin")
 
-        var chords = []
-        // Sentinel init to avoid invalid Fraction ops
-        globalStart = fraction(999999999, 1)
-        globalEnd   = fraction(0, 1)
-
-        // Collect chords
+        var chords=[]
         if (curScore.selection.isRange) {
-            var startTick  = curScore.selection.startSegment.tick
-            var endTick    = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1
-            var startStaff = curScore.selection.startStaff
-            var endStaff   = curScore.selection.endStaff
+            var startTick = curScore.selection.startSegment.tick
+            var endTick   = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1
+            var startStaff= curScore.selection.startStaff
+            var endStaff  = curScore.selection.endStaff
 
-            for (var s = startStaff; s <= endStaff; ++s) {
-                for (var v = 0; v < 4; ++v) {
-                    var c = curScore.newCursor()
-                    c.track = s * 4 + v
-                    c.rewindToTick(startTick)
+            var overrides = scopeOverrideInSelection(startStaff, endStaff, startTick, endTick)
+            var effScope  = overrides.scope ? overrides.scope : rangeScopeMode
+            var effParts  = overrides.parts ? overrides.parts : selectionPartMode
 
+            // Refined auto-widen: if selection starts at top and touches >1 parts, treat as full-system => parts=all
+            var partsTouched = {}
+            for (var sX=startStaff; sX<=endStaff; ++sX) { var pX = partInfoForStaff(sX); if (pX) partsTouched[pX.index] = true }
+            var touchedCount = 0; for (var k in partsTouched) touchedCount++
+            dbg("selection parts touched="+touchedCount+" / totalParts="+partCount())
+            if (!overrides.parts && startStaff===0 && touchedCount>1) {
+                effParts = "all"
+                dbg("parts: auto-widen to 'all' (top-of-score & multi-part selection)")
+            }
+
+            var allowedMap = computeAllowedSourceStaves(startStaff, endStaff, effScope, effParts)
+            dbg("scope: effective='"+effScope+"' parts: effective='"+effParts+"'")
+            dbg("allowed source staves: "+Object.keys(allowedMap).sort().join(", "))
+
+            for (var s=startStaff; s<=endStaff; ++s) {
+                if (!allowedMap[s]) continue
+                for (var v=0; v<4; ++v) {
+                    var c=curScore.newCursor(); c.track=s*4+v; c.rewindToTick(startTick)
                     while (c.tick < endTick) {
-                        var el = c.element
-                        if (el && el.type == Element.CHORD && el.noteType == NoteType.NORMAL) {
-                            if (typeof sourceVoicesForKeyswitches !== "undefined" &&
-                                sourceVoicesForKeyswitches.indexOf(el.voice) === -1) {
-                                // gated voice -> skip
-                            } else {
-                                chords.push(el)
-                                var st = el.fraction
-                                var et = st.plus(el.actualDuration)
-                                if (st.lessThan(globalStart)) globalStart = st
-                                if (et.greaterThan(globalEnd)) globalEnd   = et
-                            }
+                        var el=c.element
+                        if (el && el.type==Element.CHORD && el.noteType==NoteType.NORMAL) {
+                            var sIdx=el.staffIdx
+                            var ok=isEligibleSourceStaff(sIdx)
+                            dbg("scan: staff="+sIdx+" eligible="+ok)
+                            if (ok) chords.push(el); else { sawIneligible=true; if (firstIneligibleStaffIdx<0) firstIneligibleStaffIdx=sIdx; var pi=partInfoForStaff(sIdx); if (pi) ineligiblePartIdx[pi.index]=true }
                         }
                         if (!c.next()) break
                     }
@@ -511,79 +416,74 @@ MuseScore {
             }
         } else {
             for (var i in curScore.selection.elements) {
-                var el = curScore.selection.elements[i]
-                var chord = null
-                if (el.type == Element.NOTE && el.parent && el.parent.type == Element.CHORD) chord = el.parent
-                else if (el.type == Element.CHORD) chord = el
-                else continue
-
+                var el=curScore.selection.elements[i]
+                var chord=null; if (el.type==Element.NOTE && el.parent && el.parent.type==Element.CHORD) chord=el.parent; else if (el.type==Element.CHORD) chord=el; else continue
                 if (chord.noteType != NoteType.NORMAL) continue
-                if (typeof sourceVoicesForKeyswitches !== "undefined" &&
-                    sourceVoicesForKeyswitches.indexOf(chord.voice) === -1) continue
-
-                chords.push(chord)
-                var st2 = chord.fraction
-                var et2 = st2.plus(chord.actualDuration)
-                if (st2.lessThan(globalStart)) globalStart = st2
-                if (et2.greaterThan(globalEnd)) globalEnd   = et2
+                var sIdx2=chord.staffIdx; var ok2=isEligibleSourceStaff(sIdx2)
+                dbg("scan(list): staff="+sIdx2+" eligible="+ok2)
+                if (ok2) chords.push(chord); else { sawIneligible=true; if (firstIneligibleStaffIdx<0) firstIneligibleStaffIdx=sIdx2; var pi2=partInfoForStaff(sIdx2); if (pi2) ineligiblePartIdx[pi2.index]=true }
             }
         }
 
         dbg2("chords collected", chords.length)
-        dbg("globalStart " + globalStart.numerator + "/" + globalStart.denominator +
-            "   globalEnd "   + globalEnd.numerator   + "/" + globalEnd.denominator)
-
-        // Collect tags (from SCORE START; includes note-attached text)
         collectSetTagsInRange()
 
-        // Sort by time (tie: prefer configured voice)
-        chords.sort(function(a,b){
-            if (a.fraction.lessThan(b.fraction)) return -1
-            if (a.fraction.greaterThan(b.fraction)) return 1
-            var pref = (typeof preferVoiceForKSInsertion !== "undefined") ? preferVoiceForKSInsertion : 0
-            var da = Math.abs(a.voice - pref), db = Math.abs(b.voice - pref)
-            if (da !== db) return da - db
-            return a.track - b.track
-        })
+        chords.sort(function(a,b){ if (a.fraction.lessThan(b.fraction)) return -1; if (a.fraction.greaterThan(b.fraction)) return 1; var pref=(typeof preferVoiceForKSInsertion!=="undefined")?preferVoiceForKSInsertion:0; var da=Math.abs(a.voice-pref), db=Math.abs(b.voice-pref); if (da!==db) return da-db; return a.track-b.track })
 
-        // Emit KS
-        var createdCount = 0
+        var created=0
         for (var k in chords) {
-            var chord    = chords[k]
-            var tickHere = (chord.parent && chord.parent.tick) ? chord.parent.tick : 0
-            var setName  = activeSetNameFor(chord.staffIdx, tickHere)
-            var activeSet = keyswitchSets[setName] || keyswitchSets["Generic"]
+            var chord=chords[k]
+            var tickHere=(chord.parent && chord.parent.tick)?chord.parent.tick:0
+            var setName=activeSetNameFor(chord.staffIdx,tickHere)
+            var activeSet=keyswitchSets[setName]||keyswitchSets["Generic"]
+            var texts=segmentTechniqueTexts(chord)
+            var artiNames=chordArticulationNames(chord)
+            var pitches=[]
+            var techMap=activeSet.techniqueKeyMap||techniqueKeyMap
+            var aliasMap=(activeSet.techniqueAliases)?activeSet.techniqueAliases:(globalSettings.techniqueAliases?globalSettings.techniqueAliases:null)
+            if (!aliasMap) aliasMap={"pizz":["pizz","pizz.","pizzicato"],"con sord":["con sord","con sord.","con sordino"],"sul pont":["sul pont","sul pont.","sul ponticello"]}
+            pitches=pitches.concat(findTechniqueKeyswitches(texts,techMap,aliasMap))
+            pitches=pitches.concat(findArticulationKeyswitches(artiNames,activeSet.articulationKeyMap||articulationKeyMap))
 
-            var texts     = segmentTechniqueTexts(chord)
-            var artiNames = chordArticulationNames(chord)
-
-            dbg("Chord track " + chord.track + ": texts=" + texts.length +
-                " arts=" + artiNames.length + "  set=" + setName)
-
-            var pitches = []
-            // Techniques (with alias support)
-            var techMap   = activeSet.techniqueKeyMap || techniqueKeyMap
-            var aliasMap  = (activeSet.techniqueAliases) ? activeSet.techniqueAliases
-                            : (globalSettings.techniqueAliases) ? globalSettings.techniqueAliases
-                            : null
-            if (!aliasMap) aliasMap = { "pizz": ["pizz","pizz.","pizzicato"], "con sord": ["con sord","con sord.","con sordino"], "sul pont": ["sul pont","sul pont.","sul ponticello"] }
-            pitches = pitches.concat(findTechniqueKeyswitches(texts, techMap, aliasMap))
-            // Articulations (keep multiples if present)
-            pitches = pitches.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || articulationKeyMap))
-
-            var seen = {}
+            var seen={}
             for (var j in pitches) {
-                var p = pitches[j]
-                if (seen[p]) continue
-                var firstOfChord = (j == 0)
-                if (addKeyswitchNoteAt(chord, p, firstOfChord, activeSet)) createdCount++
-                seen[p] = true
+                var p=pitches[j]; if (seen[p]) continue
+                var first=(j==0)
+                if (addKeyswitchNoteAt(chord,p,first,activeSet)) created++
+                if (preflightFailed) break
+                seen[p]=true
+            }
+            if (preflightFailed) break
+        }
+
+        var partialParts = []
+        if (created>0 && warnOnPartialSuccess) {
+            for (var idx in ineligiblePartIdx) {
+                if (ineligiblePartIdx[idx]) {
+                    for (var s=0; s<curScore.staves.length; ++s) { var pi=partInfoForStaff(s); if (pi && pi.index==idx) { partialParts.push(nameForPartByRange(s,0)); break } }
+                }
             }
         }
 
-        dbg2("processSelection: total keyswitches created", createdCount)
-        return createdCount
+        dbg("processSelection: createdCount="+created+" sawIneligible="+sawIneligible+" preflightFailed="+preflightFailed+" partialParts="+partialParts.join(", "))
+
+        if (!preflightFailed && created==0 && sawIneligible && !promptShown) {
+            promptShown=true
+            var n=nameForPartByRange(firstIneligibleStaffIdx>=0?firstIneligibleStaffIdx:0,0)
+            ksStaffPrompt.title = qsTr("Keyswitch staff not found")
+            // Keep user's reworded message (no quotes around name)
+            ksStaffPrompt.text  = qsTr("The staff directly below %1 does not belong to the same instrument. Create another staff below %1 then rerun Keyswitch Creator.").arg(n)
+            try { ksStaffPrompt.open() } catch(e) { try { ksStaffPrompt.visible=true } catch(e2){} }
+        } else if (!preflightFailed && created>0 && partialParts.length>0 && !promptShown && warnOnPartialSuccess) {
+            promptShown=true
+            ksStaffPrompt.title = qsTr("Some parts had no keyswitch staff")
+            ksStaffPrompt.text  = qsTr("No keyswitches were added for: %1. Add a keyswitch staff below those parts, then rerun Keyswitch Creator.").arg(partialParts.join(", "))
+            try { ksStaffPrompt.open() } catch(e) { try { ksStaffPrompt.visible=true } catch(e2){} }
+        }
+        return created
     }
+
+    MessageDialog { id: ksStaffPrompt; title: ""; text: ""; onAccepted: { quit() } }
 
     onRun: {
         dbg("onRun: begin")
@@ -600,15 +500,28 @@ MuseScore {
         }
 
         try {
-            savedSelection = readSelection()
+            savedSelection = (function(){
+                if (!curScore.selection.elements.length) return false
+                if (curScore.selection.isRange) {
+                    var obj={isRange:true,startSegment:curScore.selection.startSegment.tick,endSegment:curScore.selection.endSegment?curScore.selection.endSegment.tick:curScore.lastSegment.tick+1,startStaff:curScore.selection.startStaff,endStaff:curScore.selection.endStaff}
+                    dbg("readSelection: range ticks "+obj.startSegment+"…"+obj.endSegment+", staffs "+obj.startStaff+"–"+obj.endStaff)
+                    return obj
+                }
+                var list={isRange:false,elements:[]}
+                for (var i in curScore.selection.elements) list.elements.push(curScore.selection.elements[i])
+                dbg("readSelection: list with "+list.elements.length+" elements")
+                return list
+            })()
+
             var count = processSelection()
             curScore.selection.clear()
-            writeSelection(savedSelection)
+            if (savedSelection && savedSelection.isRange) { dbg("writeSelection: restoring range"); curScore.selection.selectRange(savedSelection.startSegment, savedSelection.endSegment, savedSelection.startStaff, savedSelection.endStaff) }
+            else if (savedSelection && !savedSelection.isRange) { for (var i in savedSelection.elements) curScore.selection.select(savedSelection.elements[i], true) }
             curScore.endCmd()
             dbg2("onRun: end, keyswitches added", count)
         } catch (e) {
             curScore.endCmd(true)
-            dbg("ERROR: " + e.toString())
+            dbg("ERROR: "+e.toString())
         }
         quit()
     }
