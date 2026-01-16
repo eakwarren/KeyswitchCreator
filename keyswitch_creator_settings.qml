@@ -1,8 +1,14 @@
-
 //===============================================================================
-//  Keyswitch Creator Settings (StyledTabBar + Muse-styled controls)
-//  v0.10.23: Keys forwarding + initial staves focus; editor left alignment with 'Assign set to...';
-//            editor up 1px; neutral border; no editor auto-focus.
+//  Keyswitch Creator Settings for MuseScore Studio articulation & technique text
+//  Creates keyswitch notes on the staff below based on articulation symbols &
+//  technique text in the current selection/entire score.
+//
+//  Copyright (C) 2026 Eric Warren (eakwarren)
+//
+//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License version 3
+//  as published by the Free Software Foundation and appearing in
+//  the file LICENSE
 //===============================================================================
 
 import QtQuick 2.15
@@ -13,7 +19,7 @@ import Muse.UiComponents 1.0
 import MuseScore 3.0
 
 MuseScore {
-    version: "0.10.23"
+    version: "0.9.2"
     title: qsTr("Keyswitch Creator Settings")
     description: qsTr("Assign keyswitch sets to staves and manage set registry + global settings")
     pluginType: "dialog"
@@ -32,7 +38,7 @@ MuseScore {
     property int currentStaffIdx: -1
     property int lastAnchorIndex: -1
 
-    property var selectedStaff: ({})   // map of staffIdx -> true for selected rows
+    property var selectedStaff: ({})
     property int selectedCountProp: 0
 
     // Mode selector: 0 = registry, 1 = globals
@@ -157,7 +163,8 @@ MuseScore {
     // ---------- Name helpers (strip CR/LF) ----------
     function cleanName(s) {
         var t = String(s || '')
-        t = t.split('').join(' ')
+        t = t.split('
+').join(' ')
         t = t.split('
 ').join(' ')
         return t
@@ -256,7 +263,7 @@ MuseScore {
             Layout.fillHeight: true
             spacing: 12
 
-            // Left: staves list (narrow)
+            // staves list
             GroupBox {
                 title: qsTr('Staves')
                 Layout.preferredWidth: 216
@@ -317,7 +324,7 @@ MuseScore {
                 }
             }
 
-            // Right side: assign + editors
+            // Assign set to + editors
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -382,7 +389,6 @@ MuseScore {
                     }
                 }
 
-                // Tabs + Editors, tightened to place editor frame right under tabs and aligned left
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -402,10 +408,10 @@ MuseScore {
                         id: navTabPanel
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        Layout.topMargin: -1   // move editor up by 1px
+                        Layout.topMargin: -1   // hug tabs above
                         currentIndex: editorModeIndex
 
-                        // Panel 0: Registry editor (left-aligned to match 'Assign set to...' text)
+                        // Registry editor tab
                         Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -431,7 +437,7 @@ MuseScore {
                             }
                         }
 
-                        // Panel 1: Globals editor (same left alignment)
+                        // Globals editor tab
                         Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -459,7 +465,6 @@ MuseScore {
                     }
                 }
 
-                // Action bar: Reset aligned left with editor; Save/Cancel on the right
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8

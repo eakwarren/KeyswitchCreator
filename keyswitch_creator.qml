@@ -18,7 +18,7 @@ import MuseScore 3.0
 MuseScore {
     title: qsTr("Keyswitch Creator")
     description: qsTr("Creates keyswitch notes on the keyswitch staff of the same instrument/part.")
-    version: "0.10.14"  // Fix: ReferenceError n not defined; tighten line breaks; keep v0.10.12 behavior
+    version: "0.9.2"
     categoryCode: "Keyswitch Creator"
     thumbnailName: "keyswitch_creator.png"
 
@@ -289,7 +289,7 @@ MuseScore {
         return pitches
     }
 
-    // FIX: remove stray 'n' usage; map known aliases explicitly
+    // map known aliases explicitly
     function findArticulationKeyswitches(artiNames, artiMap) {
         var pitches=[]; if (!artiMap) return pitches;
         for (var i=0; i<artiNames.length; ++i) {
@@ -370,7 +370,7 @@ MuseScore {
 
     function processSelection() {
         emittedCross = ({}); emittedKS = ({}); preflightFailed=false; sawIneligible=false; firstIneligibleStaffIdx=-1
-        var ineligiblePartIdx = {}    // partIdx -> true
+        var ineligiblePartIdx = {}
         dbg("processSelection: begin")
 
         var chords=[]
@@ -384,7 +384,7 @@ MuseScore {
             var effScope  = overrides.scope ? overrides.scope : rangeScopeMode
             var effParts  = overrides.parts ? overrides.parts : selectionPartMode
 
-            // Refined auto-widen: if selection starts at top and touches >1 parts, treat as full-system => parts=all
+            // if selection starts at top and touches >1 parts, treat as full-system => parts=all
             var partsTouched = {}
             for (var sX=startStaff; sX<=endStaff; ++sX) { var pX = partInfoForStaff(sX); if (pX) partsTouched[pX.index] = true }
             var touchedCount = 0; for (var k in partsTouched) touchedCount++
@@ -471,7 +471,6 @@ MuseScore {
             promptShown=true
             var n=nameForPartByRange(firstIneligibleStaffIdx>=0?firstIneligibleStaffIdx:0,0)
             ksStaffPrompt.title = qsTr("Keyswitch staff not found")
-            // Keep user's reworded message (no quotes around name)
             ksStaffPrompt.text  = qsTr("The staff directly below %1 does not belong to the same instrument. Create another staff below %1 then rerun Keyswitch Creator.").arg(n)
             try { ksStaffPrompt.open() } catch(e) { try { ksStaffPrompt.visible=true } catch(e2){} }
         } else if (!preflightFailed && created>0 && partialParts.length>0 && !promptShown && warnOnPartialSuccess) {
