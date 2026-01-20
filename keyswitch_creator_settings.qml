@@ -1,4 +1,3 @@
-
 //===============================================================================
 // Keyswitch Creator Settings for MuseScore Studio articulation & technique text
 // Creates keyswitch notes on the staff below based on articulation symbols &
@@ -14,13 +13,14 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Window 2.15
 import Muse.Ui 1.0
-import Muse.UiComponents 1.0
+//import Muse.UiComponents 1.0
+import MuseScore.NotationScene 1.0
 import MuseScore 3.0
 
 MuseScore {
-  // NOTE: Task B – tighten piano icon size and show non-transparent background
-  version: "0.9.3.12"
+  version: "0.9.3.12 combo"
   title: qsTr("Keyswitch Creator Settings")
   description: qsTr("Assign keyswitch sets to staves and manage set registry + global settings")
   pluginType: "dialog"
@@ -28,6 +28,9 @@ MuseScore {
   width: 1385
   height: 810
 
+  //-----------------------------------------------------------------------------
+  // Settings storage
+  //-----------------------------------------------------------------------------
   Settings {
     id: ksPrefs
     category: "Keyswitch Creator"
@@ -36,7 +39,9 @@ MuseScore {
     property string globalJSON: ""
   }
 
+  //-----------------------------------------------------------------------------
   // Data state
+  //-----------------------------------------------------------------------------
   property var keyswitchSets: ({})
   property var staffToSet: ({})
   property var globalSettings: ({})
@@ -44,19 +49,13 @@ MuseScore {
   property int lastAnchorIndex: -1
   property var selectedStaff: ({})
   property int selectedCountProp: 0
-
-  // Mode selector: 0 = registry, 1 = globals
-  property int editorModeIndex: 0
+  property int editorModeIndex: 0 // Mode selector: 0 = registry, 1 = globals
 
   // Theme colors (safe fallbacks)
   readonly property color themeAccent: (ui && ui.theme && ui.theme.accentColor) ? ui.theme.accentColor : "#2E7DFF"
   readonly property color themeSeparator: (ui && ui.theme && ui.theme.separatorColor) ? ui.theme.separatorColor : "#D0D0D0"
-
-  // Neutral editor border color (safe)
-  property color editorBorderColor: themeSeparator
-
-  // Shared left text margin to align editor with 'Assign set to...' title
-  property int leftTextMargin: 12
+  property color editorBorderColor: themeSeparator // Neutral editor border color (safe)
+  property int leftTextMargin: 12 // Shared left text margin to align editor with 'Assign set to...' title
 
   ListModel { id: staffListModel } // { idx, name }
   ListModel { id: setsListModel }  // { name }
@@ -99,8 +98,8 @@ MuseScore {
       var name = setNames[i]
       var setObj = reg[name] || {}
       lines.push(' ' + JSON.stringify(name) + ':{')
-      var innerLines = []
-      var innerKeys = Object.keys(setObj)
+      var innerLines = [] // MOD IN 38
+      var innerKeys = Object.keys(setObj) //MOD IN 38 innerKeys -> ks
       for (var j = 0; j < innerKeys.length; ++j) {
         var k = innerKeys[j]
         var v = setObj[k]
@@ -159,10 +158,10 @@ MuseScore {
     if (setButtonsFlow) setButtonsFlow.uiSelectedSet = activeSetForCurrentSelection()
   }
 
-  function bumpSelection() { selectedCountProp = Object.keys(selectedStaff).length }
-  function clearSelection() { selectedStaff = ({}); bumpSelection(); refreshUISelectedSet() }
+  function bumpSelection() { selectedCountProp = Object.keys(selectedStaff).length } // OK
+  function clearSelection() { selectedStaff = ({}); bumpSelection(); refreshUISelectedSet() }  //OK
 
-  function setRowSelected(rowIndex, on) {
+  function setRowSelected(rowIndex, on) { //OK
     if (rowIndex < 0 || rowIndex >= staffListModel.count) return
     var sIdx = staffListModel.get(rowIndex).idx
     var ns = Object.assign({}, selectedStaff)
@@ -173,24 +172,33 @@ MuseScore {
     refreshUISelectedSet()
   }
 
-  function isRowSelected(rowIndex) {
+  function isRowSelected(rowIndex) { //OK
     if (rowIndex < 0 || rowIndex >= staffListModel.count) return false
     var sIdx = staffListModel.get(rowIndex).idx
     return !!selectedStaff[sIdx]
   }
 
-  function selectSingle(rowIndex) {
+  function selectSingle(rowIndex) { //OK
     clearSelection()
     setRowSelected(rowIndex, true)
     lastAnchorIndex = rowIndex
-    currentStaffIdx = staffListModel.get(rowIndex).idx
+    if(rowIndex>=0&&rowIndex<staffListModel.count) currentStaffIdx = staffListModel.get(rowIndex).idx
     refreshUISelectedSet()
   }
 
+  // in 38 (but may not work right)
+  // function toggleRow(rowIndex){
+  //   var was=isRowSelected(rowIndex)
+  //   setRowSelected(rowIndex,!was)
+  //   lastAnchorIndex=rowIndex
+  //   if(rowIndex>=0&&rowIndex<staffListModel.count) currentStaffIdx=staffListModel.get(rowIndex).idx
+  //   if(selectedCountProp===0&&staffListModel.count>0) setRowSelected(0,true)
+  // }
   function toggleRow(rowIndex) {
-    var wasSelected = isRowSelected(rowIndex)
+    clearSelection()
+    setRowSelected(rowIndex,true)
     setRowSelected(rowIndex, !wasSelected)
-    lastAnchorIndex = rowIndex
+    lastAnchorIndex = rowIndex //same
     currentStaffIdx = staffListModel.get(rowIndex).idx
     if (selectedCountProp === 0) setRowSelected(rowIndex, true)
     refreshUISelectedSet()
@@ -201,12 +209,14 @@ MuseScore {
     var a = Math.min(lastAnchorIndex, rowIndex)
     var b = Math.max(lastAnchorIndex, rowIndex)
     clearSelection()
+    // for(var r=a;r<=b&&r<staffListModel.count;++r) setRowSelected(r,true)
     for (var r = a; r <= b; ++r) setRowSelected(r, true)
+    // if(rowIndex>=0&&rowIndex<staffListModel.count)
     currentStaffIdx = staffListModel.get(rowIndex).idx
     refreshUISelectedSet()
   }
 
-  function selectAll() {
+  function selectAll() { //OK
     clearSelection()
     for (var r = 0; r < staffListModel.count; ++r) setRowSelected(r, true)
     if (staffList.currentIndex >= 0) lastAnchorIndex = staffList.currentIndex
@@ -216,7 +226,7 @@ MuseScore {
   //--------------------------------------------------------------------------------
   // Name helpers (strip CR/LF)
   //--------------------------------------------------------------------------------
-  function cleanName(s) {
+  function cleanName(s) { //OK
     var t = String(s || '')
     t = t.split('
 ').join(' ')
@@ -227,7 +237,7 @@ MuseScore {
 
   function staffBaseTrack(staffIdx) { return staffIdx * 4 }
 
-  function partForStaff(staffIdx) {
+  function partForStaff(staffIdx) { //OK
     if (!curScore || !curScore.parts) return null
     var t = staffBaseTrack(staffIdx)
     for (var i = 0; i < curScore.parts.length; ++i) {
@@ -237,7 +247,7 @@ MuseScore {
     return null
   }
 
-  function nameForPart(p, tick) {
+  function nameForPart(p, tick) { //OK
     if (!p) return ''
     var nm = (p.longName && p.longName.length) ? p.longName
             : (p.partName && p.partName.length) ? p.partName
@@ -250,7 +260,7 @@ MuseScore {
     return cleanName(nm)
   }
 
-  function indexForStaff(staffIdx) {
+  function indexForStaff(staffIdx) { //OK
     for (var i = 0; i < staffListModel.count; ++i) {
       var item = staffListModel.get(i)
       if (item && item.idx === staffIdx) return i
@@ -258,7 +268,7 @@ MuseScore {
     return 0
   }
 
-  function staffNameByIdx(staffIdx) {
+  function staffNameByIdx(staffIdx) { //OK
     for (var i = 0; i < staffListModel.count; ++i) {
       var item = staffListModel.get(i)
       if (item && item.idx === staffIdx) return cleanName(item.name)
@@ -270,7 +280,7 @@ MuseScore {
   //--------------------------------------------------------------------------------
   // Load / Save
   //--------------------------------------------------------------------------------
-  function loadData() {
+  function loadData() { //MOD IN 38
     try { keyswitchSets = (ksPrefs.setsJSON && ksPrefs.setsJSON.length) ? JSON.parse(ksPrefs.setsJSON) : {} } catch (e) { keyswitchSets = {} }
     try { staffToSet = (ksPrefs.staffToSetJSON && ksPrefs.staffToSetJSON.length) ? JSON.parse(ksPrefs.staffToSetJSON) : {} } catch (e2) { staffToSet = {} }
     try { globalSettings = (ksPrefs.globalJSON && ksPrefs.globalJSON.length) ? JSON.parse(ksPrefs.globalJSON) : defaultGlobalSettingsObj() } catch (e3) { globalSettings = defaultGlobalSettingsObj() }
@@ -293,19 +303,19 @@ MuseScore {
       }
     }
 
-    var initIndex = indexForStaff(0)
-    selectSingle(initIndex)
+    var initIndex = indexForStaff(0) //here only
+    selectSingle(initIndex) //here only
 
     setsListModel.clear()
-    for (var k in keyswitchSets) setsListModel.append({ name: k })
+    for (var k in keyswitchSets) /*if (keyswitchSets.hasOwnProperty(k))*/ setsListModel.append({ name: k })
 
-    jsonArea.text = formatRegistryCompact(keyswitchSets)
-    globalsArea.text = formatGlobalsCompact(globalSettings)
+    /*if (jsonArea)*/jsonArea.text = formatRegistryCompact(keyswitchSets)
+    /*if (globalsArea)*/globalsArea.text = formatGlobalsCompact(globalSettings)
 
     refreshUISelectedSet()
   }
 
-  function saveData() {
+  function saveData() { //OK
     ksPrefs.setsJSON = jsonArea.text
     ksPrefs.globalJSON = globalsArea.text
     ksPrefs.staffToSetJSON = JSON.stringify(staffToSet)
@@ -314,9 +324,10 @@ MuseScore {
   onRun: {
     loadData()
     // Ensure initial focus goes to staves list for keyboard shortcuts
-    staffList.forceActiveFocus()
+    /*if (staffList) */staffList.forceActiveFocus()
     refreshUISelectedSet()
   }
+  // Component.onCompleted: { if (staffListModel.count===0 && setsListModel.count===0) loadData() } //in 38
 
   //--------------------------------------------------------------------------------
   // UI
@@ -338,7 +349,7 @@ MuseScore {
         Layout.fillHeight: true
 
         ScrollView {
-          id: stavesScroll
+          id: stavesScroll //missing from 38
           anchors.fill: parent
           focus: true
 
@@ -374,7 +385,7 @@ MuseScore {
             }
 
             delegate: ItemDelegate {
-              id: rowDelegate
+              id: rowDelegate //not in 38
               width: ListView.view.width
               text: cleanName(model.name)
               background: Rectangle {
@@ -411,7 +422,7 @@ MuseScore {
         // Hidden icon-size probe using a standard icon button to get canonical metrics
         FlatButton { id: _iconProbe; visible: false; icon: IconCode.SAVE }
 
-        // Title row with dynamic text and the piano icon button on the same row (outside the box)
+        // Title row with dynamic text and the piano icon button
         RowLayout {
           Layout.fillWidth: true
           spacing: 8
@@ -422,6 +433,7 @@ MuseScore {
                   ? qsTr('Assign set to ') + cleanName(staffNameByIdx(currentStaffIdx))
                   : qsTr('Assign set to %1 staves').arg(selectedCountProp)
           }
+
           Item { Layout.fillWidth: true }
           // Piano button styled as FlatButton; glyph from MuseScoreIcon font (U+F3BB), rotated -90°
           FlatButton {
@@ -430,11 +442,19 @@ MuseScore {
             Layout.preferredHeight: _iconProbe.implicitHeight
             width: _iconProbe.implicitHeight
             height: _iconProbe.implicitHeight
-            transparent: false  // show themed background (not transparent)
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr('Show vertical keyboard')
-            onClicked: { console.log('[KS] Piano button clicked') }
+            transparent: false
             clip: true
+            onClicked: { //handles piano window creation?
+              var w=null; try { w=(Qt.application && Qt.application.activeWindow)? Qt.application.activeWindow : null } catch(e){ w=null }
+              verticalKbWindow.transientParent = w; verticalKbWindow.forceOnTop = (w===null)
+              if (!verticalKbWindow.visible) {
+                verticalKbWindow.x=120; verticalKbWindow.y=120
+                try { if (ksPrefs.kbWindowGeomJSON && ksPrefs.kbWindowGeomJSON.length) { var g=JSON.parse(ksPrefs.kbWindowGeomJSON); if (g && typeof g.x==='number' && typeof g.y==='number' && typeof g.w==='number' && typeof g.h==='number') { verticalKbWindow.x=g.x; verticalKbWindow.y=g.y; verticalKbWindow.width=g.w; verticalKbWindow.height=g.h } } } catch(e) {}
+                verticalKbWindow.show()
+              }
+              verticalKbWindow.raise(); verticalKbWindow.requestActivate();
+              verticalKbWindow.rebuildKsTextModel()
+            }
             Text {
               anchors.centerIn: parent
               text: ""
@@ -442,7 +462,7 @@ MuseScore {
               font.pixelSize: Math.round(parent.height * 0.6)
               rotation: -90
               color: ui && ui.theme ? ui.theme.fontPrimaryColor : "#333"
-              renderType: Text.NativeRendering
+              renderType: Text.NativeRendering //not in 38. Delete?
             }
           }
         }
@@ -487,6 +507,7 @@ MuseScore {
                       for (var i = 0; i < keys.length; ++i) staffToSet[keys[i]] = model.name
                     }
                     setButtonsFlow.uiSelectedSet = model.name
+                    // verticalKbWindow.rebuildKsTextModel() //only in 38
                   }
                 }
               }
@@ -505,8 +526,8 @@ MuseScore {
             Layout.fillWidth: true
             spacing: 36
             background: Item { implicitHeight: 32 }
-            StyledTabButton { text: qsTr('Edit set registry'); onClicked: editorModeIndex = 0 }
-            StyledTabButton { text: qsTr('Global settings'); onClicked: editorModeIndex = 1 }
+            StyledTabButton { text: qsTr('Edit set registry'); onClicked: editorModeIndex = 0 } //no error in 38
+            StyledTabButton { text: qsTr('Global settings'); onClicked: editorModeIndex = 1 } //no error in 38
           }
 
           StackLayout {
@@ -569,6 +590,7 @@ MuseScore {
     RowLayout {
       Layout.fillWidth: true
       spacing: 8
+
       FlatButton {
         id: resetButtonRef
         text: qsTr('Reset to Default')
@@ -580,8 +602,334 @@ MuseScore {
         }
       }
       Item { Layout.fillWidth: true }
-      FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); quit() } }
+      FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); quit() } } //no error in 38
       FlatButton { id: cancelButtonRef; text: qsTr('Cancel'); onClicked: quit() }
     }
+  }
+
+  //-----------------------------------------------------------------------------
+  // Vertical keyboard Window – keyboard + synchronized text column
+  //-----------------------------------------------------------------------------
+  Window {
+    id: verticalKbWindow
+    visible: false
+    modality: Qt.NonModal
+
+
+    // 1) When the vertical keyboard window is shown, rebuild from the current set
+    Component.onCompleted: { rebuildKsTextModel() }
+    onVisibleChanged:      if (visible) Qt.callLater(rebuildKsTextModel)
+
+    // 2) Rebuild whenever the selected set changes
+    Connections {
+      target: setButtonsFlow
+      function onUiSelectedSetChanged() { rebuildKsTextModel() }
+    }
+
+    // 3) Rebuild whenever the registry JSON changes (e.g., after Save)
+    Connections {
+      target: ksPrefs
+      function onSetsJSONChanged() {
+        try { keyswitchSets = (ksPrefs.setsJSON && ksPrefs.setsJSON.length) ? JSON.parse(ksPrefs.setsJSON) : {};
+        } catch (e) {
+          keyswitchSets = {};
+        }
+        rebuildKsTextModel();
+      }
+    }
+
+    // Thickness of the vertical keyboard stripe
+    property int keyThickness:  (width > 0 ? Math.max(160, Math.min(360, Math.round(width * 0.22))) : 220)
+    // Width of your label column (adjust to taste)
+    property int labelWidth:    250
+
+    // Key geometry used to compute the full 128-key vertical length
+    property real whiteKeyUnitPx: 22
+    property real blackKeyUnitRatio: 0.60
+    function isWhite(m)        { var pc=(m%12+12)%12; return !(pc===1||pc===3||pc===6||pc===8||pc===10) }
+    function keyUnit(m)        { return isWhite(m) ? whiteKeyUnitPx : (whiteKeyUnitPx * blackKeyUnitRatio) }
+
+
+    // --- Visual calibration for PianoKeyboardPanel ---
+    // Small padding that the panel paints around the stack (tune if needed)
+    property int panelTopPadPx:    1    // pixels from the top (G9 side)
+    property int panelBottomPadPx: 1    // pixels from the bottom (C-1 side)
+
+    // If the panel draws a 1px separator between white rows, account for it here.
+    // Start with 0; increase to 1 if you still see a consistent "one-pixel high" drift.
+    property int whiteRowSeparatorPx: 0
+
+    // Some builds render black key rectangles a touch above/below their midpoint.
+    // Bias the center for whites/blacks independently (can be negative).
+    // These are the key ones to tune. NEGATIVE values move labels/lines DOWN.
+    property real whiteCenterBiasPx: 0.0   // try -1.0 .. -1.5 for whites
+    property real blackCenterBiasPx: 0.0   // try -2.0 .. -2.5 for blacks
+
+    // Per-pitch-class fine offsets (px), repeats every octave ---
+    // Order: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
+    // NEGATIVE moves label downward, POSITIVE upward (because we measure from bottom).
+    property var pcCenterBiasPx: [
+      0.0,  // C
+      0.0,  // C#
+      0.0,  // D
+      0.0,  // D#
+      0.0,  // E
+      0.0,  // F
+      0.0,  // F#
+      0.0,  // G
+      0.0,  // G#
+      0.0,  // A
+      0.0,  // A#
+      0.0   // B
+    ]
+
+    // Pitch-class helpers
+    function pcOf(m) { return ((m|0) % 12 + 12) % 12 }
+    function isWhitePC(pc) { return !(pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10) }
+    function pcBias(m) { return pcCenterBiasPx[pcOf(m)] || 0.0 }
+
+
+    // Utility: distance from TOP (G9) to TOP of MIDI m, including row separators for whites
+    function cumulativeBeforeFromTopWithPads(m) {
+        var s = 0;
+        var mm = Math.max(0, Math.min(127, m));
+        for (var i = 127; i > mm; --i) {
+            s += keyUnit(i);
+            if (isWhite(i)) s += whiteRowSeparatorPx;
+        }
+        return panelTopPadPx + s;
+    }
+
+    // Centerline from TOP including pads/bias
+    function labelCenterYFromTopCalibrated(m) {
+      var mm = Math.max(0, Math.min(127, m));
+      var base = cumulativeBeforeFromTopWithPads(mm) + keyUnit(mm) * 0.5;
+      var pc   = pcOf(mm);
+      var wbBias = isWhitePC(pc) ? whiteCenterBiasPx : blackCenterBiasPx;
+      return base + wbBias + pcBias(mm);
+    }
+
+    // Centerline from BOTTOM (C-1) including pads/bias
+    function labelCenterYFromBottomCalibrated(m) {
+      // total painted height we target = pads + all units + pads
+      var sepSum = (function(){
+        var w=0; for (var i=1;i<=127;++i) if (isWhite(i)) ++w; return w*whiteRowSeparatorPx;
+      })();
+      var paintedTotal = panelTopPadPx + totalUnits + panelBottomPadPx + sepSum;
+      return paintedTotal - labelCenterYFromTopCalibrated(m);
+    }
+
+    // Distance from TOP (G9) to TOP of MIDI m
+    function cumulativeBeforeFromTop(m) {
+        var s = 0, mm = Math.max(0, Math.min(127, m));
+        for (var i = 127; i > mm; --i) s += keyUnit(i);
+        return s;
+    }
+
+    // Centerline from TOP
+    function labelCenterYFromTop(m) {
+        var mm = Math.max(0, Math.min(127, m));
+        return cumulativeBeforeFromTop(mm) + keyUnit(mm) * 0.5;
+    }
+
+    // Centerline from BOTTOM (C‑1)
+    function labelCenterYFromBottom(m) {
+        return totalUnits - labelCenterYFromTop(m);
+    }
+
+    property real totalUnits:  (function(){ var s=0; for (var i=0;i<128;++i) s += keyUnit(i); return s })()
+
+    property bool forceOnTop: false
+
+    property int midiOffset: 0
+
+    function toGeom(m){ return m - midiOffset }
+    function keyCenterY(m){ var g = toGeom(m); return isBlackGeom(g)
+                             ? blackTopYAdjustedGeom(g) + Math.round(blackHeight/2)
+                             : rowTopYGeom(g) + Math.round(keyHeight/2) }
+
+    flags: forceOnTop
+           ? (Qt.Tool | Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint | Qt.WindowStaysOnTopHint)
+           : (Qt.Tool | Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint)
+    title: qsTr('Keyboard Map')
+
+    width: 350
+    height: 850
+    color: ui && ui.theme ? ui.theme.backgroundPrimaryColor : "#f2f2f2"
+
+    // Text model from the active set (labels placed by MIDI mapping)
+    ListModel { id: ksTextModel } // { midi:int, label:string }
+
+    function activeSetName(){ return setButtonsFlow ? setButtonsFlow.uiSelectedSet : "__none__" }
+
+    function rebuildKsTextModel(){
+      var name = activeSetName(); var setObj = keyswitchSets[name] || {}; var A=setObj.articulationKeyMap || {}; var T=setObj.techniqueKeyMap || {}
+      var rows = []
+      for (var k in A) if (A.hasOwnProperty(k)) rows.push({ midi: A[k], label: 'Articulation | '+k })
+      for (var t in T) if (T.hasOwnProperty(t)) rows.push({ midi: T[t], label: 'Technique | '+t })
+      // was: rows.sort(function(a,b){ return b.midi - a.midi })
+      rows.sort(function(a,b){ return a.midi - b.midi }); // lowest MIDI first (C‑1 first)
+
+      ksTextModel.clear(); for (var i=0;i<rows.length;++i) ksTextModel.append(rows[i])
+    }
+
+
+    ColumnLayout {
+      anchors.fill: parent
+      anchors.margins: 0
+      anchors.bottomMargin: 10
+      spacing: 0
+
+
+
+      ScrollView {
+        id: kbScroll
+        Layout.fillWidth:  true
+        Layout.fillHeight: true
+        clip: true
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
+        // 1) Helper to scroll to the very bottom (C-1 visible)
+        function scrollBottom() {
+          // NOTE: in QQC2 ScrollView, the *inner Flickable* is contentItem
+          var f = kbScroll.contentItem;
+          f.contentY = Math.max(0, f.contentHeight - f.height);
+        }
+
+        // 2) Run after the first layout pass (and once more a tick later)
+        Component.onCompleted: {
+          Qt.callLater(kbScroll.scrollBottom);   // next event-loop turn
+          deferredBottom.restart();              // one more after ~30ms
+        }
+
+        // 3) Re-apply whenever the inner Flickable’s geometry changes
+        Connections {
+          target: kbScroll.contentItem          // the Flickable inside ScrollView
+          function onContentHeightChanged() { kbScroll.scrollBottom() }
+          function onHeightChanged()        { kbScroll.scrollBottom() }
+          // OPTIONAL: if you ever change width dynamically and want to keep it,
+          // you can watch onWidthChanged() here too.
+        }
+
+        // 4) One-shot timer to handle late-bound sizing (fonts, transforms, etc.)
+        Timer {
+          id: deferredBottom
+          interval: 30
+          running: false
+          repeat: false
+          onTriggered: kbScroll.scrollBottom()
+        }
+
+
+        // The logical content area of the ScrollView:
+        // width = keyboard thickness + label column
+        // height = full 128-key vertical length
+        Item {
+          id: contentArea
+          width:  verticalKbWindow.keyThickness + verticalKbWindow.labelWidth
+          height: verticalKbWindow.totalUnits
+
+          // CRITICAL: expose implicit sizes so ScrollView's Flickable computes full content
+          implicitWidth:  width
+          implicitHeight: height
+
+          Row {
+            id: contentRow
+            anchors.fill: parent
+            spacing: 0      // change to >0 if you want a tiny gap between keys and labels
+
+            // ===== THIN keyboard column used for Row layout =====
+            // Row will treat this as 'keyThickness' wide (correct), not the unrotated long side
+            Item {
+              id: kbColumn
+              width:  verticalKbWindow.keyThickness   // <-- thin stripe as you see it
+              height: contentArea.height
+
+              // The rotated content lives inside this thin column
+              Item {
+                id: rot
+                // UNROTATED dimensions (swap axes BEFORE rotation)
+                width:  kbColumn.height                 // long side = 128-key length
+                height: kbColumn.width                  // short side = thickness
+
+                // Rotate, then translate DOWN by the UNROTATED width
+                transform: [
+                  Rotation { angle: -90; origin.x: 0; origin.y: 0 },
+                  Translate { y: rot.width }            // NOTE: translate by 'width', NOT height
+                ]
+
+                PianoKeyboardPanel {
+                  id: msPianoPanel
+                  anchors.fill: parent
+                  Component.onCompleted: {
+                    try {
+                      if (typeof msPianoPanel.showFullRange !== "undefined")
+                        msPianoPanel.showFullRange = true;
+                      if (typeof msPianoPanel.keySizeMode   !== "undefined")
+                        msPianoPanel.keySizeMode   = "Normal";
+                    } catch (e) { /* defaults */ }
+                  }
+                }
+              }
+            }
+
+            // ===== LABELS column immediately to the right of the keyboard =====
+            Item {
+              id: labelsCanvas
+              width:  verticalKbWindow.labelWidth
+              height: contentArea.height
+              clip:   true
+
+
+              // Add inside labelsCanvas for debugging; remove later
+              Repeater {
+                model: 128
+                delegate: Rectangle {
+                  x: 0
+                  width: parent.width
+                  height: 1
+                  color: "#66FF8800"            // amber
+                  y: Math.round(verticalKbWindow.labelCenterYFromBottomCalibrated(index))
+                  opacity: 0.5
+                }
+              }
+
+
+              Repeater {
+                model: ksTextModel
+
+                delegate: Item {
+                  // Capture the roles from ListModel directly (NOT model.midi/model.label)
+                  // Use a local so we can guard once and keep expressions clean.
+                  property int  midiNote: (typeof midi === "number" ? Math.max(0, Math.min(127, midi)) : 0)
+                  property string labelText: (typeof label === "string" ? label : "")
+
+                  width:  parent.width
+                  height: Math.max(14, verticalKbWindow.whiteKeyUnitPx * 0.70)
+
+                  // Center the row on the MIDI key, measuring from the BOTTOM (so C-1 is near window bottom)
+                  y: Math.round(verticalKbWindow.labelCenterYFromBottomCalibrated(midiNote) - height / 2)
+
+                  Text {
+                    text: labelText
+                    anchors.fill: parent
+                    anchors.leftMargin:  6
+                    anchors.rightMargin: 6
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    font.pixelSize: 14
+                    color: (ui && ui.theme && ui.theme.fontPrimaryColor !== undefined)
+                           ? ui.theme.fontPrimaryColor : "#ddd"
+                  }
+                }
+              }
+
+            }
+          }
+        }
+
+      }
+    }
+
   }
 }
