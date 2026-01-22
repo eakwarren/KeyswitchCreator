@@ -507,7 +507,7 @@ MuseScore {
                       for (var i = 0; i < keys.length; ++i) staffToSet[keys[i]] = model.name
                     }
                     setButtonsFlow.uiSelectedSet = model.name
-                    // verticalKbWindow.rebuildKsTextModel() //only in 38
+                    verticalKbWindow.rebuildKsTextModel()
                   }
                 }
               }
@@ -615,15 +615,12 @@ MuseScore {
     visible: false
     modality: Qt.NonModal
 
-
-    // 1) When the vertical keyboard window is shown, rebuild from the current set
-    Component.onCompleted: { rebuildKsTextModel() }
-    onVisibleChanged:      if (visible) Qt.callLater(rebuildKsTextModel)
+    onVisibleChanged:      if (visible) Qt.callLater(verticalKbWindow.rebuildKsTextModel)
 
     // 2) Rebuild whenever the selected set changes
     Connections {
       target: setButtonsFlow
-      function onUiSelectedSetChanged() { rebuildKsTextModel() }
+      function onUiSelectedSetChanged() { verticalKbWindow.rebuildKsTextModel() }
     }
 
     // 3) Rebuild whenever the registry JSON changes (e.g., after Save)
@@ -634,7 +631,7 @@ MuseScore {
         } catch (e) {
           keyswitchSets = {};
         }
-        rebuildKsTextModel();
+        verticalKbWindow.rebuildKsTextModel();
       }
     }
 
@@ -649,11 +646,54 @@ MuseScore {
     function isWhite(m)        { var pc=(m%12+12)%12; return !(pc===1||pc===3||pc===6||pc===8||pc===10) }
     function keyUnit(m)        { return isWhite(m) ? whiteKeyUnitPx : (whiteKeyUnitPx * blackKeyUnitRatio) }
 
+    // Ensure MIDI 0 is C after rotation
+    function autoCalibrateSemitoneOffset() {
+        // With current offset, what PC does MIDI 0 report?
+        var p = pcAligned(0);          // 0..11
+        if (p !== 0) {
+            // Shift the geometry so pcAligned(0) becomes 0
+            semitoneAlignOffset = (semitoneAlignOffset + (12 - p)) % 12;
+        }
+    }
+
+    // Call this once the window has sized/initialized
+    Component.onCompleted: {
+        autoCalibrateSemitoneOffset();
+        // If you rebuild the model here, do it AFTER auto-cal:
+        verticalKbWindow.rebuildKsTextModel();
+    }
 
     // --- Visual calibration for PianoKeyboardPanel ---
+
+
+    // === Geometry alignment (rotate by N semitones to match panel) ===
+    // If C lines appear on F keys, set -5 (shift geometry down 5 semitones).
+    // If C lines appear on G keys, set -7, etc.
+    property int  semitoneAlignOffset: 0   // your current case: C → F ( +5 ) ⇒ set -5
+
+    // Aligned MIDI index used for *geometry* (0..127 clamp)
+    function midiAligned(m) {
+        var a = (m|0) + semitoneAlignOffset;
+        return (a < 0) ? 0 : (a > 127 ? 127 : a);
+    }
+
+    // Aligned pitch-class helpers (for geometry, separators, and per-PC bias)
+    function pcAligned(m) {
+        var mm = (m|0) + semitoneAlignOffset;
+        return ((mm % 12) + 12) % 12;
+    }
+    function isWhiteAligned(m) {
+        var pc = pcAligned(m);
+        // blacks: 1,3,6,8,10  ⇒ whites are the others
+        return !(pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10);
+    }
+    function keyUnitAligned(m) {
+        return isWhiteAligned(m) ? whiteKeyUnitPx : (whiteKeyUnitPx * blackKeyUnitRatio);
+    }
+
     // Small padding that the panel paints around the stack (tune if needed)
-    property int panelTopPadPx:    1    // pixels from the top (G9 side)
-    property int panelBottomPadPx: 1    // pixels from the bottom (C-1 side)
+    property int panelTopPadPx:    0    // pixels from the top (G9 side)
+    property int panelBottomPadPx: 0    // pixels from the bottom (C-1 side)
 
     // If the panel draws a 1px separator between white rows, account for it here.
     // Start with 0; increase to 1 if you still see a consistent "one-pixel high" drift.
@@ -662,62 +702,99 @@ MuseScore {
     // Some builds render black key rectangles a touch above/below their midpoint.
     // Bias the center for whites/blacks independently (can be negative).
     // These are the key ones to tune. NEGATIVE values move labels/lines DOWN.
-    property real whiteCenterBiasPx: 0.0   // try -1.0 .. -1.5 for whites
-    property real blackCenterBiasPx: 0.0   // try -2.0 .. -2.5 for blacks
+    property real whiteCenterBiasPx: 0.5   // try -1.0 .. -1.5 for whites
+    property real blackCenterBiasPx: 1.0   // try -2.0 .. -2.5 for blacks
 
     // Per-pitch-class fine offsets (px), repeats every octave ---
     // Order: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
     // NEGATIVE moves label downward, POSITIVE upward (because we measure from bottom).
+
+    // Canonical pitch-class names for C=0..B=11 (matches MIDI % 12)
+    property var __pcNames: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+
+    // Option A: keep your array (for backward compatibility)
     property var pcCenterBiasPx: [
-      0.0,  // C
-      0.0,  // C#
-      0.0,  // D
-      0.0,  // D#
-      0.0,  // E
-      0.0,  // F
-      0.0,  // F#
-      0.0,  // G
-      0.0,  // G#
-      0.0,  // A
-      0.0,  // A#
-      0.0   // B
+      0.0,  // C   (index 0)
+      0.0,  // C#  (1)
+      0.0,  // D   (2)
+      0.0,  // D#  (3)
+      0.0,  // E   (4)
+      0.0,  // F   (5)
+      0.0,  // F#  (6)
+      0.0,  // G   (7)
+      0.0,  // G#  (8)
+      0.0,  // A   (9)
+      0.0,  // A#  (10)
+      0.0   // B   (11)
     ]
 
-    // Pitch-class helpers
+    // Option B (recommended): a map keyed by *names* (use whichever you prefer)
+    property var pcBiasByName: ({
+      'C':  -7.0, 'C#': -4.0, 'D':  -3.0, 'D#': -5.0,
+      'E':  -3.0, 'F':  -10.0, 'F#': -8.0, 'G':  -6.0,
+      'G#': -5.0, 'A':  -3.0, 'A#': -6.0, 'B':  0.0
+    })
+
+    // Helpers
     function pcOf(m) { return ((m|0) % 12 + 12) % 12 }
-    function isWhitePC(pc) { return !(pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10) }
-    function pcBias(m) { return pcCenterBiasPx[pcOf(m)] || 0.0 }
+    function noteNameOf(m) { return __pcNames[pcOf(m)] }
 
 
-    // Utility: distance from TOP (G9) to TOP of MIDI m, including row separators for whites
-    function cumulativeBeforeFromTopWithPads(m) {
-        var s = 0;
-        var mm = Math.max(0, Math.min(127, m));
-        for (var i = 127; i > mm; --i) {
-            s += keyUnit(i);
-            if (isWhite(i)) s += whiteRowSeparatorPx;
+    // Map MIDI to aligned PC index 0..11 (C..B) and/or name
+
+    // Map MIDI to aligned PC index 0..11 (C..B) and/or name
+    function pcBias(m) {
+        var pca = pcAligned(m);                          // <-- ALIGNED PC
+        var name = __pcNames[pca];
+        if (pcBiasByName && pcBiasByName.hasOwnProperty(name)) {
+            var v = pcBiasByName[name];
+            return (typeof v === "number") ? v : 0.0;
         }
-        return panelTopPadPx + s;
+        return (pcCenterBiasPx && typeof pcCenterBiasPx[pca] === "number")
+             ? pcCenterBiasPx[pca] : 0.0;
     }
 
-    // Centerline from TOP including pads/bias
+
+    function isWhitePC(pc) { return !(pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10) }
+
+    // Distance from TOP (G9) to TOP of MIDI m, using ALIGNED geometry + white separators
+    function cumulativeBeforeFromTopWithPads(m) {
+        var s = panelTopPadPx;
+        // accumulate every key ABOVE m (aligned index)
+        for (var i = 127; i > m; --i) {
+            s += keyUnitAligned(i);
+            if (isWhiteAligned(i)) s += whiteRowSeparatorPx;
+        }
+        return s;
+    }
+
+    // Centerline from TOP including pads + global WB bias + per-PC bias (all ALIGNED)
     function labelCenterYFromTopCalibrated(m) {
-      var mm = Math.max(0, Math.min(127, m));
-      var base = cumulativeBeforeFromTopWithPads(mm) + keyUnit(mm) * 0.5;
-      var pc   = pcOf(mm);
-      var wbBias = isWhitePC(pc) ? whiteCenterBiasPx : blackCenterBiasPx;
-      return base + wbBias + pcBias(mm);
+        var mm  = midiAligned(m);
+        var base = cumulativeBeforeFromTopWithPads(mm) + keyUnitAligned(mm) * 0.5;
+
+        // global biases
+        var pc     = pcAligned(m);
+        var wbBias = (pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10)
+                     ? blackCenterBiasPx : whiteCenterBiasPx;
+
+        // per-PC bias (you already have pcBiasByName / pcCenterBiasPx — keep your function pcBias(m))
+        var pcNameBias = pcBias(m);   // use your existing pcBias(m) which can read by name or array
+
+        return base + wbBias + pcNameBias;
     }
 
-    // Centerline from BOTTOM (C-1) including pads/bias
+    // Centerline from BOTTOM (C-1) including pads/bias; keep it as total - top
     function labelCenterYFromBottomCalibrated(m) {
-      // total painted height we target = pads + all units + pads
-      var sepSum = (function(){
-        var w=0; for (var i=1;i<=127;++i) if (isWhite(i)) ++w; return w*whiteRowSeparatorPx;
-      })();
-      var paintedTotal = panelTopPadPx + totalUnits + panelBottomPadPx + sepSum;
-      return paintedTotal - labelCenterYFromTopCalibrated(m);
+        // total painted height = top pad + all aligned keys + separators + bottom pad
+        var sepTotal = (function(){
+            var w = 0; for (var i = 1; i <= 127; ++i) if (isWhiteAligned(i)) ++w;
+            return w * whiteRowSeparatorPx;
+        })();
+        var paintedTotal = panelTopPadPx + totalUnits + sepTotal + panelBottomPadPx;
+        return paintedTotal - labelCenterYFromTopCalibrated(m);
     }
+
 
     // Distance from TOP (G9) to TOP of MIDI m
     function cumulativeBeforeFromTop(m) {
@@ -735,6 +812,17 @@ MuseScore {
     // Centerline from BOTTOM (C‑1)
     function labelCenterYFromBottom(m) {
         return totalUnits - labelCenterYFromTop(m);
+    }
+
+    function rebuildKsTextModel(){
+      var name = activeSetName(); var setObj = keyswitchSets[name] || {}; var A=setObj.articulationKeyMap || {}; var T=setObj.techniqueKeyMap || {}
+      var rows = []
+      for (var k in A) if (A.hasOwnProperty(k)) rows.push({ midi: A[k], label: 'Articulation | '+k })
+      for (var t in T) if (T.hasOwnProperty(t)) rows.push({ midi: T[t], label: 'Technique | '+t })
+      // was: rows.sort(function(a,b){ return b.midi - a.midi })
+      rows.sort(function(a,b){ return a.midi - b.midi }); // lowest MIDI first (C‑1 first)
+
+      ksTextModel.clear(); for (var i=0;i<rows.length;++i) ksTextModel.append(rows[i])
     }
 
     property real totalUnits:  (function(){ var s=0; for (var i=0;i<128;++i) s += keyUnit(i); return s })()
@@ -761,17 +849,6 @@ MuseScore {
     ListModel { id: ksTextModel } // { midi:int, label:string }
 
     function activeSetName(){ return setButtonsFlow ? setButtonsFlow.uiSelectedSet : "__none__" }
-
-    function rebuildKsTextModel(){
-      var name = activeSetName(); var setObj = keyswitchSets[name] || {}; var A=setObj.articulationKeyMap || {}; var T=setObj.techniqueKeyMap || {}
-      var rows = []
-      for (var k in A) if (A.hasOwnProperty(k)) rows.push({ midi: A[k], label: 'Articulation | '+k })
-      for (var t in T) if (T.hasOwnProperty(t)) rows.push({ midi: T[t], label: 'Technique | '+t })
-      // was: rows.sort(function(a,b){ return b.midi - a.midi })
-      rows.sort(function(a,b){ return a.midi - b.midi }); // lowest MIDI first (C‑1 first)
-
-      ksTextModel.clear(); for (var i=0;i<rows.length;++i) ksTextModel.append(rows[i])
-    }
 
 
     ColumnLayout {
@@ -881,18 +958,50 @@ MuseScore {
               clip:   true
 
 
-              // Add inside labelsCanvas for debugging; remove later
+              // // Add inside labelsCanvas for debugging; remove later
+              // Repeater {
+              //   model: 128
+              //   delegate: Rectangle {
+              //     x: 0
+              //     width: parent.width
+              //     height: 1
+              //     color: "#66FF8800"            // amber
+              //     y: Math.round(verticalKbWindow.labelCenterYFromTopCalibrated(index))
+              //     opacity: 0.5
+              //   }
+              // }
+
+
+              // === DEBUG: pitch-class labels & color bands (remove when done) ===
+
               Repeater {
                 model: 128
-                delegate: Rectangle {
-                  x: 0
-                  width: parent.width
-                  height: 1
-                  color: "#66FF8800"            // amber
-                  y: Math.round(verticalKbWindow.labelCenterYFromBottomCalibrated(index))
-                  opacity: 0.5
+                delegate: Item {
+                  width: parent.width; height: 1
+                  y: Math.round(verticalKbWindow.labelCenterYFromTopCalibrated(index))
+
+                  // thin line per MIDI
+                  Rectangle {
+                    anchors.fill: parent
+                    height: 1
+                    color: ["#FF6A00","#FF9A00","#FFD000","#A0E000","#00E0A0","#00C0FF",
+                            "#4080FF","#9060FF","#E050F0","#FF70B0","#FF8080","#FFB070"]
+                           [verticalKbWindow.pcAligned(index)]
+                    opacity: 0.45
+                  }
+
+                  // Show PC name every 12 notes (for aligned PC)
+                  Text {
+                    // If you want to label C specifically in every octave:
+                    visible: (verticalKbWindow.pcAligned(index) === 0)   // 0 = C after alignment
+                    text:    verticalKbWindow.__pcNames[verticalKbWindow.pcAligned(index)]
+                    x: 4; y: -8
+                    color: "#AAA"; font.pixelSize: 10
+                  }
                 }
               }
+
+
 
 
               Repeater {
@@ -907,8 +1016,7 @@ MuseScore {
                   width:  parent.width
                   height: Math.max(14, verticalKbWindow.whiteKeyUnitPx * 0.70)
 
-                  // Center the row on the MIDI key, measuring from the BOTTOM (so C-1 is near window bottom)
-                  y: Math.round(verticalKbWindow.labelCenterYFromBottomCalibrated(midiNote) - height / 2)
+                  y: Math.round(verticalKbWindow.labelCenterYFromTopCalibrated(midiNote) - height / 2)
 
                   Text {
                     text: labelText
