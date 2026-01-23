@@ -509,7 +509,7 @@ MuseScore {
             property int keyCount: 128             // total keys to draw
             property string view: "small"          // "small" | "medium" | "large"
             readonly property int endMidi: startMidi + keyCount - 1
-            property bool middleCIsC4: false
+            property bool middleCIsC4: true
 
             // active highlighting
             property var   activeNotes: []                 // e.g., [96,97,98]
