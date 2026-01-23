@@ -766,11 +766,11 @@ MuseScore {
 
             FlatButton {
               anchors.verticalCenter: setSearchField.verticalCenter
-              // anchors.verticalCenterOffset: -1
               anchors.left: parent.left
-              // anchors.leftMargin: 4
               transparent: true
+              focusPolicy: Qt.NoFocus
               onClicked: {}
+              backgroundItem: Item {}
               enabled: true
               iconColor: ui.theme.fontPrimaryColor
               icon: IconCode.SEARCH
