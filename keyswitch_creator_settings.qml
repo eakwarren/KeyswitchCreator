@@ -19,6 +19,7 @@ import Muse.UiComponents 1.0
 import MuseScore 3.0
 
 MuseScore {
+  id: root
   version: "0.9.3"
   title: qsTr("Keyswitch Creator Settings")
   description: qsTr("Assign keyswitch sets to staves")
@@ -64,6 +65,7 @@ MuseScore {
   // search additions (filtered model + state + helper)
   ListModel { id: filteredSetsModel }   // filtered view for "Assign set to..." buttons
   property string setFilterText: ""
+  onSetFilterTextChanged: rebuildFilteredSets()
 
   // Rebuild filteredSetsModel from setsListModel using setFilterText (case-insensitive)
   function rebuildFilteredSets() {
@@ -418,9 +420,12 @@ MuseScore {
 
       // Left: Staves list
       GroupBox {
-        title: qsTr('Staves')
+        // title: qsTr('Staves')
         Layout.preferredWidth: 216
         Layout.fillHeight: true
+        background: Rectangle {
+          color: ui.theme.textFieldColor
+        }
 
         ScrollView {
           id: stavesScroll
@@ -466,7 +471,7 @@ MuseScore {
                 anchors.fill: parent
                 radius: 6
                 color: isRowSelected(index) ? themeAccent : "transparent"
-                opacity: isRowSelected(index) ? 0.30 : 1.0
+                opacity: isRowSelected(index) ? 0.65 : 1.0
               }
               MouseArea {
                 anchors.fill: parent
@@ -480,6 +485,7 @@ MuseScore {
                   else if (ctrlOrCmd) toggleRow(idx)
                   else selectSingle(idx)
                   staffList.currentIndex = idx
+                  setSearchField.focus = false
                 }
               }
             }
@@ -494,12 +500,228 @@ MuseScore {
         spacing: 6
 
         // Hidden icon-size probe using a standard icon button to get canonical metrics
-        // FlatButton { id: _iconProbe; visible: false; icon: IconCode.SAVE }
+        FlatButton { id: _iconProbe; visible: false; icon: IconCode.SAVE }
 
-        // Title row with dynamic text
+        // Piano keyboard
+        Item {
+            id: kbroot
+            property int startMidi: 0              // inclusive
+            property int keyCount: 128             // total keys to draw
+            property string view: "small"          // "small" | "medium" | "large"
+            readonly property int endMidi: startMidi + keyCount - 1
+            property bool middleCIsC4: false
+
+            // active highlighting
+            property var   activeNotes: []                 // e.g., [96,97,98]
+            property var   activeMap:   ({})               // { 96:true, 97:true, ... }
+            property color accent:      themeAccent        // use app/theme accent
+            property real  activeOverlayOpacityWhite: 0.65
+            property real  activeOverlayOpacityBlack: 0.80
+
+            onActiveNotesChanged: {
+              var m = {}
+              for (var i = 0; i < activeNotes.length; ++i) m[activeNotes[i]] = true
+              activeMap = m
+            }
+
+            // --- Size presets to mimic MuseScore's compact look ---
+            readonly property real whiteW: (view === "small" ? 15 :
+                                           view === "medium" ? 20 : 22)
+            readonly property real whiteH: (view === "small" ? 65 :
+                                           view === "medium" ? 70 : 80)
+            readonly property real blackW: Math.round(whiteW * 0.70)
+            readonly property real blackH: Math.round(whiteH * 0.65)
+            readonly property color whiteColor: "#FAFAFA"
+            readonly property color whiteBorder: "#202020"
+            readonly property color blackColor: "#111111"
+            readonly property color blackBorder: "#000000"
+
+            implicitHeight: whiteH
+            implicitWidth: {
+                // width = number of white keys * whiteW
+                var whites = 0
+                for (var n = kbroot.startMidi; n <= kbroot.endMidi; ++n) {
+                    var pc = n % 12
+                    if (pc !== 1 && pc !== 3 && pc !== 6 && pc !== 8 && pc !== 10)
+                        whites++
+                }
+                return whites * whiteW
+            }
+
+            // --- Helpers ---
+            // Tooltip helpers (pitch name, octave, tooltip text)
+            function octaveFor(m) {
+              // MIDI 60 => 4 if C4 standard (subtract 1)
+              // MIDI 60 => 3 if C3 standard (subtract 2)
+              return Math.floor(m / 12) - (kbroot.middleCIsC4 ? 1 : 2)
+            }
+
+            function noteName(m) {
+              var names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+              var pc = ((m % 12) + 12) % 12
+              return names[pc] + octaveFor(m)
+            }
+
+            function tooltipText(m) {
+              return "MIDI " + m + "\n" + noteName(m)
+            }
+
+            // NEW: active highlighting
+            function isBlack(pc) {
+                // C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11
+                return (pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10)
+            }
+
+            function whiteIndexFor(n) {
+                // count white keys up to midi n
+                var count = 0
+                for (var i = kbroot.startMidi; i <= n; ++i) {
+                    var pc = i % 12
+                    if (!isBlack(pc)) count++
+                }
+                return count - 1 // zero-based index of this white key (if white)
+            }
+
+            // Offset for placing black keys centered above the gap between whites.
+            function blackXFor(n) {
+                var pc = n % 12
+                // For a black key, it sits between two white indices; compute base white index
+                // pattern within an octave: W W B W W B W B W W B W (W=white slot)
+                // anchor each black key relative to the white on its left.
+                var leftWhiteMidi = n - 1
+                while (leftWhiteMidi >= kbroot.startMidi && isBlack(leftWhiteMidi % 12)) {
+                    leftWhiteMidi--
+                }
+                var leftIdx = whiteIndexFor(leftWhiteMidi)
+                // position: left white x + whiteW - (blackW/2)
+                return leftIdx * whiteW + (whiteW - blackW / 2)
+            }
+
+            // --- WHITE KEYS LAYER ---
+            // Draw all white keys left-to-right
+            Repeater {
+                id: whiteKeys
+                model: (function () {
+                    var arr = []
+                    for (var n = kbroot.startMidi; n <= kbroot.endMidi; ++n) {
+                        var pc = n % 12
+                        if (!kbroot.isBlack(pc)) {
+                            arr.push(n)
+                        }
+                    }
+                    return arr
+                })()
+
+                Rectangle {
+                    id:whiteKeyRect
+                    readonly property int midi: whiteKeys.model[index]
+                    readonly property int whiteIndex: kbroot.whiteIndexFor(midi)
+                    readonly property bool active: !!kbroot.activeMap[midi]
+
+                    x: whiteIndex * kbroot.whiteW
+                    y: 0
+                    width: kbroot.whiteW
+                    height: kbroot.whiteH
+                    color: kbroot.whiteColor
+                    // border.color: active ? kbroot.accent : kbroot.whiteBorder
+                    border.color: active ? 0 : kbroot.whiteBorder
+                    // border.width: active ? 2 : 1
+                    border.width: 1
+                    radius: 1
+
+                    // accent overlay (subtle fill), keeps the key visible
+                    Rectangle {
+                      anchors.fill: parent
+                      color: kbroot.accent
+                      opacity: active ? kbroot.activeOverlayOpacityWhite : 0
+                      radius: parent.radius
+                    }
+
+                    // MuseScore-styled tooltip via FlatButton overlay
+                    FlatButton {
+                      id: whiteKeyTip
+                      anchors.fill: parent
+                      z: 100
+                      transparent: true // don't draw background
+                      focusPolicy: Qt.NoFocus
+                      opacity: 0
+                      toolTipTitle: kbroot.tooltipText(midi)
+
+                      // If the key should react to clicks, wire them here or forward them:
+                      // onPressed:  kbroot.notePressed(midi)
+                      // onReleased: kbroot.noteReleased(midi)
+                    }
+                }
+            }
+
+            // --- BLACK KEYS LAYER (overlay) ---
+            // Draw all black keys above whites with proper x-offset
+            Repeater {
+                id: blackKeys
+                model: (function () {
+                    var arr = []
+                    for (var n = kbroot.startMidi; n <= kbroot.endMidi; ++n) {
+                        var pc = n % 12
+                        if (kbroot.isBlack(pc)) {
+                            // skip black keys that would straddle outside range at very edges
+                            // (safe enough for 0..127 full range)
+                            arr.push(n)
+                        }
+                    }
+                    return arr
+                })()
+
+                Rectangle {
+                    readonly property int midi: blackKeys.model[index]
+                    readonly property bool active: !!kbroot.activeMap[midi]
+
+                    z: 10
+                    x: kbroot.blackXFor(midi)
+                    y: 0
+                    width: kbroot.blackW
+                    height: kbroot.blackH
+                    color: kbroot.blackColor
+                    // border.color: active ? kbroot.accent : kbroot.blackBorder
+                    border.color: active ? 0 : kbroot.blackBorder
+                    // border.width: active ? 2 : 1
+                    border.width: 1
+                    radius: Math.max(1, Math.round(kbroot.blackW * 0.12))
+
+                    // accent overlay for black keys (slightly stronger opacity)
+                    Rectangle {
+                      anchors.fill: parent
+                      color: kbroot.accent
+                      opacity: active ? kbroot.activeOverlayOpacityBlack : 0
+                      radius: parent.radius
+                    }
+
+                    // MuseScore-styled tooltip via FlatButton overlay
+                    FlatButton {
+                      id: blackKeyTip
+                      anchors.fill: parent
+                      z: 100
+                      transparent: true // don't draw background
+                      focusPolicy: Qt.NoFocus
+                      opacity: 0
+                      toolTipTitle: kbroot.tooltipText(midi)
+
+                      // If the key should react to clicks, wire them here or forward them:
+                      // onPressed:  kbroot.notePressed(midi)
+                      // onReleased: kbroot.noteReleased(midi)
+                    }
+
+                }
+            }
+
+            // Optional: transparent MouseArea to capture clicks => midi note number
+            // MouseArea { anchors.fill: parent; enabled: false }
+        }
+
+        // Title row with dynamic text + filter search
         RowLayout {
           Layout.fillWidth: true
           spacing: 8
+
           StyledTextLabel {
             id: assignTitle
             Layout.alignment: Qt.AlignVCenter
@@ -507,193 +729,52 @@ MuseScore {
                   ? qsTr('Assign set to ') + cleanName(staffNameByIdx(currentStaffIdx))
                   : qsTr('Assign set to %1 staves').arg(selectedCountProp)
           }
+
           Item { Layout.fillWidth: true }
 
-          // Piano button styled as FlatButton; glyph from MuseScoreIcon font (U+F3BB), rotated -90°
-          // FlatButton {
-          //   id: pianoButton
-          //   Layout.preferredWidth: _iconProbe.implicitHeight
-          //   Layout.preferredHeight: _iconProbe.implicitHeight
-          //   width: _iconProbe.implicitHeight
-          //   height: _iconProbe.implicitHeight
-          //   transparent: false  // show themed background (not transparent)
-          //   // ToolTip.visible: hovered
-          //   ToolTip.text: qsTr('Show vertical keyboard')
-          //   onClicked: { console.log('[KS] Piano button clicked') }
-          //   clip: true
-          //   Text {
-          //     anchors.centerIn: parent
-          //     text: ""
-          //     font.family: "MuseScoreIcon"
-          //     font.pixelSize: Math.round(parent.height * 0.6)
-          //     rotation: -90
-          //     color: ui && ui.theme ? ui.theme.fontPrimaryColor : "#333"
-          //     renderType: Text.NativeRendering
-          //   }
-          // }
-
-          // Piano keyboard
           Item {
-              id: kbroot
-              property int startMidi: 0              // inclusive
-              property int keyCount: 128             // total keys to draw
-              property string view: "small"          // "small" | "medium" | "large"
-              readonly property int endMidi: startMidi + keyCount - 1
+            id: searchBox
+            Layout.preferredWidth: 285
+            Layout.minimumWidth: 240
+            Layout.maximumWidth: 320
+            height: ui.theme.defaultButtonSize
 
-              // NEW: active highlighting
-              property var   activeNotes: []                 // e.g., [96,97,98]
-              property var   activeMap:   ({})               // { 96:true, 97:true, ... }
-              property color accent:      themeAccent        // use app/theme accent
-              property real  activeOverlayOpacityWhite: 0.35
-              property real  activeOverlayOpacityBlack: 0.50
+            TextField {
+              id: setSearchField
+              anchors.fill: parent
+              leftPadding: 28 //for icon
+              placeholderText: qsTr("Filter sets…")
 
-              onActiveNotesChanged: {
-                var m = {}
-                for (var i = 0; i < activeNotes.length; ++i) m[activeNotes[i]] = true
-                activeMap = m
+              background: Rectangle {
+                anchors.fill: parent
+                radius: 4
+                // color: "transparent"
+                color: ui.theme.textFieldColor
+                border.width: 1
+                border.color: setSearchField.text.length > 0 ? ui.theme.accentColor
+                              : ui.theme.strokeColor
               }
 
-              // --- Size presets to mimic MuseScore's compact look ---
-              readonly property real whiteW: (view === "small" ? 11 :
-                                             view === "medium" ? 14 : 16)
-              readonly property real whiteH: (view === "small" ? 40 :
-                                             view === "medium" ? 60 : 70)
-              readonly property real blackW: Math.round(whiteW * 0.70)
-              readonly property real blackH: Math.round(whiteH * 0.62)
-              readonly property color whiteColor: "#FAFAFA"
-              readonly property color whiteBorder: "#202020"
-              readonly property color blackColor: "#111111"
-              readonly property color blackBorder: "#000000"
-
-              implicitHeight: whiteH
-              implicitWidth: {
-                  // width = number of white keys * whiteW
-                  var whites = 0
-                  for (var n = kbroot.startMidi; n <= kbroot.endMidi; ++n) {
-                      var pc = n % 12
-                      if (pc !== 1 && pc !== 3 && pc !== 6 && pc !== 8 && pc !== 10)
-                          whites++
-                  }
-                  return whites * whiteW
+              // When types, rebuild the filtered view
+              onTextChanged: {
+                setFilterText = text
+                rebuildFilteredSets()
               }
 
-              // --- Helpers ---
-              function isBlack(pc) {
-                  // C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11
-                  return (pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10)
-              }
+              Keys.onReturnPressed: rebuildFilteredSets()
+            }
 
-              function whiteIndexFor(n) {
-                  // count white keys up to midi n
-                  var count = 0
-                  for (var i = kbroot.startMidi; i <= n; ++i) {
-                      var pc = i % 12
-                      if (!isBlack(pc)) count++
-                  }
-                  return count - 1 // zero-based index of this white key (if white)
-              }
-
-              // Offset for placing black keys centered above the gap between whites.
-              function blackXFor(n) {
-                  var pc = n % 12
-                  // For a black key, it sits between two white indices; compute base white index
-                  // pattern within an octave: W W B W W B W B W W B W (W=white slot)
-                  // anchor each black key relative to the white on its left.
-                  var leftWhiteMidi = n - 1
-                  while (leftWhiteMidi >= kbroot.startMidi && isBlack(leftWhiteMidi % 12)) {
-                      leftWhiteMidi--
-                  }
-                  var leftIdx = whiteIndexFor(leftWhiteMidi)
-                  // position: left white x + whiteW - (blackW/2)
-                  return leftIdx * whiteW + (whiteW - blackW / 2)
-              }
-
-              // --- WHITE KEYS LAYER ---
-              // Draw all white keys left-to-right
-              Repeater {
-                  id: whiteKeys
-                  model: (function () {
-                      var arr = []
-                      for (var n = kbroot.startMidi; n <= kbroot.endMidi; ++n) {
-                          var pc = n % 12
-                          if (!kbroot.isBlack(pc)) {
-                              arr.push(n)
-                          }
-                      }
-                      return arr
-                  })()
-
-                  Rectangle {
-                      readonly property int midi: whiteKeys.model[index]
-                      readonly property int whiteIndex: kbroot.whiteIndexFor(midi)
-                      readonly property bool active: !!kbroot.activeMap[midi]
-
-                      x: whiteIndex * kbroot.whiteW
-                      y: 0
-                      width: kbroot.whiteW
-                      height: kbroot.whiteH
-                      color: kbroot.whiteColor
-                      // border.color: active ? kbroot.accent : kbroot.whiteBorder
-                      border.color: active ? 0 : kbroot.whiteBorder
-                      // border.width: active ? 2 : 1
-                      border.width: 1
-                      radius: 1
-
-                      // accent overlay (subtle fill), keeps the key visible
-                      Rectangle {
-                        anchors.fill: parent
-                        color: kbroot.accent
-                        opacity: active ? kbroot.activeOverlayOpacityWhite : 0
-                        radius: parent.radius
-                      }
-                  }
-              }
-
-              // --- BLACK KEYS LAYER (overlay) ---
-              // Draw all black keys above whites with proper x-offset
-              Repeater {
-                  id: blackKeys
-                  model: (function () {
-                      var arr = []
-                      for (var n = kbroot.startMidi; n <= kbroot.endMidi; ++n) {
-                          var pc = n % 12
-                          if (kbroot.isBlack(pc)) {
-                              // skip black keys that would straddle outside range at very edges
-                              // (safe enough for 0..127 full range)
-                              arr.push(n)
-                          }
-                      }
-                      return arr
-                  })()
-
-                  Rectangle {
-                      readonly property int midi: blackKeys.model[index]
-                      readonly property bool active: !!kbroot.activeMap[midi]
-
-                      z: 10
-                      x: kbroot.blackXFor(midi)
-                      y: 0
-                      width: kbroot.blackW
-                      height: kbroot.blackH
-                      color: kbroot.blackColor
-                      // border.color: active ? kbroot.accent : kbroot.blackBorder
-                      border.color: active ? 0 : kbroot.blackBorder
-                      // border.width: active ? 2 : 1
-                      border.width: 1
-                      radius: Math.max(1, Math.round(kbroot.blackW * 0.12))
-
-                      // accent overlay for black keys (slightly stronger opacity)
-                      Rectangle {
-                        anchors.fill: parent
-                        color: kbroot.accent
-                        opacity: active ? kbroot.activeOverlayOpacityBlack : 0
-                        radius: parent.radius
-                      }
-                  }
-              }
-
-              // Optional: transparent MouseArea to capture clicks => midi note number
-              // MouseArea { anchors.fill: parent; enabled: false }
+            FlatButton {
+              anchors.verticalCenter: setSearchField.verticalCenter
+              // anchors.verticalCenterOffset: -1
+              anchors.left: parent.left
+              // anchors.leftMargin: 4
+              transparent: true
+              onClicked: {}
+              enabled: true
+              iconColor: ui.theme.fontPrimaryColor
+              icon: IconCode.SEARCH
+            }
           }
 
         }
@@ -703,7 +784,10 @@ MuseScore {
           id: assignBox
           title: ""
           Layout.fillWidth: true
-          Layout.preferredHeight: 160
+          Layout.preferredHeight: 260
+          background: Rectangle {
+            color: ui.theme.textFieldColor
+          }
 
           // Size probe to match FlatButton metrics (use the exact component type)
           FlatButton { id: _sizeProbe; visible: false; text: qsTr('Save'); accentButton: true }
@@ -741,6 +825,7 @@ MuseScore {
                       for (var i = 0; i < keys.length; ++i) staffToSet[keys[i]] = model.name
                     }
                     setButtonsFlow.uiSelectedSet = model.name
+                    setSearchField.focus = false
                   }
                 }
               }
@@ -755,7 +840,7 @@ MuseScore {
           spacing: 0
 
 
-          // tabs + search
+          // tabs
           RowLayout {
             id: tabsHeaderRow
             Layout.fillWidth: true
@@ -770,29 +855,13 @@ MuseScore {
               StyledTabButton { text: qsTr('Edit set registry'); onClicked: editorModeIndex = 0 }
               StyledTabButton { text: qsTr('Global settings');   onClicked: editorModeIndex = 1 }
             }
-
-            TextField {
-              id: setSearchField
-              Layout.preferredWidth: 200
-              Layout.minimumWidth: 180
-              Layout.maximumWidth: 250
-              placeholderText: qsTr("Filter sets…")
-
-              // When user types, rebuild the filtered view
-              onTextChanged: {
-                setFilterText = text;
-                rebuildFilteredSets();
-              }
-
-              Keys.onReturnPressed: rebuildFilteredSets()
-            }
           }
 
           StackLayout {
             id: navTabPanel
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.topMargin: -1
+            Layout.topMargin: 0
             currentIndex: editorModeIndex
 
             Item {
@@ -804,15 +873,19 @@ MuseScore {
                 anchors.fill: parent
                 color: "transparent"
                 border.width: 1
-                border.color: editorBorderColor
+                border.color: ui.theme.strokeColor
                 radius: 4
                 ScrollView {
                   anchors.fill: parent
                   anchors.margins: 0
+
                   TextArea {
                     id: jsonArea
                     wrapMode: TextArea.NoWrap
                     font.family: 'monospace'
+                    background: Rectangle {
+                      color: ui.theme.textFieldColor
+                    }
                   }
                 }
               }
@@ -825,17 +898,21 @@ MuseScore {
               Rectangle {
                 id: globalsFrame
                 anchors.fill: parent
-                color: "transparent"
+                color: ui.theme.textFieldColor /*"transparent"*/
                 border.width: 1
-                border.color: editorBorderColor
+                border.color: ui.theme.strokeColor
                 radius: 4
                 ScrollView {
                   anchors.fill: parent
                   anchors.margins: 0
+
                   TextArea {
                     id: globalsArea
                     wrapMode: TextArea.NoWrap
                     font.family: 'monospace'
+                    background: Rectangle {
+                      color: ui.theme.textFieldColor
+                    }
                   }
                 }
               }
@@ -845,11 +922,21 @@ MuseScore {
       }
     }
 
+    // bottom buttons
     RowLayout {
       Layout.fillWidth: true
       spacing: 8
 
-      Item { Layout.preferredWidth: 222 }
+      Item {
+        Layout.preferredWidth: 222
+
+        Text {
+          id: version
+          color: ui.theme.fontPrimaryColor
+          Layout.alignment: Qt.AlignVBottom
+          text: "v." + root.version
+        }
+      }
 
       FlatButton {
         id: resetButtonRef
@@ -864,8 +951,8 @@ MuseScore {
 
       Item { Layout.fillWidth: true }
 
-      FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); quit() } }
-      FlatButton { id: cancelButtonRef; text: qsTr('Cancel'); onClicked: quit() }
+      FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); /*quit()*/ } }
+      FlatButton { id: cancelButtonRef; text: qsTr('Close'); onClicked: quit() }
     }
 
   }
