@@ -21,7 +21,7 @@ import MuseScore 3.0
 MuseScore {
   version: "0.9.3"
   title: qsTr("Keyswitch Creator Settings")
-  description: qsTr("Assign keyswitch sets to staves and manage set registry + global settings")
+  description: qsTr("Assign keyswitch sets to staves")
   pluginType: "dialog"
   categoryCode: "Keyswitch Creator"
   width: 1385
@@ -59,6 +59,36 @@ MuseScore {
 
   ListModel { id: staffListModel } // { idx, name }
   ListModel { id: setsListModel }  // { name }
+
+
+  // search additions (filtered model + state + helper)
+  ListModel { id: filteredSetsModel }   // filtered view for "Assign set to..." buttons
+  property string setFilterText: ""
+
+  // Rebuild filteredSetsModel from setsListModel using setFilterText (case-insensitive)
+  function rebuildFilteredSets() {
+      filteredSetsModel.clear();
+      var q = (setFilterText || "").trim().toLowerCase();
+
+      // Show all if no query
+      if (q.length === 0) {
+          for (var i = 0; i < setsListModel.count; ++i) {
+              var nm = setsListModel.get(i).name;
+              filteredSetsModel.append({ name: nm });
+          }
+          return;
+      }
+
+      for (var j = 0; j < setsListModel.count; ++j) {
+          var name = (setsListModel.get(j).name || "");
+          if (name.toLowerCase().indexOf(q) !== -1) {
+              filteredSetsModel.append({ name: name });
+          }
+      }
+  }
+
+
+
 
   //--------------------------------------------------------------------------------
   // Defaults
@@ -346,11 +376,18 @@ MuseScore {
     setsListModel.clear()
     for (var k in keyswitchSets) setsListModel.append({ name: k })
 
+    // keep the filtered view in sync with the full list
+    // Option A (recommended on load): reset search and rebuild
+    setFilterText = ""
+    rebuildFilteredSets()
+    // Option B (if you want to keep the last search): just rebuild
+    // rebuildFilteredSets()
+
     jsonArea.text = formatRegistryCompact(keyswitchSets)
     globalsArea.text = formatGlobalsCompact(globalSettings)
-
     refreshUISelectedSet()
     updateKeyboardActiveNotes()
+
   }
 
   function saveData() {
@@ -495,7 +532,7 @@ MuseScore {
           //   }
           // }
 
-          // PluginPianoKeyboard.qml
+          // Piano keyboard
           Item {
               id: kbroot
               property int startMidi: 0              // inclusive
@@ -672,11 +709,13 @@ MuseScore {
           FlatButton { id: _sizeProbe; visible: false; text: qsTr('Save'); accentButton: true }
 
           ScrollView {
+            id: setsScroll
             anchors.fill: parent
+            clip: true
 
             Flow {
               id: setButtonsFlow
-              width: parent.width
+              width: setsScroll.availableWidth
               spacing: 8
               flow: Flow.LeftToRight
 
@@ -684,7 +723,8 @@ MuseScore {
               property string uiSelectedSet: "__none__"
 
               Repeater {
-                model: setsListModel
+                // model: setsListModel
+                model: filteredSetsModel
                 delegate: FlatButton {
                   id: setBtn
                   text: model.name
@@ -714,13 +754,38 @@ MuseScore {
           Layout.fillHeight: true
           spacing: 0
 
-          StyledTabBar {
-            id: editorTabs
+
+          // tabs + search
+          RowLayout {
+            id: tabsHeaderRow
             Layout.fillWidth: true
-            spacing: 36
-            background: Item { implicitHeight: 32 }
-            StyledTabButton { text: qsTr('Edit set registry'); onClicked: editorModeIndex = 0 }
-            StyledTabButton { text: qsTr('Global settings'); onClicked: editorModeIndex = 1 }
+            spacing: 8
+
+            StyledTabBar {
+              id: editorTabs
+              Layout.fillWidth: true
+              spacing: 36
+              background: Item { implicitHeight: 32 }
+
+              StyledTabButton { text: qsTr('Edit set registry'); onClicked: editorModeIndex = 0 }
+              StyledTabButton { text: qsTr('Global settings');   onClicked: editorModeIndex = 1 }
+            }
+
+            TextField {
+              id: setSearchField
+              Layout.preferredWidth: 200
+              Layout.minimumWidth: 180
+              Layout.maximumWidth: 250
+              placeholderText: qsTr("Filter sets…")
+
+              // When user types, rebuild the filtered view
+              onTextChanged: {
+                setFilterText = text;
+                rebuildFilteredSets();
+              }
+
+              Keys.onReturnPressed: rebuildFilteredSets()
+            }
           }
 
           StackLayout {
@@ -783,6 +848,9 @@ MuseScore {
     RowLayout {
       Layout.fillWidth: true
       spacing: 8
+
+      Item { Layout.preferredWidth: 222 }
+
       FlatButton {
         id: resetButtonRef
         text: qsTr('Reset to Default')
@@ -793,14 +861,14 @@ MuseScore {
             globalsArea.text = formatGlobalsCompact(defaultGlobalSettingsObj())
         }
       }
+
       Item { Layout.fillWidth: true }
+
       FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); quit() } }
       FlatButton { id: cancelButtonRef; text: qsTr('Cancel'); onClicked: quit() }
     }
 
   }
-
-  // --- Reactive hooks (place near the end of the root MuseScore, after the big ColumnLayout) ---
 
   // On selected set button change, refresh active keys
   Connections {
