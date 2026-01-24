@@ -432,12 +432,48 @@ MuseScore {
 
   }
 
+
   function saveData() {
-    ksPrefs.setsJSON = jsonArea.text
-    ksPrefs.globalJSON = globalsArea.text
-    ksPrefs.staffToSetJSON = JSON.stringify(staffToSet)
-    if (ksPrefs.sync) { try { ksPrefs.sync() } catch(e) {} }  // flush if available
+      // 1) Persist raw strings
+      ksPrefs.setsJSON = jsonArea.text
+      ksPrefs.globalJSON = globalsArea.text
+      ksPrefs.staffToSetJSON = JSON.stringify(staffToSet)
+      if (ksPrefs.sync) { try { ksPrefs.sync() } catch (e) {} } // flush if available
+
+      // 2) Try to parse the registry text so we can refresh UI immediately
+      var parsed = parseRegistrySafely(jsonArea.text)  // returns null on error
+      if (parsed) {
+          // a) Update in-memory registry
+          keyswitchSets = parsed
+
+          // b) Rebuild the list used by the buttons
+          var prevSelected = (setButtonsFlow && setButtonsFlow.uiSelectedSet) ? setButtonsFlow.uiSelectedSet : "__none__"
+          setsListModel.clear()
+          for (var k in keyswitchSets) {
+              if (keyswitchSets.hasOwnProperty(k))
+                  setsListModel.append({ name: k })
+          }
+
+          // c) Rebuild the filtered view (respect current filter text)
+          rebuildFilteredSets()
+
+          // d) Restore a reasonable selected set for the buttons row
+          //    - keep previous if it still exists; else derive from current selection
+          if (!prevSelected || !keyswitchSets.hasOwnProperty(prevSelected)) {
+              setButtonsFlow.uiSelectedSet = activeSetForCurrentSelection()
+          } else {
+              setButtonsFlow.uiSelectedSet = prevSelected
+          }
+
+          // e) Refresh keyboard highlights and border
+          updateKeyboardActiveNotes()
+          setRegistryBorder(true)
+      } else {
+          // Still saved the raw text, but it's not valid JSON yet -> keep warning
+          setRegistryBorder(false)
+      }
   }
+
 
   function setRegistryBorder(valid) {
       root.registryBorderColor = valid ? themeSeparator : warningColor
@@ -970,7 +1006,7 @@ MuseScore {
 
                 ScrollView {
                   anchors.fill: parent
-                  anchors.margins: root.registryBorderWidth
+                  anchors.margins: root.globalsBorderWidth
 
                   TextArea {
                     id: globalsArea
