@@ -14,6 +14,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import Qt.labs.settings 1
 import Muse.Ui 1.0
 import Muse.UiComponents 1.0
 import MuseScore 3.0
@@ -51,9 +52,14 @@ MuseScore {
   // Theme colors (safe fallbacks)
   readonly property color themeAccent: (ui && ui.theme && ui.theme.accentColor) ? ui.theme.accentColor : "#2E7DFF"
   readonly property color themeSeparator: (ui && ui.theme && ui.theme.separatorColor) ? ui.theme.separatorColor : "#D0D0D0"
+  readonly property color warningColor: (ui && ui.theme && ui.theme.warningColor) ? ui.theme.warningColor : "#E57373"
 
-  // Neutral editor border color (safe)
-  property color editorBorderColor: themeSeparator
+  // Per-editor border state (each tab can reflect its own validity)
+  property color registryBorderColor: themeSeparator
+  property int   registryBorderWidth: 1
+  property color globalsBorderColor: themeSeparator
+  property int   globalsBorderWidth: 1
+
 
   // Shared left text margin to align editor with 'Assign set to...' title
   property int leftTextMargin: 12
@@ -350,45 +356,79 @@ MuseScore {
   // Load / Save
   //--------------------------------------------------------------------------------
   function loadData() {
-    try { keyswitchSets = (ksPrefs.setsJSON && ksPrefs.setsJSON.length) ? JSON.parse(ksPrefs.setsJSON) : {} } catch (e) { keyswitchSets = {} }
-    try { staffToSet = (ksPrefs.staffToSetJSON && ksPrefs.staffToSetJSON.length) ? JSON.parse(ksPrefs.staffToSetJSON) : {} } catch (e2) { staffToSet = {} }
-    try { globalSettings = (ksPrefs.globalJSON && ksPrefs.globalJSON.length) ? JSON.parse(ksPrefs.globalJSON) : defaultGlobalSettingsObj() } catch (e3) { globalSettings = defaultGlobalSettingsObj() }
+      // 1) Raw strings from settings
+      var rawSets = ksPrefs.setsJSON || ""
+      var rawGlobals = ksPrefs.globalJSON || ""
 
-    if (Object.keys(keyswitchSets).length === 0) keyswitchSets = defaultRegistryObj()
-
-    staffListModel.clear()
-    if (curScore && curScore.parts) {
-      for (var pIdx = 0; pIdx < curScore.parts.length; ++pIdx) {
-        var p = curScore.parts[pIdx]
-        var baseStaff = Math.floor(p.startTrack / 4)
-        var numStaves = Math.floor((p.endTrack - p.startTrack) / 4)
-        var partName = nameForPart(p, 0)
-        var cleanPart = cleanName(partName)
-        for (var sOff = 0; sOff < numStaves; ++sOff) {
-          var staffIdx = baseStaff + sOff
-          var display = cleanPart + ': ' + qsTr('Staff %1 (%2)').arg(sOff + 1).arg(sOff === 1 ? 'Bass' : 'Treble')
-          staffListModel.append({ idx: staffIdx, name: display })
-        }
+      // 2) Show EXACTLY what is saved (do not reformat unless empty)
+      if (rawSets.length > 0) {
+          jsonArea.text = rawSets
+      } else {
+          keyswitchSets = defaultRegistryObj()
+          jsonArea.text = formatRegistryCompact(keyswitchSets)
       }
-    }
 
-    var initIndex = indexForStaff(0)
-    selectSingle(initIndex)
+      if (rawGlobals.length > 0) {
+          globalsArea.text = rawGlobals
+      } else {
+          globalSettings = defaultGlobalSettingsObj()
+          globalsArea.text = formatGlobalsCompact(globalSettings)
+      }
 
-    setsListModel.clear()
-    for (var k in keyswitchSets) setsListModel.append({ name: k })
+      // 3) Parse in-memory objects (never clobber the editor if parse fails)
 
-    // keep the filtered view in sync with the full list
-    // Option A (recommended on load): reset search and rebuild
-    setFilterText = ""
-    rebuildFilteredSets()
-    // Option B (if you want to keep the last search): just rebuild
-    // rebuildFilteredSets()
+      var parsedSets = parseRegistrySafely(jsonArea.text);
+      if (parsedSets) {
+          keyswitchSets = parsedSets;
+          setRegistryBorder(true);     // good JSON
+      } else {
+          keyswitchSets = defaultRegistryObj();
+          setRegistryBorder(false);    // bad JSON
+      }
 
-    jsonArea.text = formatRegistryCompact(keyswitchSets)
-    globalsArea.text = formatGlobalsCompact(globalSettings)
-    refreshUISelectedSet()
-    updateKeyboardActiveNotes()
+      // staffToSet (safe parse)
+      try {
+          staffToSet = (ksPrefs.staffToSetJSON && ksPrefs.staffToSetJSON.length) ? JSON.parse(ksPrefs.staffToSetJSON) : {}
+      } catch (e2) {
+          staffToSet = {}
+      }
+
+      // Rebuild lists (from the in-memory object, not the text)
+      staffListModel.clear()
+
+      if (curScore && curScore.parts) {
+          for (var pIdx = 0; pIdx < curScore.parts.length; ++pIdx) {
+              var p = curScore.parts[pIdx]
+              var baseStaff = Math.floor(p.startTrack / 4)
+              var numStaves = Math.floor((p.endTrack - p.startTrack) / 4)
+              var partName = nameForPart(p, 0)
+              var cleanPart = cleanName(partName)
+              for (var sOff = 0; sOff < numStaves; ++sOff) {
+                  var staffIdx = baseStaff + sOff
+                  var display = cleanPart + ': ' + qsTr('Staff %1 (%2)').arg(sOff + 1).arg(sOff === 1 ? 'Bass' : 'Treble')
+                  staffListModel.append({ idx: staffIdx, name: display })
+              }
+          }
+      }
+
+      var initIndex = indexForStaff(0)
+      selectSingle(initIndex)
+
+      setsListModel.clear()
+      for (var k in keyswitchSets) setsListModel.append({ name: k })
+
+      setFilterText = ""
+      rebuildFilteredSets()
+
+      refreshUISelectedSet()
+      updateKeyboardActiveNotes()
+
+      validateRegistryText()
+      validateGlobalsText()
+
+      // quick visibility check in the console
+      console.log("[KS] staffListModel.count =", staffListModel.count)
+      console.log("[KS] setsListModel.count  =", setsListModel.count)
 
   }
 
@@ -396,6 +436,26 @@ MuseScore {
     ksPrefs.setsJSON = jsonArea.text
     ksPrefs.globalJSON = globalsArea.text
     ksPrefs.staffToSetJSON = JSON.stringify(staffToSet)
+    if (ksPrefs.sync) { try { ksPrefs.sync() } catch(e) {} }  // flush if available
+  }
+
+  function setRegistryBorder(valid) {
+      root.registryBorderColor = valid ? themeSeparator : warningColor
+      root.registryBorderWidth = valid ? 1 : 2
+  }
+  function setGlobalsBorder(valid) {
+      root.globalsBorderColor = valid ? themeSeparator : warningColor
+      root.globalsBorderWidth = valid ? 1 : 2
+  }
+  function validateRegistryText() {
+      var ok = true
+      try { JSON.parse(jsonArea.text) } catch(e) { ok = false }
+      setRegistryBorder(ok)
+  }
+  function validateGlobalsText() {
+      var ok = true
+      try { JSON.parse(globalsArea.text) } catch(e) { ok = false }
+      setGlobalsBorder(ok)
   }
 
   onRun: {
@@ -868,23 +928,27 @@ MuseScore {
               Layout.fillWidth: true
               Layout.fillHeight: true
               Layout.leftMargin: leftTextMargin
+
               Rectangle {
                 id: registryFrame
                 anchors.fill: parent
                 color: "transparent"
-                border.width: 1
-                border.color: ui.theme.strokeColor
+                border.width: root.registryBorderWidth
+                border.color: root.registryBorderColor
                 radius: 4
+
                 ScrollView {
                   anchors.fill: parent
-                  anchors.margins: 0
+                  anchors.margins: root.registryBorderWidth
 
                   TextArea {
                     id: jsonArea
                     wrapMode: TextArea.NoWrap
                     font.family: 'monospace'
-                    background: Rectangle {
-                      color: ui.theme.textFieldColor
+                    background: Rectangle { color: ui.theme.textFieldColor }
+                    onTextChanged: {
+                        root.updateKeyboardActiveNotes()
+                        root.validateRegistryText()         // live validation
                     }
                   }
                 }
@@ -895,24 +959,25 @@ MuseScore {
               Layout.fillWidth: true
               Layout.fillHeight: true
               Layout.leftMargin: leftTextMargin
+
               Rectangle {
                 id: globalsFrame
                 anchors.fill: parent
-                color: ui.theme.textFieldColor /*"transparent"*/
-                border.width: 1
-                border.color: ui.theme.strokeColor
+                color: "transparent"
+                border.width: root.globalsBorderWidth
+                border.color: root.globalsBorderColor
                 radius: 4
+
                 ScrollView {
                   anchors.fill: parent
-                  anchors.margins: 0
+                  anchors.margins: root.registryBorderWidth
 
                   TextArea {
                     id: globalsArea
                     wrapMode: TextArea.NoWrap
                     font.family: 'monospace'
-                    background: Rectangle {
-                      color: ui.theme.textFieldColor
-                    }
+                    background: Rectangle { color: ui.theme.textFieldColor }
+                    onTextChanged: root.validateGlobalsText()   // live validation
                   }
                 }
               }
@@ -933,7 +998,7 @@ MuseScore {
         Text {
           id: version
           color: ui.theme.fontPrimaryColor
-          Layout.alignment: Qt.AlignVBottom
+          Layout.alignment: Qt.AlignVCenter
           text: "v." + root.version
         }
       }
