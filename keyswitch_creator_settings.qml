@@ -213,7 +213,7 @@ MuseScore {
       var setName = (setButtonsFlow && setButtonsFlow.uiSelectedSet) ? setButtonsFlow.uiSelectedSet
                      : activeSetForCurrentSelection()
       // normalize non-selection to something meaningful if possible
-      if (!setName || setName === "__none__") setName = "Default Low"
+      // if (!setName || setName === "__none__") setName = "Default Low"
       if (kbroot) kbroot.activeNotes = activeMidiFromRegistryText(jsonArea.text, setName)
   }
 
@@ -905,22 +905,53 @@ MuseScore {
               Repeater {
                 // model: setsListModel
                 model: filteredSetsModel
+
                 delegate: FlatButton {
                   id: setBtn
                   text: model.name
                   width: _sizeProbe.implicitWidth
                   height: _sizeProbe.implicitHeight
+
+                  // Active state = highlighted button
                   property bool isActive: setButtonsFlow.uiSelectedSet === model.name
                   accentButton: isActive
                   transparent: false
+
                   onClicked: {
                     var keys = Object.keys(selectedStaff)
-                    if (keys.length === 0 && currentStaffIdx >= 0) {
-                      staffToSet[currentStaffIdx.toString()] = model.name
-                    } else {
-                      for (var i = 0; i < keys.length; ++i) staffToSet[keys[i]] = model.name
+                    var hasSelection = keys.length > 0
+                    var targetStaffIds = []
+
+                    if (hasSelection) {
+                      targetStaffIds = keys       // array of staffIdx strings
+                    } else if (currentStaffIdx >= 0) {
+                      targetStaffIds = [ currentStaffIdx.toString() ]
                     }
-                    setButtonsFlow.uiSelectedSet = model.name
+
+                    var togglingOff = (setButtonsFlow.uiSelectedSet === model.name)
+
+                    if (togglingOff) {
+                      // Second click on the same button: unassign (clear mapping)
+                      for (var i = 0; i < targetStaffIds.length; ++i)
+                        delete staffToSet[targetStaffIds[i]]
+
+                      // UI: no button selected
+                      setButtonsFlow.uiSelectedSet = "__none__"
+                    } else {
+                      // First click: assign this set
+                      for (var j = 0; j < targetStaffIds.length; ++j)
+                        staffToSet[targetStaffIds[j]] = model.name
+
+                      // UI: this button selected
+                      setButtonsFlow.uiSelectedSet = model.name
+                    }
+
+                    // Update helper visuals (keyboard)
+                    updateKeyboardActiveNotes()
+
+                    // persist immediately (uncomment to auto-save on click)
+                    // saveData()
+
                     setSearchField.focus = false
                   }
                 }
