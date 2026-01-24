@@ -212,8 +212,13 @@ MuseScore {
       // Prefer the explicit UI-selected set if present, otherwise derive
       var setName = (setButtonsFlow && setButtonsFlow.uiSelectedSet) ? setButtonsFlow.uiSelectedSet
                      : activeSetForCurrentSelection()
-      // normalize non-selection to something meaningful if possible
-      // if (!setName || setName === "__none__") setName = "Default Low"
+
+      // No explicit set selected/assigned → clear keyboard highlights
+    if (!setName || setName === "__none__") {
+      if (kbroot) kbroot.activeNotes = []
+      return
+    }
+
       if (kbroot) kbroot.activeNotes = activeMidiFromRegistryText(jsonArea.text, setName)
   }
 
@@ -226,14 +231,15 @@ MuseScore {
     if (keys.length === 0) {
       if (currentStaffIdx >= 0) {
         var nm0 = staffToSet[currentStaffIdx.toString()]
-        return nm0 ? nm0 : "Default Low"
+        return nm0 ? nm0 : "__none__"
       }
       return "__none__"
     }
+    // Multi-select: if all selected staves share the same explicit mapping, return it
     var first = null
     for (var i = 0; i < keys.length; ++i) {
       var nm = staffToSet[keys[i]]
-      if (!nm) nm = "Default Low"
+      if (!nm) nm = "__none__"
       if (first === null) first = nm
       else if (nm !== first) return "__none__"
     }
@@ -827,6 +833,24 @@ MuseScore {
           }
 
           Item { Layout.fillWidth: true }
+
+          FlatButton {
+              id: clearAssignmentsRef
+              text: qsTr('Clear staff assignments')
+              onClicked: {
+                // Clear in-memory
+                staffToSet = {}
+
+                // Clear persisted JSON (explicitly to "{}" for clarity)
+                ksPrefs.staffToSetJSON = "{}"
+                if (ksPrefs.sync) { try { ksPrefs.sync() } catch(e) {} }
+
+                // Reset UI state
+                setButtonsFlow.uiSelectedSet = "__none__"
+                refreshUISelectedSet()
+                updateKeyboardActiveNotes()
+              }
+            }
 
           Item {
             id: searchBox
