@@ -61,6 +61,11 @@ MuseScore {
   property int   globalsBorderWidth: 1
 
 
+  // Pending editor text (used if loadData() runs before editors exist)
+  property var _pendingRegistryText: undefined
+  property var _pendingGlobalsText:  undefined
+
+
   // Shared left text margin to align editor with 'Assign set to...' title
   property int leftTextMargin: 12
 
@@ -362,82 +367,81 @@ MuseScore {
   // Load / Save
   //--------------------------------------------------------------------------------
   function loadData() {
-      // 1) Raw strings from settings
-      var rawSets = ksPrefs.setsJSON || ""
-      var rawGlobals = ksPrefs.globalJSON || ""
+    // 1) Raw strings from settings
+    var rawSets = ksPrefs.setsJSON || ""
+    var rawGlobals = ksPrefs.globalJSON || ""
+    
+    // 2) Show EXACTLY what is saved (do not reformat unless empty)
+    if (rawSets.length > 0) {
+      if (jsonArea) jsonArea.text = rawSets; else _pendingRegistryText = rawSets
+    } else {
+      keyswitchSets = defaultRegistryObj()
+      var defRegText = formatRegistryCompact(keyswitchSets)
+      if (jsonArea) jsonArea.text = defRegText; else _pendingRegistryText = defRegText
+    }
 
-      // 2) Show EXACTLY what is saved (do not reformat unless empty)
-      if (rawSets.length > 0) {
-          jsonArea.text = rawSets
-      } else {
-          keyswitchSets = defaultRegistryObj()
-          jsonArea.text = formatRegistryCompact(keyswitchSets)
+    if (rawGlobals.length > 0) {
+      if (globalsArea) globalsArea.text = rawGlobals; else _pendingGlobalsText = rawGlobals
+    } else {
+      globalSettings = defaultGlobalSettingsObj()
+      var defGlobText = formatGlobalsCompact(globalSettings)
+      if (globalsArea) globalsArea.text = defGlobText; else _pendingGlobalsText = defGlobText
+    }
+    // 3) Parse in-memory objects (never clobber the editor if parse fails)
+
+    var parsedSets = parseRegistrySafely(jsonArea.text);
+    if (parsedSets) {
+      keyswitchSets = parsedSets;
+      setRegistryBorder(true);     // good JSON
+    } else {
+      keyswitchSets = defaultRegistryObj();
+      setRegistryBorder(false);    // bad JSON
+    }
+
+    // staffToSet (safe parse)
+    try {
+      staffToSet = (ksPrefs.staffToSetJSON && ksPrefs.staffToSetJSON.length) ? JSON.parse(ksPrefs.staffToSetJSON) : {}
+    } catch (e2) {
+      staffToSet = {}
+    }
+
+    // Rebuild lists (from the in-memory object, not the text)
+    staffListModel.clear()
+
+    if (curScore && curScore.parts) {
+      for (var pIdx = 0; pIdx < curScore.parts.length; ++pIdx) {
+        var p = curScore.parts[pIdx]
+        var baseStaff = Math.floor(p.startTrack / 4)
+        var numStaves = Math.floor((p.endTrack - p.startTrack) / 4)
+        var partName = nameForPart(p, 0)
+        var cleanPart = cleanName(partName)
+        for (var sOff = 0; sOff < numStaves; ++sOff) {
+          var staffIdx = baseStaff + sOff
+          var display = cleanPart + ': ' + qsTr('Staff %1 (%2)').arg(sOff + 1).arg(sOff === 1 ? 'Bass' : 'Treble')
+          staffListModel.append({ idx: staffIdx, name: display })
+        }
       }
+    }
 
-      if (rawGlobals.length > 0) {
-          globalsArea.text = rawGlobals
-      } else {
-          globalSettings = defaultGlobalSettingsObj()
-          globalsArea.text = formatGlobalsCompact(globalSettings)
-      }
+    var initIndex = indexForStaff(0)
+    selectSingle(initIndex)
 
-      // 3) Parse in-memory objects (never clobber the editor if parse fails)
+    setsListModel.clear()
+    for (var k in keyswitchSets) setsListModel.append({ name: k })
 
-      var parsedSets = parseRegistrySafely(jsonArea.text);
-      if (parsedSets) {
-          keyswitchSets = parsedSets;
-          setRegistryBorder(true);     // good JSON
-      } else {
-          keyswitchSets = defaultRegistryObj();
-          setRegistryBorder(false);    // bad JSON
-      }
+    setFilterText = ""
+    rebuildFilteredSets()
 
-      // staffToSet (safe parse)
-      try {
-          staffToSet = (ksPrefs.staffToSetJSON && ksPrefs.staffToSetJSON.length) ? JSON.parse(ksPrefs.staffToSetJSON) : {}
-      } catch (e2) {
-          staffToSet = {}
-      }
+    refreshUISelectedSet()
+    updateKeyboardActiveNotes()
 
-      // Rebuild lists (from the in-memory object, not the text)
-      staffListModel.clear()
+    validateRegistryText()
+    validateGlobalsText()
 
-      if (curScore && curScore.parts) {
-          for (var pIdx = 0; pIdx < curScore.parts.length; ++pIdx) {
-              var p = curScore.parts[pIdx]
-              var baseStaff = Math.floor(p.startTrack / 4)
-              var numStaves = Math.floor((p.endTrack - p.startTrack) / 4)
-              var partName = nameForPart(p, 0)
-              var cleanPart = cleanName(partName)
-              for (var sOff = 0; sOff < numStaves; ++sOff) {
-                  var staffIdx = baseStaff + sOff
-                  var display = cleanPart + ': ' + qsTr('Staff %1 (%2)').arg(sOff + 1).arg(sOff === 1 ? 'Bass' : 'Treble')
-                  staffListModel.append({ idx: staffIdx, name: display })
-              }
-          }
-      }
-
-      var initIndex = indexForStaff(0)
-      selectSingle(initIndex)
-
-      setsListModel.clear()
-      for (var k in keyswitchSets) setsListModel.append({ name: k })
-
-      setFilterText = ""
-      rebuildFilteredSets()
-
-      refreshUISelectedSet()
-      updateKeyboardActiveNotes()
-
-      validateRegistryText()
-      validateGlobalsText()
-
-      // quick visibility check in the console
-      console.log("[KS] staffListModel.count =", staffListModel.count)
-      console.log("[KS] setsListModel.count  =", setsListModel.count)
-
+    // quick visibility check in the console
+    console.log("[KS] staffListModel.count =", staffListModel.count)
+    console.log("[KS] setsListModel.count  =", setsListModel.count)
   }
-
 
   function saveData() {
       // 1) Persist raw strings
@@ -470,16 +474,72 @@ MuseScore {
           } else {
               setButtonsFlow.uiSelectedSet = prevSelected
           }
-
           // e) Refresh keyboard highlights and border
           updateKeyboardActiveNotes()
           setRegistryBorder(true)
+
+          //ensure the editor shows the active set's JSON after saving
+          if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
+            scrollToSetInRegistry(setButtonsFlow.uiSelectedSet)
       } else {
           // Still saved the raw text, but it's not valid JSON yet -> keep warning
           setRegistryBorder(false)
       }
   }
 
+  function scrollToSetInRegistry(setName) {
+      if (!setName || setName === "__none__")
+          return;
+
+      // Only when the Registry tab is visible
+      if (editorModeIndex !== 0)
+          return;
+
+      var txt = jsonArea.text || "";
+
+      // Prefer compact formatter pattern: "Name":{
+      var needle = JSON.stringify(setName) + ":{";
+      var pos = txt.indexOf(needle);
+
+      // Fallback: just the quoted name (if user reformatted)
+      if (pos < 0) {
+          var q = JSON.stringify(setName);
+          pos = txt.indexOf(q);
+          if (pos < 0) return; // not found
+      }
+
+      // Snap caret to start of containing line – stable anchor
+      var lineStart = pos;
+      while (lineStart > 0) {
+          var ch = txt.charAt(lineStart - 1);
+          if (ch === '\n' || ch === '\r') break;
+          lineStart--;
+      }
+      jsonArea.cursorPosition = lineStart;
+
+      // 1st defer: let cursorRectangle update to new caret position
+      Qt.callLater(function () {
+          var caretRect;
+          try { caretRect = jsonArea.cursorRectangle; } catch (e) { caretRect = null; }
+          if (!caretRect) return;
+
+          var topPad = 6;
+          var targetY = Math.max(0, caretRect.y - topPad);
+
+          // 2nd defer: ensure Flickable metrics (contentHeight/height) are final
+          Qt.callLater(function () {
+              var flk = registryFlick;              // ✅ use the Flickable, not jsonArea.flickable
+              if (!flk) return;
+
+              var maxY = Math.max(0, (flk.contentHeight || 0) - (flk.height || 0));
+              var clamped = Math.max(0, Math.min(targetY, maxY));
+
+              flk.contentY = clamped;              // ✅ top-align (clamped near EOF)
+              jsonArea.forceActiveFocus();
+              try { jsonArea.cursorVisible = true; } catch (e) {}
+          });
+      });
+  }
 
   function setRegistryBorder(valid) {
       root.registryBorderColor = valid ? themeSeparator : warningColor
@@ -500,11 +560,15 @@ MuseScore {
       setGlobalsBorder(ok)
   }
 
+
   onRun: {
-    loadData()
-    // Ensure initial focus goes to staves list for keyboard shortcuts
-    staffList.forceActiveFocus()
-    refreshUISelectedSet()
+      // Defer until the next frame to ensure child items (globalsArea/jsonArea) exist
+      Qt.callLater(function () {
+          loadData()
+          // Ensure initial focus goes to staves list for keyboard shortcuts
+          staffList.forceActiveFocus()
+          refreshUISelectedSet()
+      })
   }
 
   //--------------------------------------------------------------------------------
@@ -968,7 +1032,9 @@ MuseScore {
 
                       // UI: this button selected
                       setButtonsFlow.uiSelectedSet = model.name
+                      scrollToSetInRegistry(model.name)
                     }
+
 
                     // Update helper visuals (keyboard)
                     updateKeyboardActiveNotes()
@@ -1028,22 +1094,40 @@ MuseScore {
                 border.color: root.registryBorderColor
                 radius: 4
 
-                ScrollView {
+                Flickable {
+                  id: registryFlick
                   anchors.fill: parent
                   anchors.margins: root.registryBorderWidth
+                  clip: true
 
-                  TextArea {
+                  TextArea.flickable: TextArea {
                     id: jsonArea
+                    width: registryFlick.width
                     wrapMode: TextArea.NoWrap
-                    font.family: 'monospace'
+                    font.family: "monospace"
                     background: Rectangle { color: ui.theme.textFieldColor }
+
                     onTextChanged: {
-                        root.updateKeyboardActiveNotes()
-                        root.validateRegistryText()         // live validation
+                      root.updateKeyboardActiveNotes()
+                      root.validateRegistryText()
                     }
+
+                    Component.onCompleted: {
+                        if (root._pendingRegistryText !== undefined) {
+                            jsonArea.text = root._pendingRegistryText
+                            root._pendingRegistryText = undefined
+                        }
+                        root.validateRegistryText()
+                    }
+
+                  }
+
+                  ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AlwaysOn
                   }
                 }
               }
+
             }
 
             Item {
@@ -1059,16 +1143,36 @@ MuseScore {
                 border.color: root.globalsBorderColor
                 radius: 4
 
-                ScrollView {
+                Flickable {
+                  id: globalsFlick
                   anchors.fill: parent
                   anchors.margins: root.globalsBorderWidth
+                  clip: true
 
-                  TextArea {
+                  TextArea.flickable: TextArea {
                     id: globalsArea
+                    width: globalsFlick.width
                     wrapMode: TextArea.NoWrap
-                    font.family: 'monospace'
+                    font.family: "monospace"
                     background: Rectangle { color: ui.theme.textFieldColor }
-                    onTextChanged: root.validateGlobalsText()   // live validation
+
+                    onTextChanged: {
+                      root.updateKeyboardActiveNotes()
+                      root.validateGlobalsText()
+                    }
+
+                    Component.onCompleted: {
+                        if (root._pendingGlobalsText !== undefined) {
+                            globalsArea.text = root._pendingGlobalsText
+                            root._pendingGlobalsText = undefined
+                        }
+                        root.validateGlobalsText()
+                    }
+
+                  }
+
+                  ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AlwaysOn
                   }
                 }
               }
@@ -1113,11 +1217,16 @@ MuseScore {
 
   }
 
-  // On selected set button change, refresh active keys
+  // On selected set button change, refresh active keys, scroll editor to set
   Connections {
-      target: setButtonsFlow
-      function onUiSelectedSetChanged() { updateKeyboardActiveNotes() }
+    target: setButtonsFlow
+    function onUiSelectedSetChanged() {
+        updateKeyboardActiveNotes()
+        if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
+            scrollToSetInRegistry(setButtonsFlow.uiSelectedSet)
+    }
   }
+
 
   // While editing the registry text, update highlights live
   Connections {
