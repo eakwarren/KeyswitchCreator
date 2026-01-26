@@ -26,7 +26,7 @@ MuseScore {
   description: qsTr("Keyswitch Creator settings.")
   pluginType: "dialog"
   categoryCode: "Keyswitch Creator"
-  thumbnailName: "keyswitch_creator.png"
+  thumbnailName: "keyswitch_creator_settings.png"
 
   width: 1385
   height: 810
