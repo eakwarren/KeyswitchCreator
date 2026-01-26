@@ -27,15 +27,42 @@ MuseScore {
     function dbg(msg)  { if (debugEnabled) console.log("[KS] " + msg) }
     function dbg2(k,v) { if (debugEnabled) console.log("[KS] " + k + ": " + v) }
 
-    // ------------------ SETTINGS (trimmed) ------------------
+    // ------------------ SETTINGS ------------------
+
     property var defaultGlobalSettings: ({
-                                             "priority": ["accent","staccato","tenuto","marcato"],
+                                             "priority": ["accent", "staccato", "tenuto", "marcato", "legato"],
                                              "durationPolicy": "source",
-                                             "techniqueAliases": { "pizz":["pizz","pizz.","pizzicato"], "con sord":["con sord","con sord.","con sordino"], "sul pont":["sul pont","sul pont.","sul ponticello"] }
+                                             "techniqueAliases": {
+                                                 // phrasing
+                                                 "legato": ["legato", "leg.", "slur", "slurred"],
+                                                 "normal": ["normal", "norm.", "nor.", "ordinary", "ord.", "std.", "arco"],
+                                                 "arco":   ["arco", "normal", "ord.", "ordinary"],
+                                                 // mutes
+                                                 "con sord":   ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
+                                                 "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
+                                                 // position
+                                                 "sul pont":  ["sul pont", "sul pont.", "sul ponticello"],
+                                                 "sul tasto": ["sul tasto", "sul tast.", "flautando"],
+                                                 // timbre/attack
+                                                 "col legno": ["col legno", "col l.", "c.l."],
+                                                 "harmonic":  ["harmonic", "harm.", "harmonics", "natural harmonic", "artificial harmonic"],
+                                                 "spiccato":  ["spiccato", "spicc.", "spic."],
+                                                 "pizz":      ["pizz", "pizz.", "pizzicato"],
+                                                 "tremolo":   ["tremolo", "trem.", "tremolando"]
+                                             }
                                          })
+
     property var globalSettings: defaultGlobalSettings
-    property var techniqueKeyMap: ({ "pizz":24, "arco":25, "tremolo":26, "con sord":27, "sordino":27, "senza sord":28, "sul pont":29, "sul tasto":30, "harmonic":31, "col legno":32, "legato":33, "spiccato":34 })
-    property var articulationKeyMap: ({ "staccato":31, "staccatissimo":32, "tenuto":37, "accent":38, "marcato":39, "loure":40, "fermata":41, "sforzato":42 })
+
+    // Articulations (note-attached symbols)
+    property var articulationKeyMap: ({
+      "staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13
+    })
+    // Techniques (written)
+    property var techniqueKeyMap: ({
+      "normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25
+    })
+
     property int ksNumerator: 1
     property int ksDenominator: 16
     property bool hideKeyswitchNotes: false
@@ -47,7 +74,7 @@ MuseScore {
     property var  emittedKS: ({})
 
     // ------------------ INTERNAL ------------------
-    property var savedSelection: false
+    property bool savedSelection: false
     property bool preflightFailed: false
     property bool promptShown: false
     property bool sawIneligible: false
@@ -60,9 +87,11 @@ MuseScore {
 
     // Registry & settings store
     property var defaultKeyswitchSets: ({
-                                            "Generic": { articulationKeyMap: { "staccato":31, "staccatissimo":32, "tenuto":37, "accent":38, "marcato":39 },
-                                                techniqueKeyMap:   { "pizz":24, "arco":25, "harmonic":31, "con sord":27, "senza sord":28, "sul pont":29 } }
-                                        })
+                    "Default Low": {
+                        articulationKeyMap: {"staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13},
+                        techniqueKeyMap:    {"normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25}
+                    }
+                 })
     property var keyswitchSets: defaultKeyswitchSets
     property var setTagTimeline: ({})
     property var staffToSet: ({})
@@ -246,7 +275,7 @@ MuseScore {
         var tl = setTagTimeline[staffIdx] || []
         for (var i = tl.length - 1; i >= 0; --i) { if (tl[i].tick <= tick) { var name = tl[i].setName; if (keyswitchSets[name]) return name; break } }
         var assigned = staffToSet[staffIdx.toString()]
-        return (assigned && keyswitchSets[assigned]) ? assigned : "Generic"
+        return (assigned && keyswitchSets[assigned]) ? assigned : "Default Low"
     }
 
     function segmentTechniqueTexts(chord) {
@@ -270,7 +299,24 @@ MuseScore {
         for (var i in chord.articulations) {
             var a=chord.articulations[i]
             var raw=((a.articulationName?a.articulationName():"")+" "+(a.userName?a.userName():"")+" "+(a.subtypeName?a.subtypeName():"")).toLowerCase()
-            var n=""; if (raw.indexOf("staccatissimo")>=0) n="staccatissimo"; else if (raw.indexOf("staccat")>=0) n="staccato"; else if (raw.indexOf("tenuto")>=0) n="tenuto"; else if (raw.indexOf("accent")>=0) n="accent"; else if (raw.indexOf("marcato")>=0) n="marcato"; else if (raw.indexOf("sforzato")>=0 || raw.indexOf("sfz")>=0) n="sforzato"; if (!n) n="unknown"; names.push(n)
+
+            var n="";
+            if (raw.indexOf("staccatissimo")>=0) n="staccatissimo";
+            else if (raw.indexOf("staccato")>=0) n="staccato";
+            else if (raw.indexOf("tenuto")>=0) n="tenuto";
+            else if (raw.indexOf("accent")>=0) n="accent";
+            else if (raw.indexOf("marcato")>=0) n="marcato";
+            else if (raw.indexOf("sforzato")>=0 || raw.indexOf("sfz")>=0) n="sforzato";
+            else if (raw.indexOf("loure")>=0 || raw.indexOf("tenuto-staccato")>=0) n="loure";
+            else if (raw.indexOf("fermata")>=0) n="fermata";
+            // ornaments as "articulations"
+            else if (raw.indexOf("trill")>=0) n="trill";
+            else if (raw.indexOf("mordent inverted")>=0 || raw.indexOf("prallprall")>=0) n="mordent inverted";
+            else if (raw.indexOf("mordent")>=0) n="mordent";
+            else if (raw.indexOf("turn")>=0) n="turn";
+
+            if (!n) n="unknown";
+            names.push(n)
         }
         return names
     }
@@ -435,13 +481,30 @@ MuseScore {
             var chord=chords[k]
             var tickHere=(chord.parent && chord.parent.tick)?chord.parent.tick:0
             var setName=activeSetNameFor(chord.staffIdx,tickHere)
-            var activeSet=keyswitchSets[setName]||keyswitchSets["Generic"]
+            var activeSet=keyswitchSets[setName]||keyswitchSets["Default Low"]
             var texts=segmentTechniqueTexts(chord)
             var artiNames=chordArticulationNames(chord)
             var pitches=[]
             var techMap=activeSet.techniqueKeyMap||techniqueKeyMap
             var aliasMap=(activeSet.techniqueAliases)?activeSet.techniqueAliases:(globalSettings.techniqueAliases?globalSettings.techniqueAliases:null)
-            if (!aliasMap) aliasMap={"pizz":["pizz","pizz.","pizzicato"],"con sord":["con sord","con sord.","con sordino"],"sul pont":["sul pont","sul pont.","sul ponticello"]}
+            if (!aliasMap) aliasMap={
+                    // phrasing
+                    "legato": ["legato", "leg.", "slur", "slurred"],
+                    "normal": ["normal", "norm.", "nor.", "ordinary", "ord.", "std.", "arco"],
+                    "arco":   ["arco", "normal", "ord.", "ordinary"],
+                    // mutes
+                    "con sord":   ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
+                    "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
+                    // position
+                    "sul pont":  ["sul pont", "sul pont.", "sul ponticello"],
+                    "sul tasto": ["sul tasto", "sul tast.", "flautando"],
+                    // timbre/attack
+                    "col legno": ["col legno", "col l.", "c.l."],
+                    "harmonic":  ["harmonic", "harm.", "harmonics", "natural harmonic", "artificial harmonic"],
+                    "spiccato":  ["spiccato", "spicc.", "spic."],
+                    "pizz":      ["pizz", "pizz.", "pizzicato"],
+                    "tremolo":   ["tremolo", "trem.", "tremolando"]
+                }
             pitches=pitches.concat(findTechniqueKeyswitches(texts,techMap,aliasMap))
             pitches=pitches.concat(findArticulationKeyswitches(artiNames,activeSet.articulationKeyMap||articulationKeyMap))
 

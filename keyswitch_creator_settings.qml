@@ -106,30 +106,44 @@ MuseScore {
   //--------------------------------------------------------------------------------
   // Defaults
   //--------------------------------------------------------------------------------
+
   function defaultGlobalSettingsObj() {
     return {
-      "priority":   ["accent", "staccato", "tenuto", "marcato", "legato"],
+      "priority": ["accent", "staccato", "tenuto", "marcato", "legato"],
       "durationPolicy": "source",
       "techniqueAliases": {
-        "legato":   ["legato", "leg.", "slur", "slurred"],
-        "normal":   ["normal", "norm.", "nor.", "ordinary", "ord.", "std.", "arco"],
-        "pizz":     ["pizz", "pizz.", "pizzicato"],
-        "con sord": ["con sord", "con sord.", "con sordino"],
-        "sul pont": ["sul pont", "sul pont.", "sul ponticello"]
+        // phrasing
+        "legato": ["legato", "leg.", "slur", "slurred"],
+        "normal": ["normal", "norm.", "nor.", "ordinary", "ord.", "std.", "arco"],
+        "arco":   ["arco", "normal", "ord.", "ordinary"],
+        // mutes
+        "con sord": ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
+        "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
+        // position
+        "sul pont": ["sul pont", "sul pont.", "sul ponticello"],
+        "sul tasto": ["sul tasto", "sul tast.", "flautando"],
+        // timbre/attack
+        "col legno": ["col legno", "col l.", "c.l."],
+        "harmonic": ["harmonic", "harm.", "harmonics", "natural harmonic", "artificial harmonic"],
+        "spiccato": ["spiccato", "spicc.", "spic."],
+        "pizz": ["pizz", "pizz.", "pizzicato"],
+        "tremolo": ["tremolo", "trem.", "tremolando"]
       }
     }
   }
 
+
   function defaultRegistryObj() {
     return {
       "Default Low": {
-        "articulationKeyMap": { "staccato": 0, "tenuto": 1, "accent": 2, "marcato": 3 },
-        "techniqueKeyMap": { "pizz": 4, "normal": 5, "harmonic": 6, "con sord": 7, "senza sord": 5, "sul pont": 8 }
-      },
-      "Default High": {
-        "articulationKeyMap": { "staccato": 127, "tenuto": 126, "accent": 125, "marcato": 124 },
-        "techniqueKeyMap": { "pizz": 123, "normal": 122, "harmonic": 121, "con sord": 120, "senza sord": 122, "sul pont": 119 }
-      }
+         "articulationKeyMap": {"staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13},
+         "techniqueKeyMap": {"normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25}
+        },
+
+        "Default High": {
+         "articulationKeyMap": { "staccato": 127, "staccatissimo": 126, "tenuto": 125, "accent": 124, "marcato": 123, "sforzato": 122, "loure": 121, "fermata": 120, "trill": 119, "mordent": 118, "mordent inverted": 117, "turn": 116, "harmonics": 115, "mute": 114},
+         "techniqueKeyMap": {"normal": 113, "arco": 112, "pizz": 111, "tremolo": 110, "con sord": 109, "senza sord": 108, "sul pont": 107, "sul tasto": 106, "harmonic": 105, "col legno": 104, "legato": 103, "spiccato": 102}
+        }
     }
   }
 
@@ -528,13 +542,13 @@ MuseScore {
 
           // 2nd defer: ensure Flickable metrics (contentHeight/height) are final
           Qt.callLater(function () {
-              var flk = registryFlick;              // ✅ use the Flickable, not jsonArea.flickable
+              var flk = registryFlick;
               if (!flk) return;
 
               var maxY = Math.max(0, (flk.contentHeight || 0) - (flk.height || 0));
               var clamped = Math.max(0, Math.min(targetY, maxY));
 
-              flk.contentY = clamped;              // ✅ top-align (clamped near EOF)
+              flk.contentY = clamped;
               jsonArea.forceActiveFocus();
               try { jsonArea.cursorVisible = true; } catch (e) {}
           });
