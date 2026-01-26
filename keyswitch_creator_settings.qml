@@ -914,7 +914,7 @@ MuseScore {
 
           FlatButton {
               id: clearAssignmentsRef
-              text: qsTr('Clear staff assignments')
+              text: qsTr('Clear all staff assignments')
               onClicked: {
                 // Clear in-memory
                 staffToSet = {}
