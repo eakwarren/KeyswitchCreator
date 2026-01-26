@@ -1563,7 +1563,37 @@ MuseScore {
 
       Item { Layout.fillWidth: true }
 
-      FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); /*quit()*/ } }
+
+      // --- animated "Settings Saved" label ---
+      Text {
+          id: saveToast
+          text: qsTr("Settings Saved")
+          color: ui.theme.fontPrimaryColor
+          visible: false
+          opacity: 0.0
+          Layout.alignment: Qt.AlignVCenter
+          Layout.rightMargin: 8    // small gap before Save button
+          font.bold: true          // optional; remove if you prefer regular weight
+      }
+
+      // --- New: animation that fades the toast in, waits 3s, then fades it out ---
+      SequentialAnimation {
+          id: saveToastAnim
+          running: false
+
+          // Show it and snap to fully visible quickly
+          PropertyAction   { target: saveToast; property: "visible"; value: true }
+          NumberAnimation  { target: saveToast; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.InOutSine }
+
+          // Keep it visible for 3 seconds
+          PauseAnimation   { duration: 3000 }
+
+          // Fade out, then hide to avoid tab‑stop/focus issues
+          NumberAnimation  { target: saveToast; property: "opacity"; from: 1.0; to: 0.0; duration: 250; easing.type: Easing.OutSine }
+          ScriptAction     { script: saveToast.visible = false }
+      }
+
+      FlatButton { id: saveButtonRef; text: qsTr('Save'); accentButton: true; onClicked: { saveData(); saveToastAnim.restart(); /*quit()*/ } }
       FlatButton { id: cancelButtonRef; text: qsTr('Close'); onClicked: quit() }
     }
 
