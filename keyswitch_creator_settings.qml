@@ -60,12 +60,21 @@ MuseScore {
   property color globalsBorderColor: themeSeparator
   property int   globalsBorderWidth: 1
 
-
   // Pending editor text (used if loadData() runs before editors exist)
   property var _pendingRegistryText: undefined
   property var _pendingGlobalsText:  undefined
 
+  // Error overlays (line index -> y = lineIndex * lineHeight)
+  property bool showRegistryErrorOverlay: false
+  property bool showGlobalsErrorOverlay: false
+  property int  registryErrorLine: 0
+  property int  globalsErrorLine: 0
 
+  // Error state flags (used to suppress auto-scrolling while JSON is invalid)
+  property bool hasRegistryJsonError: false
+  property bool hasGlobalsJsonError: false
+  property bool _registryErrorRevealScheduled: false
+  property bool _globalsErrorRevealScheduled: false
   // Shared left text margin to align editor with 'Assign set to...' title
   property int leftTextMargin: 12
 
@@ -384,7 +393,7 @@ MuseScore {
     // 1) Raw strings from settings
     var rawSets = ksPrefs.setsJSON || ""
     var rawGlobals = ksPrefs.globalJSON || ""
-    
+
     // 2) Show EXACTLY what is saved (do not reformat unless empty)
     if (rawSets.length > 0) {
       if (jsonArea) jsonArea.text = rawSets; else _pendingRegistryText = rawSets
@@ -401,16 +410,37 @@ MuseScore {
       var defGlobText = formatGlobalsCompact(globalSettings)
       if (globalsArea) globalsArea.text = defGlobText; else _pendingGlobalsText = defGlobText
     }
-    // 3) Parse in-memory objects (never clobber the editor if parse fails)
 
+    // Decide the error state for Globals NOW (before any later UI scrolls)
+    var _tmpParsedGlobals = null;
+    try {
+        _tmpParsedGlobals = JSON.parse(globalsArea.text);
+    } catch (e) {
+        _tmpParsedGlobals = null;
+    }
+    root.hasGlobalsJsonError = (_tmpParsedGlobals === null);
+    setGlobalsBorder(!_tmpParsedGlobals ? false : true);
+
+    // 3) Parse in-memory objects (never clobber the editor if parse fails)
+    // NOTE: Decide the error flag *now*, before any scroll-to-set logic triggers.
     var parsedSets = parseRegistrySafely(jsonArea.text);
+    root.hasRegistryJsonError = !parsedSets;
+
     if (parsedSets) {
       keyswitchSets = parsedSets;
-      setRegistryBorder(true);     // good JSON
+      setRegistryBorder(true);
     } else {
       keyswitchSets = defaultRegistryObj();
-      setRegistryBorder(false);    // bad JSON
+      setRegistryBorder(false);
     }
+
+    // If globals JSON invalid on open, schedule a "late" error reveal
+    if (root.hasGlobalsJsonError) {
+        // scheduleGlobalsErrorReveal();
+    }
+
+    // quick visibility check in the console
+    console.log("[KS] staffListModel.count =", staffListModel.count)
 
     // staffToSet (safe parse)
     try {
@@ -493,7 +523,7 @@ MuseScore {
           setRegistryBorder(true)
 
           //ensure the editor shows the active set's JSON after saving
-          if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
+          if (!root.hasRegistryJsonError && setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
             scrollToSetInRegistry(setButtonsFlow.uiSelectedSet)
       } else {
           // Still saved the raw text, but it's not valid JSON yet -> keep warning
@@ -502,76 +532,352 @@ MuseScore {
   }
 
   function scrollToSetInRegistry(setName) {
-      if (!setName || setName === "__none__")
-          return;
+    if (root.hasRegistryJsonError)
+      return; // cancel any queued "scroll to set" while an error is present
+    if (!setName || setName === "__none__")
+      return;
+    if (editorModeIndex !== 0)
+      return;
+    var txt = jsonArea.text || "";
 
-      // Only when the Registry tab is visible
-      if (editorModeIndex !== 0)
-          return;
+    // Prefer compact formatter pattern: "Name":{
+    var needle = JSON.stringify(setName) + ":{";
+    var pos = txt.indexOf(needle);
 
-      var txt = jsonArea.text || "";
+    // Fallback: just the quoted name (if user reformatted)
+    if (pos < 0) {
+      var q = JSON.stringify(setName);
+      pos = txt.indexOf(q);
+      if (pos < 0) return; // not found
+    }
 
-      // Prefer compact formatter pattern: "Name":{
-      var needle = JSON.stringify(setName) + ":{";
-      var pos = txt.indexOf(needle);
+    // Snap caret to start of containing line – stable anchor
+    var lineStart = pos;
+    while (lineStart > 0) {
+      var ch = txt.charAt(lineStart - 1);
+      if (ch === '\n' || ch === '\r') break;
+      lineStart--;
+    }
+    jsonArea.cursorPosition = lineStart;
 
-      // Fallback: just the quoted name (if user reformatted)
-      if (pos < 0) {
-          var q = JSON.stringify(setName);
-          pos = txt.indexOf(q);
-          if (pos < 0) return; // not found
-      }
+    // 1st defer: let cursorRectangle update to new caret position
+    Qt.callLater(function () {
+      var caretRect;
+      try { caretRect = jsonArea.cursorRectangle; } catch (e) { caretRect = null; }
+      if (!caretRect) return;
 
-      // Snap caret to start of containing line – stable anchor
-      var lineStart = pos;
-      while (lineStart > 0) {
-          var ch = txt.charAt(lineStart - 1);
-          if (ch === '\n' || ch === '\r') break;
-          lineStart--;
-      }
-      jsonArea.cursorPosition = lineStart;
+      var topPad = 6;
+      var targetY = Math.max(0, caretRect.y - topPad);
 
-      // 1st defer: let cursorRectangle update to new caret position
+      // 2nd defer: ensure Flickable metrics (contentHeight/height) are final
       Qt.callLater(function () {
-          var caretRect;
-          try { caretRect = jsonArea.cursorRectangle; } catch (e) { caretRect = null; }
-          if (!caretRect) return;
+        var flk = registryFlick;
+        if (!flk) return;
 
-          var topPad = 6;
-          var targetY = Math.max(0, caretRect.y - topPad);
+        var maxY = Math.max(0, (flk.contentHeight || 0) - (flk.height || 0));
+        var clamped = Math.max(0, Math.min(targetY, maxY));
 
-          // 2nd defer: ensure Flickable metrics (contentHeight/height) are final
-          Qt.callLater(function () {
-              var flk = registryFlick;
-              if (!flk) return;
-
-              var maxY = Math.max(0, (flk.contentHeight || 0) - (flk.height || 0));
-              var clamped = Math.max(0, Math.min(targetY, maxY));
-
-              flk.contentY = clamped;
-              jsonArea.forceActiveFocus();
-              try { jsonArea.cursorVisible = true; } catch (e) {}
-          });
+        flk.contentY = clamped;
+        jsonArea.forceActiveFocus();
+        try { jsonArea.cursorVisible = true; } catch (e) {}
       });
+    });
   }
 
   function setRegistryBorder(valid) {
       root.registryBorderColor = valid ? themeSeparator : warningColor
       root.registryBorderWidth = valid ? 1 : 2
   }
+
   function setGlobalsBorder(valid) {
       root.globalsBorderColor = valid ? themeSeparator : warningColor
       root.globalsBorderWidth = valid ? 1 : 2
   }
+
   function validateRegistryText() {
-      var ok = true
-      try { JSON.parse(jsonArea.text) } catch(e) { ok = false }
-      setRegistryBorder(ok)
+      var ok = true, p = -1;
+      try {
+          JSON.parse(jsonArea.text);
+      } catch (e) {
+          ok = false;
+          // Use the robust detector (supports "position N", "line X column Y",
+          // "character N", and a missing-comma heuristic).
+          p = computeJsonErrorPos(jsonArea.text);
+          console.log("[KS] registry JSON error:", String(e));
+      }
+
+      setRegistryBorder(ok);
+      root.hasRegistryJsonError = !ok;
+
+      if (!ok) {
+          var raw = computeJsonErrorPos(jsonArea.text);
+          var p = displayPosForError(jsonArea.text, raw);
+          console.log("[KS] registry rawPos =", raw, "displayPos =", p, "len =", (jsonArea.text || "").length);
+
+          root.showRegistryErrorOverlay = true;
+          scrollToPosByCaret(jsonArea, registryFlick, p, 6); // caret=display line start
+      } else {
+          root.showRegistryErrorOverlay = false;
+      }
+
   }
+
   function validateGlobalsText() {
-      var ok = true
-      try { JSON.parse(globalsArea.text) } catch(e) { ok = false }
-      setGlobalsBorder(ok)
+      var ok = true, p = -1;
+      try {
+          JSON.parse(globalsArea.text);
+      } catch (e) {
+          ok = false;
+          p = computeJsonErrorPos(globalsArea.text);
+          console.log("[KS] globals JSON error:", String(e));
+      }
+
+      setGlobalsBorder(ok);
+      root.hasGlobalsJsonError = !ok;
+
+      if (!ok) {
+          var raw = computeJsonErrorPos(globalsArea.text);
+          var p = displayPosForError(globalsArea.text, raw);
+          console.log("[KS] globals rawPos =", raw, "displayPos =", p, "len =", (globalsArea.text || "").length);
+
+          root.showGlobalsErrorOverlay = true;
+          scrollToPosByCaret(globalsArea, globalsFlick, p, 6);
+      } else {
+          root.showGlobalsErrorOverlay = false;
+      }
+
+  }
+
+  // --- JSON error highlighting helpers ---------------------------------------
+
+  // Try to extract a numeric position from a JSON.parse error message.
+  // Supports multiple engine variants: "at position N", "at line X column Y", "at character N".
+  function jsonErrorPosFromMessage(msg, text) {
+      var s = String(msg || "");
+      var m;
+
+      // 1) "... at position 123" (with or without a ":" and extra spaces)
+      m = /position\s*:?\s*([0-9]+)/i.exec(s);
+      if (m && m[1]) return parseInt(m[1], 10);
+
+      // 2) "... at character 123" / "... char 123"
+      m = /(?:character|char)\s+([0-9]+)/i.exec(s);
+      if (m && m[1]) return parseInt(m[1], 10);
+
+      // 3) "... line X column Y" (0- or 1-based depends on engine; we treat column as 1-based)
+      m = /line\s+([0-9]+)\s*(?:,|\s+)?column\s+([0-9]+)/i.exec(s);
+      if (m && m[1] && m[2]) {
+          var line = parseInt(m[1], 10);    // 1-based in most messages
+          var col  = parseInt(m[2], 10);    // also 1-based
+          var t = String(text || "");
+          var idx = 0, currentLine = 1;     // convert line/column to flat index
+          for (var i = 0; i < t.length && currentLine < line; i++) {
+              if (t.charAt(i) === '\n') { currentLine++; idx = i + 1; }
+          }
+          return Math.max(0, Math.min(idx + Math.max(0, col - 1), t.length));
+      }
+
+      return -1;
+  }
+
+  // Heuristic for common "missing comma" faults: look for   } "<nextKey>"   or   ] "<nextItem>"
+  function _heuristicMissingCommaPos(text) {
+      var s = String(text || "");
+      var m = /}\s*"/.exec(s);
+      if (m) return m.index + m[0].indexOf('"');   // at the offending quote
+      m = /\]\s*(?=["{\[])/.exec(s);
+      if (m) return m.index + 1;                   // at the quote/bracket after ]
+      return 0;                                     // fall back to top if nothing obvious
+  }
+
+  // Returns -1 if valid, else the best-effort character position for the error
+  function computeJsonErrorPos(text) {
+      try { JSON.parse(text); return -1; }
+      catch (e) {
+          // First: try to decode whatever message the engine gave us
+          var pos = jsonErrorPosFromMessage(String(e), text);
+          if (typeof pos === "number" && pos >= 0 && isFinite(pos)) return pos;
+
+          // Fallback: guess a likely comma-missing site
+          return _heuristicMissingCommaPos(text);
+      }
+  }
+
+  // Select and color (accent) the line containing 'pos' in 'editor', then scroll that line into view.
+  // NOTE: We color the *text* (selectedTextColor) and keep selection background transparent,
+  // so the accent color is applied to the glyphs themselves.
+  function highlightErrorAtPos(editor, flick, pos) {
+      if (!editor || !flick) return;
+
+      // Guard against NaN/undefined/inf
+      if (typeof pos !== "number" || !isFinite(pos)) pos = 0;
+      var txt = String(editor.text || "");
+      var len = txt.length;
+      pos = Math.max(0, Math.min(pos, len));
+
+      // Compute line start/end
+      var start = pos;
+      while (start > 0 && txt.charAt(start - 1) !== '\n') start--;
+      var end = pos;
+      while (end < len && txt.charAt(end) !== '\n') end++;
+
+      // Apply selection with accent-colored text
+
+      // var accent = (ui && ui.theme && ui.theme.accentColor) ? ui.theme.accentColor : "#2E7DFF";
+      try {
+          // 1) Use a background highlight instead of recoloring glyphs (for the test)
+          editor.selectionColor = (ui && ui.theme && ui.theme.accentColor) ? ui.theme.accentColor : "#2E7DFF";
+
+          // 2) Comment this out temporarily (this can trigger the Fusion loop)
+          // editor.selectedTextColor = accent;
+
+          // Keep the no-op check to avoid redundant selection churn
+          var sameSel = (editor.selectionStart === start &&
+                         editor.selectionEnd   === end   &&
+                         editor.cursorPosition === start);
+          if (!sameSel) {
+              editor.select(start, end);
+              editor.cursorPosition = start;
+          }
+      } catch (e) {}
+
+      // Defer scrolling twice to outrun other queued scrolls.
+      Qt.callLater(function() {
+          var caret = editor.cursorRectangle;
+          var topPad = 6;
+          var targetY = Math.max(0, (caret ? caret.y : 0) - topPad);
+
+          Qt.callLater(function() {
+              var maxY = Math.max(0, (flick.contentHeight || 0) - (flick.height || 0));
+              flick.contentY = Math.max(0, Math.min(targetY, maxY));
+              try { editor.forceActiveFocus(); } catch (e) {}
+          });
+      });
+  }
+
+  function clearHighlight(editor) {
+      if (!editor) return;
+      // Clear selection and revert text color to default
+      if (typeof editor.deselect === "function") editor.deselect(); else editor.select(0, 0);
+      try {
+          editor.selectedTextColor = ui && ui.theme ? ui.theme.fontPrimaryColor : "#000000";
+          // leave selectionColor alone; default is fine
+      } catch (e) {}
+  }
+
+  // Count '\n' before pos to get a 0-based line index
+  function lineIndexForPos(text, pos) {
+      var s = String(text || "");
+      if (typeof pos !== "number" || !isFinite(pos) || pos < 0) pos = 0;
+      if (pos > s.length) pos = s.length;
+      var count = 0;
+      for (var i = 0; i < pos; ++i) if (s.charAt(i) === '\n') count++;
+      return count;
+  }
+
+  // Scroll a Flickable so that lineIndex is near the top (uses FontMetrics height)
+  function scrollToLine(flick, lineIndex, lineHeight) {
+      if (!flick || !isFinite(lineIndex) || !isFinite(lineHeight)) return;
+      var topPad = 6;
+      var targetY = Math.max(0, lineIndex * lineHeight - topPad);
+      Qt.callLater(function() {
+          var maxY = Math.max(0, (flick.contentHeight || 0) - (flick.height || 0));
+          flick.contentY = Math.max(0, Math.min(targetY, maxY));
+      });
+  }
+
+  // Defer highlight/scroll twice so it runs AFTER any queued palette/set scrolls
+  function scheduleRegistryErrorReveal() {
+      if (_registryErrorRevealScheduled) return;
+      _registryErrorRevealScheduled = true;
+      Qt.callLater(function() {
+          Qt.callLater(function() {
+              _registryErrorRevealScheduled = false;
+              if (!root.hasRegistryJsonError) return;
+              var pos = computeJsonErrorPos(jsonArea.text);
+              // highlightErrorAtPos(jsonArea, registryFlick, (pos >= 0 ? pos : 0));
+          });
+      });
+  }
+
+  function scheduleGlobalsErrorReveal() {
+      if (_globalsErrorRevealScheduled) return;
+      _globalsErrorRevealScheduled = true;
+      Qt.callLater(function() {
+          Qt.callLater(function() {
+              _globalsErrorRevealScheduled = false;
+              if (!root.hasGlobalsJsonError) return;
+              var pos = computeJsonErrorPos(globalsArea.text);
+              // highlightErrorAtPos(globalsArea, globalsFlick, (pos >= 0 ? pos : 0));
+          });
+      });
+  }
+
+  function scrollToPosByCaret(editor, flick, pos, topPad) {
+      if (!editor || !flick) return;
+      var textLen = (editor.length !== undefined ? editor.length : (editor.text || "").length);
+      var p = Math.max(0, Math.min(pos, textLen));
+      editor.cursorPosition = p;                    // put caret at error
+      Qt.callLater(function() {                     // wait for cursorRectangle
+          var caret = editor.cursorRectangle;
+          if (!caret) return;
+          var pad = (typeof topPad === "number") ? topPad : 6;
+          var targetY = Math.max(0, caret.y - pad);
+          Qt.callLater(function() {                 // ensure flick metrics are final
+              var maxY = Math.max(0, (flick.contentHeight || 0) - (flick.height || 0));
+              flick.contentY = Math.max(0, Math.min(targetY, maxY));
+          });
+      });
+  }
+
+  // Return index of last non-whitespace char at/left of 'i'
+  function _skipWsLeft(text, i) {
+      var s = String(text || "");
+      var j = Math.min(Math.max(0, i), s.length - 1);
+      while (j >= 0) {
+          var ch = s.charAt(j);
+          if (ch !== ' ' && ch !== '\t' && ch !== '\r' && ch !== '\n') return j;
+          j--;
+      }
+      return -1;
+  }
+
+  // Return start-index of the line containing 'i'
+  function _lineStart(text, i) {
+      var s = String(text || "");
+      var j = Math.min(Math.max(0, i), s.length);
+      while (j > 0 && s.charAt(j - 1) !== '\n') j--;
+      return j;
+  }
+
+  // Adjust the raw engine position to the line that *caused* the error.
+  // If the engine points at the next key (e.g., missing comma), jump to the line
+  // that ends with '}' or ']' right above it. Otherwise, snap to the raw line.
+  function displayPosForError(text, rawPos) {
+      var s = String(text || "");
+      if (!(typeof rawPos === "number" && isFinite(rawPos) && rawPos >= 0))
+          return 0;
+      if (rawPos > s.length) rawPos = s.length;
+
+      // 1) Look left of the raw position for the nearest non-WS char
+      var left = _skipWsLeft(s, rawPos - 1);
+
+      // If that left char is a quote, step left again to find what precedes the quote.
+      var beforeLeft = left;
+      if (left >= 0 && s.charAt(left) === '"')
+          beforeLeft = _skipWsLeft(s, left - 1);
+
+      // 2) If the char immediately preceding the next token is '}' or ']',
+      //    the *real* fault is "missing comma after that block".
+      if (beforeLeft >= 0) {
+          var ch = s.charAt(beforeLeft);
+          if (ch === '}' || ch === ']') {
+              return _lineStart(s, beforeLeft);   // snap to the offending block line
+          }
+      }
+
+      // 3) Otherwise, just snap to the raw line start.
+      return _lineStart(s, rawPos);
   }
 
 
@@ -1114,6 +1420,23 @@ MuseScore {
                   anchors.margins: root.registryBorderWidth
                   clip: true
 
+                  // line height probe for consistent Y mapping
+                  FontMetrics { id: regFM; font: jsonArea.font }
+
+                  // Error overlay for registry
+                  Rectangle {
+                    id: registryErrorOverlay
+                    z: 1000
+                    visible: root.showRegistryErrorOverlay && (editorModeIndex === 0)
+                    color: root.themeAccent
+                    opacity: 0.25
+                    x: jsonArea.x
+                    y: jsonArea.y + (jsonArea ? jsonArea.cursorRectangle.y : 0)
+                    width: jsonArea.width
+                    height: (jsonArea ? jsonArea.cursorRectangle.height : regFM.height)
+                    radius: 0
+                  }
+
                   TextArea.flickable: TextArea {
                     id: jsonArea
                     width: registryFlick.width
@@ -1162,6 +1485,21 @@ MuseScore {
                   anchors.fill: parent
                   anchors.margins: root.globalsBorderWidth
                   clip: true
+
+                  FontMetrics { id: globFM; font: globalsArea.font }
+
+                  Rectangle {
+                    id: globalsErrorOverlay
+                    z: 1000
+                    visible: root.showGlobalsErrorOverlay && (editorModeIndex === 1)
+                    color: root.themeAccent
+                    opacity: 0.25
+                    x: globalsArea.x
+                    y: globalsArea.y + (globalsArea ? globalsArea.cursorRectangle.y : 0)
+                    width: globalsArea.width
+                    height: (globalsArea ? globalsArea.cursorRectangle.height : globFM.height)
+                    radius: 0
+                  }
 
                   TextArea.flickable: TextArea {
                     id: globalsArea
@@ -1231,21 +1569,17 @@ MuseScore {
 
   }
 
-  // On selected set button change, refresh active keys, scroll editor to set
+  // On JSON error or selected set button change, refresh active keys, scroll editor to error or set
   Connections {
     target: setButtonsFlow
     function onUiSelectedSetChanged() {
-        updateKeyboardActiveNotes()
-        if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
-            scrollToSetInRegistry(setButtonsFlow.uiSelectedSet)
+      updateKeyboardActiveNotes()
+      // ERROR TAKES PRECEDENCE: do not fight the error scroll
+      if (root.hasRegistryJsonError)
+        return;
+      if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
+        scrollToSetInRegistry(setButtonsFlow.uiSelectedSet)
     }
-  }
-
-
-  // While editing the registry text, update highlights live
-  Connections {
-      target: jsonArea
-      function onTextChanged() { updateKeyboardActiveNotes() }
   }
 
 }
