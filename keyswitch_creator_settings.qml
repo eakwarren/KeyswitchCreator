@@ -21,11 +21,13 @@ import MuseScore 3.0
 
 MuseScore {
   id: root
-  version: "0.9.3"
+  version: "0.9.4"
   title: qsTr("Keyswitch Creator Settings")
-  description: qsTr("Assign keyswitch sets to staves")
+  description: qsTr("Keyswitch Creator settings.")
   pluginType: "dialog"
   categoryCode: "Keyswitch Creator"
+  thumbnailName: "keyswitch_creator.png"
+
   width: 1385
   height: 810
 

@@ -17,8 +17,8 @@ import MuseScore 3.0
 
 MuseScore {
     title: qsTr("Keyswitch Creator")
-    description: qsTr("Creates keyswitch notes on the keyswitch staff of the same instrument/part.")
-    version: "0.9.2"
+    description: qsTr("Creates keyswitch notes on a staff below in the same instrument.")
+    version: "0.9.4"
     categoryCode: "Keyswitch Creator"
     thumbnailName: "keyswitch_creator.png"
 
