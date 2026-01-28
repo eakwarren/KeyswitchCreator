@@ -174,18 +174,18 @@ MuseScore {
         for (var i = 0; i < setNames.length; ++i) {
             var name = setNames[i]
             var setObj = reg[name] || {}
-            lines.push(' ' + JSON.stringify(name) + ':{')
+            lines.push('    ' + JSON.stringify(name) + ':{')
             var innerLines = []
             var innerKeys = Object.keys(setObj)
             for (var j = 0; j < innerKeys.length; ++j) {
                 var k = innerKeys[j]
                 var v = setObj[k]
-                innerLines.push('  ' + JSON.stringify(k) + ':' + JSON.stringify(v))
+                innerLines.push('        ' + JSON.stringify(k) + ':' + JSON.stringify(v))
             }
             if (innerLines.length)
                 lines.push(innerLines.join(',
 '))
-            lines.push(' }' + (i < setNames.length - 1 ? ',' : ''))
+            lines.push('    }' + (i < setNames.length - 1 ? ',' : ''))
         }
         lines.push('}')
         return lines.join('
@@ -194,15 +194,15 @@ MuseScore {
 
     function formatGlobalsCompact(glob) {
         var lines = ['{']
-        lines.push(' "durationPolicy":' + JSON.stringify(glob.durationPolicy || "source") + ',')
-        lines.push(' "techniqueAliases":{')
+        lines.push('    "durationPolicy":' + JSON.stringify(glob.durationPolicy || "source") + ',')
+        lines.push('    "techniqueAliases":{')
         var alias = glob.techniqueAliases || {}
         var ak = Object.keys(alias)
         for (var i = 0; i < ak.length; ++i) {
             var k = ak[i]
-            lines.push('  ' + JSON.stringify(k) + ':' + JSON.stringify(alias[k]) + (i < ak.length - 1 ? ',' : ''))
+            lines.push('        ' + JSON.stringify(k) + ':' + JSON.stringify(alias[k]) + (i < ak.length - 1 ? ',' : ''))
         }
-        lines.push(' }')
+        lines.push('    }')
         lines.push('}')
         return lines.join('
 ')
