@@ -289,14 +289,30 @@ MuseScore {
         if (seg && seg.annotations) {
             for (var i in seg.annotations) {
                 var ann = seg.annotations[i]
-                if (ann.type==Element.STAFF_TEXT || ann.type==Element.SYSTEM_TEXT || ann.type==Element.EXPRESSION_TEXT) {
-                    if (ann.type != Element.STAFF_TEXT || sameStaff(ann.track, chord.track)) {
-                        var norm = normalizeTextBasic(ann.text).toLowerCase().trim(); if (norm.indexOf("keyswitch creator:")===0) continue; if (norm.length) out.push(norm)
+                if (ann.type===Element.STAFF_TEXT
+                    || ann.type===Element.SYSTEM_TEXT
+                    || ann.type===Element.EXPRESSION_TEXT) {
+                    if (ann.type !== Element.STAFF_TEXT
+                        || sameStaff(ann.track, chord.track)) {
+                        var norm = normalizeTextBasic(ann.text).toLowerCase().trim();
+                        if (norm.length) out.push(norm)
                     }
                 }
             }
         }
-        if (chord.notes) { for (var j in chord.notes) { var note=chord.notes[j]; if (!note.elements) continue; for (var k in note.elements) { var nel=note.elements[k]; if (nel.type==Element.TEXT) { var txt=normalizeTextBasic(nel.text).toLowerCase().trim(); if (txt.indexOf("keyswitch creator:")===0) continue; if (txt.length) out.push(txt) } } } }
+        if (chord.notes) {
+            for (var j in chord.notes) {
+                var note=chord.notes[j];
+                if (!note.elements) continue;
+                for (var k in note.elements) {
+                    var nel=note.elements[k];
+                    if (nel.type===Element.TEXT) {
+                        var txt=normalizeTextBasic(nel.text).toLowerCase().trim();
+                        if (txt.length) out.push(txt)
+                    }
+                }
+            }
+        }
         return out
     }
 
