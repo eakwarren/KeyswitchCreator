@@ -72,11 +72,25 @@ MuseScore {
   property int  registryErrorLine: 0
   property int  globalsErrorLine: 0
 
+  // error character positions (used with positionToRectangle())
+  property int registryErrorPos: 0
+  property int globalsErrorPos: 0
+
   // Error state flags (used to suppress auto-scrolling while JSON is invalid)
   property bool hasRegistryJsonError: false
   property bool hasGlobalsJsonError: false
   property bool _registryErrorRevealScheduled: false
   property bool _globalsErrorRevealScheduled: false
+
+  // Interaction flags: used to avoid drawing a bogus top-of-file overlay on first open
+  property bool _regUserInteracted: false
+  property bool _globUserInteracted: false
+
+  // Select the style for the red highlight:
+  //   "line"   -> highlight the whole row (left margin to right edge)
+  //   "fromPos"-> highlight from the error character to right edge
+  property string errorHighlightStyle: "line"
+
   // Shared left text margin to align editor with 'Assign set to...' title
   property int leftTextMargin: 12
 
@@ -621,57 +635,61 @@ MuseScore {
   }
 
   function validateRegistryText() {
-      var ok = true, p = -1;
-      try {
-          JSON.parse(jsonArea.text);
-      } catch (e) {
-          ok = false;
-          // Use the robust detector (supports "position N", "line X column Y",
-          // "character N", and a missing-comma heuristic).
-          p = computeJsonErrorPos(jsonArea.text);
-          console.log("[KS] registry JSON error:", String(e));
+    var ok = true, raw = -1, pos = -1
+    try {
+      JSON.parse(jsonArea.text)
+    } catch (e) {
+      ok = false
+      raw = computeJsonErrorPos(jsonArea.text)                  // -1 if unknown
+      var candidate = (raw >= 0) ? displayPosForError(jsonArea.text, raw) : -1
+      // If parser gave us nothing usable (<=0) and user hasn't interacted yet,
+      // don't draw a misleading overlay on row 1.
+      if (candidate <= 0 && !root._regUserInteracted) {
+        root.showRegistryErrorOverlay = false
+        setRegistryBorder(false)
+        root.hasRegistryJsonError = true
+        return
       }
+      // Otherwise pick parser's position if >0, else use caret (user moved/typed)
+      pos = (candidate > 0) ? candidate : jsonArea.cursorPosition
 
-      setRegistryBorder(ok);
-      root.hasRegistryJsonError = !ok;
-
-      if (!ok) {
-          var raw = computeJsonErrorPos(jsonArea.text);
-          var p = displayPosForError(jsonArea.text, raw);
-          console.log("[KS] registry rawPos =", raw, "displayPos =", p, "len =", (jsonArea.text || "").length);
-
-          root.showRegistryErrorOverlay = true;
-          scrollToPosByCaret(jsonArea, registryFlick, p, 6); // caret=display line start
-      } else {
-          root.showRegistryErrorOverlay = false;
-      }
-
+      root.registryErrorPos  = Math.max(0, Math.min(pos, (jsonArea.text || "").length))
+      root.registryErrorLine = lineIndexForPos(jsonArea.text, root.registryErrorPos)
+      console.log("[KS] registry JSON error:", String(e),
+                  "rawPos=", raw, "candidate=", candidate, "chosen=", root.registryErrorPos)
+    }
+    setRegistryBorder(ok)
+    root.hasRegistryJsonError = !ok
+    root.showRegistryErrorOverlay = !ok
   }
 
   function validateGlobalsText() {
-      var ok = true, p = -1;
-      try {
-          JSON.parse(globalsArea.text);
-      } catch (e) {
-          ok = false;
-          p = computeJsonErrorPos(globalsArea.text);
-          console.log("[KS] globals JSON error:", String(e));
+    var ok = true, raw = -1, pos = -1
+    try {
+      JSON.parse(globalsArea.text)
+    } catch (e) {
+      ok = false
+      raw = computeJsonErrorPos(globalsArea.text)                  // -1 if unknown
+      var candidate = (raw >= 0) ? displayPosForError(globalsArea.text, raw) : -1
+      // If parser gave us nothing usable (<=0) and user hasn't interacted yet,
+      // don't draw a misleading overlay on row 1.
+      if (candidate <= 0 && !root._globUserInteracted) {
+        root.showGlobalsErrorOverlay = false
+        setGlobalsBorder(false)
+        root.hasGlobalsJsonError = true
+        return
       }
+      // Otherwise pick parser's position if >0, else use caret (user moved/typed)
+      pos = (candidate > 0) ? candidate : globalsArea.cursorPosition
 
-      setGlobalsBorder(ok);
-      root.hasGlobalsJsonError = !ok;
-
-      if (!ok) {
-          var raw = computeJsonErrorPos(globalsArea.text);
-          var p = displayPosForError(globalsArea.text, raw);
-          console.log("[KS] globals rawPos =", raw, "displayPos =", p, "len =", (globalsArea.text || "").length);
-
-          root.showGlobalsErrorOverlay = true;
-          scrollToPosByCaret(globalsArea, globalsFlick, p, 6);
-      } else {
-          root.showGlobalsErrorOverlay = false;
-      }
-
+      root.globalsErrorPos  = Math.max(0, Math.min(pos, (globalsArea.text || "").length))
+      root.globalsErrorLine = lineIndexForPos(globalsArea.text, root.globalsErrorPos)
+      console.log("[KS] globals JSON error:", String(e),
+                  "rawPos=", raw, "candidate=", candidate, "chosen=", root.globalsErrorPos)
+    }
+    setGlobalsBorder(ok)
+    root.hasGlobalsJsonError = !ok
+    root.showGlobalsErrorOverlay = !ok
   }
 
   // --- JSON error highlighting helpers ---------------------------------------
@@ -708,12 +726,12 @@ MuseScore {
 
   // Heuristic for common "missing comma" faults: look for   } "<nextKey>"   or   ] "<nextItem>"
   function _heuristicMissingCommaPos(text) {
-      var s = String(text || "");
-      var m = /}\s*"/.exec(s);
-      if (m) return m.index + m[0].indexOf('"');   // at the offending quote
-      m = /\]\s*(?=["{\[])/.exec(s);
-      if (m) return m.index + 1;                   // at the quote/bracket after ]
-      return 0;                                     // fall back to top if nothing obvious
+    var s = String(text || "");
+    var m = /\}\s*"/.exec(s);
+    if (m) return m.index + m[0].indexOf('"'); // at the offending quote
+    m = /\]\s*(?=["{\[\]])/.exec(s);
+    if (m) return m.index + 1;                 // at the quote/bracket after ]
+    return -1;                                  // <— unknown (do NOT force top-of-file)
   }
 
   // Returns -1 if valid, else the best-effort character position for the error
@@ -1459,20 +1477,40 @@ MuseScore {
                   // line height probe for consistent Y mapping
                   FontMetrics { id: regFM; font: jsonArea.font }
 
-                  // Error overlay for registry
+                  // Error overlay for registry (positioned by the error character rectangle)
                   Rectangle {
                     id: registryErrorOverlay
+                    // Put the overlay in the SAME stack as the text to ensure it draws above it
+                    parent: jsonArea
                     z: 1000
                     visible: root.showRegistryErrorOverlay && (editorModeIndex === 0)
-                    color: root.themeAccent
+                    color: root.warningColor
                     opacity: 0.25
-                    x: jsonArea.x
-                    y: jsonArea.y + (jsonArea ? jsonArea.cursorRectangle.y : 0)
-                    width: jsonArea.width
-                    height: (jsonArea ? jsonArea.cursorRectangle.height : regFM.height)
+
+                    // Where the error character sits inside jsonArea (local coords)
+                    property rect _errRect: (function() {
+                      try { return jsonArea.positionToRectangle(root.registryErrorPos) }
+                      catch(e) { return Qt.rect(0, root.registryErrorLine * regFM.height, jsonArea.width, regFM.height) }
+                    })()
+
+                    // Helper: start-of-line position/rectangle for this line
+                    property int _lineStartPos: (function() {
+                      return _lineStart(jsonArea.text || "", root.registryErrorPos);
+                    })()
+
+                    property rect _lineStartRect: (function() {
+                      try { return jsonArea.positionToRectangle(_lineStartPos) }
+                      catch(e) { return Qt.rect(0, root.registryErrorLine * regFM.height, jsonArea.width, regFM.height) }
+                    })()
+
+                    // Choose "line" or "fromPos" behavior
+                    x: (root.errorHighlightStyle === "line") ? 0 : _errRect.x
+                    y: _lineStartRect.y
+                    width: (root.errorHighlightStyle === "line") ? jsonArea.width
+                                                                 : Math.max(1, jsonArea.width - _errRect.x)
+                    height: Math.max(1, _errRect.height || regFM.height)
                     radius: 0
                   }
-
                   TextArea.flickable: TextArea {
                     id: jsonArea
                     width: registryFlick.width
@@ -1480,6 +1518,9 @@ MuseScore {
                     font.family: "monospace"
                     background: Rectangle { color: ui.theme.textFieldColor }
 
+                    onActiveFocusChanged: if (activeFocus) root._regUserInteracted = true
+                    onCursorPositionChanged: root._regUserInteracted = true
+                    Keys.onPressed: root._regUserInteracted = true
                     onTextChanged: {
                       root.updateKeyboardActiveNotes()
                       root.validateRegistryText()
@@ -1526,24 +1567,48 @@ MuseScore {
 
                   Rectangle {
                     id: globalsErrorOverlay
+                    parent: globalsArea
                     z: 1000
                     visible: root.showGlobalsErrorOverlay && (editorModeIndex === 1)
-                    color: root.themeAccent
+                    color: root.warningColor
                     opacity: 0.25
-                    x: globalsArea.x
-                    y: globalsArea.y + (globalsArea ? globalsArea.cursorRectangle.y : 0)
-                    width: globalsArea.width
-                    height: (globalsArea ? globalsArea.cursorRectangle.height : globFM.height)
+
+                    // Where the error character sits inside jsonArea (local coords)
+                    property rect _errRect: (function() {
+                      try { return globalsArea.positionToRectangle(root.globalsErrorPos) }
+                      catch(e) { return Qt.rect(0, root.globalsErrorLine * globFM.height, globalsArea.width, globFM.height) }
+                    })()
+
+                    // Helper: start-of-line position/rectangle for this line
+                    property int _lineStartPos: (function() {
+                      return _lineStart(globalsArea.text || "", root.globalsErrorPos);
+                    })()
+
+                    property rect _lineStartRect: (function() {
+                      try { return globalsArea.positionToRectangle(_lineStartPos) }
+                      catch(e) { return Qt.rect(0, root.globalsErrorLine * globFM.height, globalsArea.width, globFM.height) }
+                    })()
+
+                    // Choose "line" or "fromPos" behavior
+                    x: (root.errorHighlightStyle === "line") ? 0 : _errRect.x
+                    y: _lineStartRect.y
+                    width: (root.errorHighlightStyle === "line") ? globalsArea.width
+                                                                 : Math.max(1, globalsArea.width - _errRect.x)
+                    height: Math.max(1, _errRect.height || globFM.height)
+
                     radius: 0
                   }
-
                   TextArea.flickable: TextArea {
                     id: globalsArea
+
                     width: globalsFlick.width
                     wrapMode: TextArea.NoWrap
                     font.family: "monospace"
                     background: Rectangle { color: ui.theme.textFieldColor }
 
+                    onActiveFocusChanged: if (activeFocus) root._globUserInteracted = true
+                    onCursorPositionChanged: root._globUserInteracted = true
+                    Keys.onPressed: root._globUserInteracted = true
                     onTextChanged: {
                       root.updateKeyboardActiveNotes()
                       root.validateGlobalsText()
