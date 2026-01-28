@@ -333,12 +333,34 @@ MuseScore {
         try { c.addRest() } catch(e) { dbg("ensureWritableSlot: addRest failed at "+t.numerator+"/"+t.denominator) }
         c.rewindToFraction(t)
     }
-    function escapeRegex(s) { return s.replace(/[\-\/\\^$*+?.()\[\]{}]/g,'\\$&') }
+
+    function escapeRegex(s) { return s.replace(/[\\\-\\/\\^$*+?.()\\[\\]{}]/g,'\\$&') }
+
+    // Build a "token" regex that matches alias surrounded by start/end or any non-word char.
+    // Works for abbreviations with punctuation (e.g., "nor.", "ord.", "con sord.", etc.).
+    function tokenRegex(alias) {
+      var core = escapeRegex(String(alias||""))
+      // Left boundary: start of string OR a non-word (not [A-Za-z0-9_])
+      // Right boundary: non-word OR end of string
+      return new RegExp('(?:^|[^A-Za-z0-9_])' + core + '(?:[^A-Za-z0-9_]|$)')
+    }
 
     function findTechniqueKeyswitches(texts, techMap, aliasMap) {
-        var pitches=[]; if (!techMap) return pitches; var aliasFor=aliasMap||{};
-        for (var key in techMap){ var pitch=techMap[key]; var aliases=aliasFor[key]||[key]; var rx=[]; for (var i=0;i<aliases.length;++i) rx.push(new RegExp('\\b'+escapeRegex(aliases[i])+'\\b')); for (var ti=0;ti<texts.length;++ti){ var t=texts[ti]; for (var ri=0;ri<rx.length;++ri){ if (rx[ri].test(t)){ pitches.push(pitch); break } } } }
-        return pitches
+      var pitches=[]; if (!techMap) return pitches; var aliasFor=aliasMap||{};
+      for (var key in techMap) {
+        var pitch = techMap[key]
+        var aliases = aliasFor[key] || [key]
+        var rx = []
+        for (var i=0; i<aliases.length; ++i)
+          rx.push(tokenRegex(aliases[i]))
+        for (var ti=0; ti<texts.length; ++ti) {
+          var t = texts[ti]
+          for (var ri=0; ri<rx.length; ++ri) {
+            if (rx[ri].test(t)) { pitches.push(pitch); break }
+          }
+        }
+      }
+      return pitches
     }
 
     // map known aliases explicitly
