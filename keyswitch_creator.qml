@@ -36,8 +36,7 @@ MuseScore {
                                              "techniqueAliases": {
                                                  // phrasing
                                                  "legato": ["legato", "leg.", "slur", "slurred"],
-                                                 "normal": ["normal", "norm.", "nor.", "ordinary", "ord.", "std.", "arco"],
-                                                 "arco":   ["arco", "normal", "ord.", "ordinary"],
+                                                 "normal": ["normal", "normale", "norm.", "nor.", "ordinary", "ord.", "standard", "std.", "arco"],
                                                  // mutes
                                                  "con sord":   ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
                                                  "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
