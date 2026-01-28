@@ -211,10 +211,46 @@ MuseScore {
     //--------------------------------------------------------------------------------
     // Active set note utilities
     //--------------------------------------------------------------------------------
+
+    /* registry values may now be either:
+         26       (number)
+        "26|127"  (string: pitch|velocity)
+       We only care about pitch for keyboard highlighting.
+    */
+    function pitchFromKsMapValue(v) {
+        if (typeof v === "number") return parseInt(v, 10)
+
+        if (typeof v === "string") {
+            var s = v.trim()
+            var bar = s.indexOf("|")
+            if (bar >= 0) s = s.substring(0, bar)
+            var n = parseInt(s, 10)
+            return isNaN(n) ? null : n
+        }
+
+        if (v && typeof v === "object") {
+            // (Not advertised yet, but harmless if someone uses it)
+            if (v.pitch !== undefined) {
+                var p = parseInt(v.pitch, 10)
+                return isNaN(p) ? null : p
+            }
+            if (v.note !== undefined) {
+                var p2 = parseInt(v.note, 10)
+                return isNaN(p2) ? null : p2
+            }
+            if (Array.isArray(v) && v.length > 0) {
+                var p3 = parseInt(v[0], 10)
+                return isNaN(p3) ? null : p3
+            }
+        }
+        return null
+    }
+
     function uniqMidi(list) {
         var seen = {}, out = []
         for (var i = 0; i < list.length; ++i) {
-            var v = (list[i] | 0)
+            var v = parseInt(list[i], 10)
+            if (isNaN(v)) continue
             if (v >= 0 && v <= 127 && !seen[v]) { seen[v] = true; out.push(v) }
         }
         return out
@@ -223,14 +259,23 @@ MuseScore {
     function activeMidiFromSetObj(setObj) {
         if (!setObj) return []
         var arr = []
+
         if (setObj.articulationKeyMap) {
-            for (var k in setObj.articulationKeyMap) arr.push(setObj.articulationKeyMap[k])
+            for (var k in setObj.articulationKeyMap) {
+                var p = pitchFromKsMapValue(setObj.articulationKeyMap[k])
+                if (p !== null) arr.push(p)
+            }
         }
+
         if (setObj.techniqueKeyMap) {
-            for (var t in setObj.techniqueKeyMap)   arr.push(setObj.techniqueKeyMap[t])
+            for (var t in setObj.techniqueKeyMap) {
+                var p2 = pitchFromKsMapValue(setObj.techniqueKeyMap[t])
+                if (p2 !== null) arr.push(p2)
+            }
         }
         return uniqMidi(arr)
     }
+
 
     function parseRegistrySafely(jsonText) {
         try { return JSON.parse(jsonText) } catch (e) { return null }

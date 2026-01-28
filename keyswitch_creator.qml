@@ -71,6 +71,7 @@ MuseScore {
     property bool dedupeAcrossVoices: true
     property int  preferVoiceForKSInsertion: 0
     property var  emittedCross: ({})
+    property int defaultKsVelocity: 64
 
     // ------------------ INTERNAL ------------------
     property bool savedSelection: false
@@ -356,6 +357,68 @@ MuseScore {
 
     function escapeRegex(s) { return s.replace(/[\\\-\\/\\^$*+?.()\\[\\]{}]/g,'\\$&') }
 
+    // --- parse per-keyswitch velocity ---
+    // Accepts:
+    //    26          -> { pitch:26, velocity: defaultKsVelocity }
+    //   "26|127"     -> { pitch:26, velocity:127 }
+    //   "26"         -> { pitch:26, velocity: defaultKsVelocity }
+    // (Future-proofing: if someone later uses {pitch:26, velocity:127} it will also work.)
+    function clampInt(v, lo, hi) {
+        var n = parseInt(v, 10)
+        if (isNaN(n)) return lo
+        return Math.max(lo, Math.min(hi, n))
+    }
+
+    function parseKsMapValue(v) {
+        var pitch = null
+        var vel = defaultKsVelocity
+
+        if (typeof v === "number") {
+            pitch = parseInt(v, 10)
+        } else if (typeof v === "string") {
+            var s = v.trim()
+            var parts = s.split("|")
+            pitch = parseInt(parts[0], 10)
+            if (parts.length > 1 && parts[1].trim().length)
+                vel = parseInt(parts[1], 10)
+        } else if (v && typeof v === "object") {
+            // Not advertised yet, but harmless to support for future schema expansion
+            if (v.pitch !== undefined) pitch = parseInt(v.pitch, 10)
+            else if (v.note !== undefined) pitch = parseInt(v.note, 10)
+            if (v.velocity !== undefined) vel = parseInt(v.velocity, 10)
+            else if (v.vel !== undefined) vel = parseInt(v.vel, 10)
+        }
+
+        if (pitch === null || isNaN(pitch)) return null
+        pitch = clampInt(pitch, 0, 127)
+        vel = clampInt(vel, 0, 127)
+        return { pitch: pitch, velocity: vel }
+    }
+
+    // Apply absolute velocity to a Note in a version-tolerant way.
+    // MS4: note.userVelocity (forum reports veloOffset doesn't work there) [3](https://musescore.org/en/node/378892)
+    // MS3: note.veloType + note.veloOffset (plugin docs) [1](https://musescore.github.io/MuseScore_PluginAPI_Docs/plugins/html/class_ms_1_1_plugin_a_p_i_1_1_note.html)[2](https://github.com/musescore/MuseScore/blob/master/docs/plugins2to3.md)
+    function setKeyswitchNoteVelocity(note, velocity) {
+        var v = clampInt(velocity, 0, 127)
+
+        // MuseScore Studio 4+
+        try {
+            if (note.userVelocity !== undefined) {
+                note.userVelocity = v
+                return true
+            }
+        } catch (e) { }
+
+        // MuseScore 3.x
+        try {
+            note.veloType = NoteValueType.USER_VAL
+            note.veloOffset = v
+            return true
+        } catch (e2) { }
+
+        return false
+    }
+
     // Build a "token" regex that matches alias surrounded by start/end or any non-word char.
     // Works for abbreviations with punctuation (e.g., "nor.", "ord.", "con sord.", etc.).
     function tokenRegex(alias) {
@@ -366,40 +429,55 @@ MuseScore {
     }
 
     function findTechniqueKeyswitches(texts, techMap, aliasMap) {
-        var pitches=[]; if (!techMap) return pitches; var aliasFor=aliasMap||{};
+        var specs = []
+        if (!techMap) return specs
+        var aliasFor = aliasMap || {}
+
         for (var key in techMap) {
-            var pitch = techMap[key]
+            var spec = parseKsMapValue(techMap[key])
+            if (!spec) continue
+
             var aliases = aliasFor[key] || [key]
             var rx = []
             for (var i=0; i<aliases.length; ++i)
                 rx.push(tokenRegex(aliases[i]))
+
             for (var ti=0; ti<texts.length; ++ti) {
                 var t = texts[ti]
                 for (var ri=0; ri<rx.length; ++ri) {
-                    if (rx[ri].test(t)) { pitches.push(pitch); break }
+                    if (rx[ri].test(t)) { specs.push(spec); break }
                 }
             }
         }
-        return pitches
+        return specs
     }
 
     // map known aliases explicitly
     function findArticulationKeyswitches(artiNames, artiMap) {
-        var pitches=[]; if (!artiMap) return pitches;
+        var specs = []
+        if (!artiMap) return specs
+
         for (var i=0; i<artiNames.length; ++i) {
-            var k=artiNames[i];
-            if (artiMap.hasOwnProperty(k)) pitches.push(artiMap[k]);
-            else if (k.indexOf("tenuto")>=0 && artiMap.tenuto) pitches.push(artiMap.tenuto);
-            else if (k.indexOf("stacc")>=0 && artiMap.staccato) pitches.push(artiMap.staccato);
-            else if (k.indexOf("accent")>=0 && artiMap.accent) pitches.push(artiMap.accent);
-            else if (k.indexOf("marcato")>=0 && artiMap.marcato) pitches.push(artiMap.marcato);
+            var k = artiNames[i]
+
+            function pushKey(name) {
+                if (!artiMap || !artiMap.hasOwnProperty(name)) return
+                var spec = parseKsMapValue(artiMap[name])
+                if (spec) specs.push(spec)
+            }
+
+            if (artiMap.hasOwnProperty(k)) pushKey(k)
+            else if (k.indexOf("tenuto")>=0) pushKey("tenuto")
+            else if (k.indexOf("stacc")>=0) pushKey("staccato")
+            else if (k.indexOf("accent")>=0) pushKey("accent")
+            else if (k.indexOf("marcato")>=0) pushKey("marcato")
         }
-        return pitches
+        return specs
     }
 
     function keyswitchExistsAt(cursor, pitch) { if (!cursor.element || cursor.element.type != Element.CHORD) return false; var chord=cursor.element; for (var i in chord.notes) if (chord.notes[i].pitch==pitch) return true; return false }
 
-    function addKeyswitchNoteAt(sourceChord, pitch, firstOfChord, activeSet) {
+    function addKeyswitchNoteAt(sourceChord, pitch, velocity, firstOfChord, activeSet) {
         var track = sourceChord.track
         var startFrac = sourceChord.fraction
         var srcStaff = staffIdxFromTrack(track)
@@ -423,11 +501,25 @@ MuseScore {
         c.rewindToFraction(startFrac)
         if (!keyswitchExistsAt(c, pitch)) { dbg("post-add verification failed at tick="+c.tick+" pitch="+pitch); return false }
 
-        if (dedupeAcrossVoices && firstOfChord) markEmittedCross(c.staffIdx, c.tick)
+        if (dedupeAcrossVoices && firstOfChord)
+            markEmittedCross(c.staffIdx, c.tick)
 
-        if (hideKeyswitchNotes && c.element && c.element.type==Element.CHORD) {
-            var ch=c.element; if (ch.notes) { for (var i in ch.notes) { var nn=ch.notes[i]; if (nn.pitch==pitch) { try { nn.visible=false } catch(e){} } } }
+        // apply velocity (and optionally hide) to the note we just inserted
+        if (c.element && c.element.type == Element.CHORD) {
+            var ch = c.element
+            if (ch.notes) {
+                for (var i in ch.notes) {
+                    var nn = ch.notes[i]
+                    if (nn.pitch == pitch) {
+                        // Apply absolute velocity
+                        setKeyswitchNoteVelocity(nn, velocity)
+                        // Preserve existing behavior
+                        if (hideKeyswitchNotes) { try { nn.visible = false } catch(e){} }
+                    }
+                }
+            }
         }
+
         return true
     }
 
@@ -545,7 +637,7 @@ MuseScore {
 
             var texts      = segmentTechniqueTexts(chord)
             var artiNames  = chordArticulationNames(chord)
-            var pitches    = []
+            var specs   = []
 
             // Only use maps from the active set; no global fallback
             var techMap    = activeSet.techniqueKeyMap || null
@@ -553,18 +645,24 @@ MuseScore {
             if (!aliasMap && globalSettings && globalSettings.techniqueAliases)
                 aliasMap = globalSettings.techniqueAliases
 
-            pitches = pitches.concat(findTechniqueKeyswitches(texts, techMap, aliasMap))
-            pitches = pitches.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null))
+            specs = specs.concat(findTechniqueKeyswitches(texts, techMap, aliasMap))
+            specs = specs.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null))
 
-            var seen={}
-            for (var j in pitches) {
-                var p=pitches[j]; if (seen[p]) continue
-                var first=(j==0)
-                if (addKeyswitchNoteAt(chord,p,first,activeSet)) created++
+            var seen = {}
+            for (var j in specs) {
+                var spec = specs[j]
+                if (!spec) continue
+
+                var p = spec.pitch
+                if (seen[p]) continue
+
+                var first = (j === 0)
+                if (addKeyswitchNoteAt(chord, p, spec.velocity, first, activeSet))
+                    created++
+
                 if (preflightFailed) break
-                seen[p]=true
+                seen[p] = true
             }
-            if (preflightFailed) break
         }
 
         var partialParts = []
