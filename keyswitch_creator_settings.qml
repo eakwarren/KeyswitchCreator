@@ -1440,7 +1440,7 @@ MuseScore {
               spacing: 36
               background: Item { implicitHeight: 32 }
 
-              StyledTabButton { text: qsTr('Edit set registry'); onClicked: editorModeIndex = 0 }
+              StyledTabButton { text: qsTr('Set registry'); onClicked: editorModeIndex = 0 }
               StyledTabButton { text: qsTr('Global settings');   onClicked: editorModeIndex = 1 }
             }
           }
@@ -1650,7 +1650,7 @@ MuseScore {
 
       FlatButton {
         id: resetButtonRef
-        text: qsTr('Reset to Default')
+        text: qsTr('Reset editor to default')
         onClicked: {
           if (editorModeIndex === 0)
             jsonArea.text = formatRegistryCompact(defaultRegistryObj())
