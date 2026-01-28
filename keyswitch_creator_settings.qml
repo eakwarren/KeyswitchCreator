@@ -1279,50 +1279,86 @@ MuseScore {
                         }
                     }
 
-                    Item {
-                        id: searchBox
-                        Layout.preferredWidth: 285
-                        Layout.minimumWidth: 240
-                        Layout.maximumWidth: 320
-                        height: ui.theme.defaultButtonSize
+                    SearchField {
+                        id: setSearchField
+                        Layout.preferredWidth: 160
+                        hint: "Filter sets"
 
-                        TextField {
-                            id: setSearchField
-                            anchors.fill: parent
-                            leftPadding: 28 //for icon
-                            placeholderText: qsTr("Filter sets…")
+                        // --- Defensive read of whatever this SearchField exposes ---
+                        function _readSearchText() {
+                            // Try common property names without assuming they exist.
+                            // Accessing a missing prop yields 'undefined' (no crash).
+                            var v = setSearchField.text
+                                     !== undefined ? setSearchField.text
+                                 : setSearchField.value
+                                     !== undefined ? setSearchField.value
+                                 : setSearchField.displayText
+                                     !== undefined ? setSearchField.displayText
+                                 : "";
 
-                            background: Rectangle {
-                                anchors.fill: parent
-                                radius: 4
-                                // color: "transparent"
-                                color: ui.theme.textFieldColor
-                                border.width: 1
-                                border.color: setSearchField.text.length > 0 ? ui.theme.accentColor
-                                                                             : ui.theme.strokeColor
-                            }
-
-                            // When types, rebuild the filtered view
-                            onTextChanged: {
-                                setFilterText = text
-                                rebuildFilteredSets()
-                            }
-
-                            Keys.onReturnPressed: rebuildFilteredSets()
+                            // Ensure a string
+                            return (typeof v === "string") ? v : "";
                         }
 
-                        FlatButton {
-                            anchors.verticalCenter: setSearchField.verticalCenter
-                            anchors.left: parent.left
-                            transparent: true
-                            focusPolicy: Qt.NoFocus
-                            onClicked: {}
-                            backgroundItem: Item {}
-                            enabled: true
-                            iconColor: ui.theme.fontPrimaryColor
-                            icon: IconCode.SEARCH
+                        // Some builds pass the new value as a parameter, some don't.
+                        onTextChanged: function (val) {
+                            setFilterText = (typeof val === "string") ? val : _readSearchText();
+                            // onSetFilterTextChanged at root will rebuildFilteredSets()
                         }
+
+                        onTextEdited: function (val) {
+                            setFilterText = (typeof val === "string") ? val : _readSearchText();
+                            // onSetFilterTextChanged at root will rebuildFilteredSets()
+                        }
+
+                        // Fallback: pressing Enter/Return still rebuilds explicitly
+                        Keys.onReturnPressed: rebuildFilteredSets()
                     }
+
+                    // Item {
+                    //     id: searchBox
+                    //     Layout.preferredWidth: 285
+                    //     Layout.minimumWidth: 240
+                    //     Layout.maximumWidth: 320
+                    //     height: ui.theme.defaultButtonSize
+
+                    //     TextField {
+                    //         id: setSearchField
+                    //         anchors.fill: parent
+                    //         leftPadding: 28 //for icon
+                    //         placeholderText: qsTr("Filter sets…")
+
+                    //         background: Rectangle {
+                    //             anchors.fill: parent
+                    //             radius: 4
+                    //             // color: "transparent"
+                    //             color: ui.theme.textFieldColor
+                    //             border.width: 1
+                    //             border.color: setSearchField.text.length > 0 ? ui.theme.accentColor
+                    //                                                          : ui.theme.strokeColor
+                    //         }
+
+                    //         // When types, rebuild the filtered view
+                    //         onTextChanged: {
+                    //             setFilterText = text
+                    //             rebuildFilteredSets()
+                    //         }
+
+                    //         Keys.onReturnPressed: rebuildFilteredSets()
+                    //     }
+
+                    //     FlatButton {
+                    //         anchors.verticalCenter: setSearchField.verticalCenter
+                    //         anchors.left: parent.left
+                    //         transparent: true
+                    //         focusPolicy: Qt.NoFocus
+                    //         onClicked: {}
+                    //         backgroundItem: Item {}
+                    //         enabled: true
+                    //         iconColor: ui.theme.fontPrimaryColor
+                    //         icon: IconCode.SEARCH
+                    //     }
+                    // }
 
                 }
 
