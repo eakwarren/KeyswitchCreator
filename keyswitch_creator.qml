@@ -18,13 +18,15 @@ import MuseScore 3.0
 MuseScore {
     title: qsTr("Keyswitch Creator")
     description: qsTr("Creates keyswitch notes on a staff below in the same instrument.")
-    version: "0.9.4"
+    version: "0.9.5"
     categoryCode: "Keyswitch Creator"
     thumbnailName: "keyswitch_creator.png"
 
     // ------------------ DEBUG ------------------
     property bool debugEnabled: true
+
     function dbg(msg)  { if (debugEnabled) console.log("[KS] " + msg) }
+
     function dbg2(k,v) { if (debugEnabled) console.log("[KS] " + k + ": " + v) }
 
     // ------------------ SETTINGS ------------------
@@ -55,12 +57,12 @@ MuseScore {
 
     // Articulations (note-attached symbols)
     property var articulationKeyMap: ({
-      "staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13
-    })
+                                          "staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13
+                                      })
     // Techniques (written)
     property var techniqueKeyMap: ({
-      "normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25
-    })
+                                       "normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25
+                                   })
 
     property int ksNumerator: 1
     property int ksDenominator: 16
@@ -85,11 +87,11 @@ MuseScore {
 
     // Registry & settings store
     property var defaultKeyswitchSets: ({
-                    "Default Low": {
-                        articulationKeyMap: {"staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13},
-                        techniqueKeyMap:    {"normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25}
-                    }
-                 })
+                                            "Default Low": {
+                                                articulationKeyMap: {"staccato": 0, "staccatissimo": 1, "tenuto": 2, "accent": 3, "marcato": 4, "sforzato": 5, "loure": 6, "fermata": 7, "trill": 8, "mordent": 9, "mordent inverted": 10, "turn": 11, "harmonics": 12, "mute": 13},
+                                                techniqueKeyMap:    {"normal": 14, "arco": 15, "pizz": 16, "tremolo": 17, "con sord": 18, "senza sord": 19, "sul pont": 20, "sul tasto": 21, "harmonic": 22, "col legno": 23, "legato": 24, "spiccato": 25}
+                                            }
+                                        })
     property var keyswitchSets: defaultKeyswitchSets
     property var setTagTimeline: ({})
     property var staffToSet: ({})
@@ -125,6 +127,7 @@ MuseScore {
         }
         return null
     }
+
     function partCount() { return curScore && curScore.parts ? curScore.parts.length : 0 }
 
     function nameForPartByRange(staffIdx, tick) {
@@ -148,9 +151,11 @@ MuseScore {
         dbg(qsTr("targetStaffForKeyswitch(range): src=%1 -> target=%2").arg(srcStaffIdx).arg(last))
         return (last > srcStaffIdx) ? last : -1
     }
+
     function isEligibleSourceStaff(staffIdx) { return targetStaffForKeyswitch(staffIdx) !== -1 }
 
     function normalizeTextBasic(s) { var t=(s||"").toString(); t=t.replace(/“\n”/g,'"').replace(/‘\n’/g,"'"); t=t.replace(/\u00A0/g," ").replace(/\s+/g," "); return t }
+
     function sameStaff(trackA, trackB) { return Math.floor(trackA/4) === Math.floor(trackB/4) }
 
     function collectSetTagsInRange() {
@@ -219,6 +224,7 @@ MuseScore {
         if (val[0]=='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
         return (val==="part"||val==="staff") ? val : ""
     }
+
     function parsePartsTag(rawText) {
         var s = normalizeTextBasic(rawText).toLowerCase()
         var idx = s.indexOf("ks:parts"); if (idx < 0) return ""
@@ -228,6 +234,7 @@ MuseScore {
         if (val[0]=='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
         return (val==="all"||val==="anchor") ? val : ""
     }
+
     function scopeOverrideInSelection(startStaff, endStaff, startTick, endTick) {
         var scopeVal = "", partsVal = ""
         for (var s = startStaff; s <= endStaff; ++s) {
@@ -270,16 +277,16 @@ MuseScore {
     }
 
     function activeSetNameFor(staffIdx, tick) {
-      var tl = setTagTimeline[staffIdx] || []
-      for (var i = tl.length - 1; i >= 0; --i) {
-        if (tl[i].tick <= tick) {
-          var name = tl[i].setName
-          if (keyswitchSets[name]) return name
-          break
+        var tl = setTagTimeline[staffIdx] || []
+        for (var i = tl.length - 1; i >= 0; --i) {
+            if (tl[i].tick <= tick) {
+                var name = tl[i].setName
+                if (keyswitchSets[name]) return name
+                break
+            }
         }
-      }
-      var assigned = staffToSet[staffIdx.toString()]
-      return (assigned && keyswitchSets[assigned]) ? assigned : ""   // no implicit default
+        var assigned = staffToSet[staffIdx.toString()]
+        return (assigned && keyswitchSets[assigned]) ? assigned : ""   // no implicit default
     }
 
     function segmentTechniqueTexts(chord) {
@@ -288,10 +295,10 @@ MuseScore {
             for (var i in seg.annotations) {
                 var ann = seg.annotations[i]
                 if (ann.type===Element.STAFF_TEXT
-                    || ann.type===Element.SYSTEM_TEXT
-                    || ann.type===Element.EXPRESSION_TEXT) {
+                        || ann.type===Element.SYSTEM_TEXT
+                        || ann.type===Element.EXPRESSION_TEXT) {
                     if (ann.type !== Element.STAFF_TEXT
-                        || sameStaff(ann.track, chord.track)) {
+                            || sameStaff(ann.track, chord.track)) {
                         var norm = normalizeTextBasic(ann.text).toLowerCase().trim();
                         if (norm.length) out.push(norm)
                     }
@@ -353,28 +360,28 @@ MuseScore {
     // Build a "token" regex that matches alias surrounded by start/end or any non-word char.
     // Works for abbreviations with punctuation (e.g., "nor.", "ord.", "con sord.", etc.).
     function tokenRegex(alias) {
-      var core = escapeRegex(String(alias||""))
-      // Left boundary: start of string OR a non-word (not [A-Za-z0-9_])
-      // Right boundary: non-word OR end of string
-      return new RegExp('(?:^|[^A-Za-z0-9_])' + core + '(?:[^A-Za-z0-9_]|$)')
+        var core = escapeRegex(String(alias||""))
+        // Left boundary: start of string OR a non-word (not [A-Za-z0-9_])
+        // Right boundary: non-word OR end of string
+        return new RegExp('(?:^|[^A-Za-z0-9_])' + core + '(?:[^A-Za-z0-9_]|$)')
     }
 
     function findTechniqueKeyswitches(texts, techMap, aliasMap) {
-      var pitches=[]; if (!techMap) return pitches; var aliasFor=aliasMap||{};
-      for (var key in techMap) {
-        var pitch = techMap[key]
-        var aliases = aliasFor[key] || [key]
-        var rx = []
-        for (var i=0; i<aliases.length; ++i)
-          rx.push(tokenRegex(aliases[i]))
-        for (var ti=0; ti<texts.length; ++ti) {
-          var t = texts[ti]
-          for (var ri=0; ri<rx.length; ++ri) {
-            if (rx[ri].test(t)) { pitches.push(pitch); break }
-          }
+        var pitches=[]; if (!techMap) return pitches; var aliasFor=aliasMap||{};
+        for (var key in techMap) {
+            var pitch = techMap[key]
+            var aliases = aliasFor[key] || [key]
+            var rx = []
+            for (var i=0; i<aliases.length; ++i)
+                rx.push(tokenRegex(aliases[i]))
+            for (var ti=0; ti<texts.length; ++ti) {
+                var t = texts[ti]
+                for (var ri=0; ri<rx.length; ++ri) {
+                    if (rx[ri].test(t)) { pitches.push(pitch); break }
+                }
+            }
         }
-      }
-      return pitches
+        return pitches
     }
 
     // map known aliases explicitly
@@ -426,7 +433,9 @@ MuseScore {
     }
 
     function crossKey(staffIdx, tick) { return staffIdx+":"+tick }
+
     function wasEmittedCross(staffIdx, tick) { return emittedCross.hasOwnProperty(crossKey(staffIdx,tick)) }
+
     function markEmittedCross(staffIdx, tick) { emittedCross[crossKey(staffIdx,tick)] = true }
 
     function computeAllowedSourceStaves(startStaff, endStaff, effScope, effPartsMode) {
@@ -479,8 +488,8 @@ MuseScore {
             // Auto-widen whenever a range selection spans multiple parts,
             // unless explicitly overridden by a ks:parts tag in the selection.
             if (!overrides.parts && touchedCount>1) {
-              effParts = "all"
-              dbg("parts: auto-widen to 'all' (multi-part selection)")
+                effParts = "all"
+                dbg("parts: auto-widen to 'all' (multi-part selection)")
             }
 
             var allowedMap = computeAllowedSourceStaves(startStaff, endStaff, effScope, effParts)
@@ -526,13 +535,13 @@ MuseScore {
             var setName = activeSetNameFor(chord.staffIdx, tickHere)
 
             if (!setName) {
-              // No active set by tag or assignment => do not create keyswitches
-              continue
+                // No active set by tag or assignment => do not create keyswitches
+                continue
             }
             var activeSet = keyswitchSets[setName]
             if (!activeSet) {
-              // Defensive: unknown/removed set name => skip
-              continue
+                // Defensive: unknown/removed set name => skip
+                continue
             }
 
             var texts      = segmentTechniqueTexts(chord)
@@ -543,7 +552,7 @@ MuseScore {
             var techMap    = activeSet.techniqueKeyMap || null
             var aliasMap   = activeSet.techniqueAliases
             if (!aliasMap && globalSettings && globalSettings.techniqueAliases)
-              aliasMap = globalSettings.techniqueAliases
+                aliasMap = globalSettings.techniqueAliases
 
             pitches = pitches.concat(findTechniqueKeyswitches(texts, techMap, aliasMap))
             pitches = pitches.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null))
@@ -627,4 +636,5 @@ MuseScore {
         }
         quit()
     }
+
 }
