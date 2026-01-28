@@ -134,7 +134,6 @@ MuseScore {
 
   function defaultGlobalSettingsObj() {
     return {
-      "priority": ["accent", "staccato", "tenuto", "marcato", "legato"],
       "durationPolicy": "source",
       "techniqueAliases": {
         // phrasing
@@ -200,7 +199,6 @@ MuseScore {
 
   function formatGlobalsCompact(glob) {
     var lines = ['{']
-    lines.push(' "priority":' + JSON.stringify(glob.priority || []) + ',')
     lines.push(' "durationPolicy":' + JSON.stringify(glob.durationPolicy || "source") + ',')
     lines.push(' "techniqueAliases":{')
     var alias = glob.techniqueAliases || {}

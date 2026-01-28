@@ -30,7 +30,6 @@ MuseScore {
     // ------------------ SETTINGS ------------------
 
     property var defaultGlobalSettings: ({
-                                             "priority": ["accent", "staccato", "tenuto", "marcato", "legato"],
                                              "durationPolicy": "source",
                                              "techniqueAliases": {
                                                  // phrasing
@@ -71,7 +70,6 @@ MuseScore {
     property bool dedupeAcrossVoices: true
     property int  preferVoiceForKSInsertion: 0
     property var  emittedCross: ({})
-    property var  emittedKS: ({})
 
     // ------------------ INTERNAL ------------------
     property bool savedSelection: false
@@ -427,9 +425,6 @@ MuseScore {
         return true
     }
 
-    function ksKey(staffIdx, tick, pitch) { return staffIdx+":"+tick+":"+pitch }
-    function wasEmitted(staffIdx, tick, pitch) { return emittedKS.hasOwnProperty(ksKey(staffIdx,tick,pitch)) }
-    function markEmitted(staffIdx, tick, pitch) { emittedKS[ksKey(staffIdx,tick,pitch)] = true }
     function crossKey(staffIdx, tick) { return staffIdx+":"+tick }
     function wasEmittedCross(staffIdx, tick) { return emittedCross.hasOwnProperty(crossKey(staffIdx,tick)) }
     function markEmittedCross(staffIdx, tick) { emittedCross[crossKey(staffIdx,tick)] = true }
@@ -459,7 +454,7 @@ MuseScore {
     }
 
     function processSelection() {
-        emittedCross = ({}); emittedKS = ({}); preflightFailed=false; sawIneligible=false; firstIneligibleStaffIdx=-1
+        emittedCross = ({}); preflightFailed=false; sawIneligible=false; firstIneligibleStaffIdx=-1
         var ineligiblePartIdx = {}
         dbg("processSelection: begin")
 
