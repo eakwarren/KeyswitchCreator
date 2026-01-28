@@ -272,10 +272,16 @@ MuseScore {
     }
 
     function activeSetNameFor(staffIdx, tick) {
-        var tl = setTagTimeline[staffIdx] || []
-        for (var i = tl.length - 1; i >= 0; --i) { if (tl[i].tick <= tick) { var name = tl[i].setName; if (keyswitchSets[name]) return name; break } }
-        var assigned = staffToSet[staffIdx.toString()]
-        return (assigned && keyswitchSets[assigned]) ? assigned : "Default Low"
+      var tl = setTagTimeline[staffIdx] || []
+      for (var i = tl.length - 1; i >= 0; --i) {
+        if (tl[i].tick <= tick) {
+          var name = tl[i].setName
+          if (keyswitchSets[name]) return name
+          break
+        }
+      }
+      var assigned = staffToSet[staffIdx.toString()]
+      return (assigned && keyswitchSets[assigned]) ? assigned : ""   // no implicit default
     }
 
     function segmentTechniqueTexts(chord) {
@@ -430,14 +436,18 @@ MuseScore {
             var effScope  = overrides.scope ? overrides.scope : rangeScopeMode
             var effParts  = overrides.parts ? overrides.parts : selectionPartMode
 
-            // if selection starts at top and touches >1 parts, treat as full-system => parts=all
+            // any multi‑part range selection (regardless of which staff it starts on) processes all touched parts
+            // unless explicitly overridden by a ks:parts tag
             var partsTouched = {}
             for (var sX=startStaff; sX<=endStaff; ++sX) { var pX = partInfoForStaff(sX); if (pX) partsTouched[pX.index] = true }
             var touchedCount = 0; for (var k in partsTouched) touchedCount++
             dbg("selection parts touched="+touchedCount+" / totalParts="+partCount())
-            if (!overrides.parts && startStaff===0 && touchedCount>1) {
-                effParts = "all"
-                dbg("parts: auto-widen to 'all' (top-of-score & multi-part selection)")
+
+            // Auto-widen whenever a range selection spans multiple parts,
+            // unless explicitly overridden by a ks:parts tag in the selection.
+            if (!overrides.parts && touchedCount>1) {
+              effParts = "all"
+              dbg("parts: auto-widen to 'all' (multi-part selection)")
             }
 
             var allowedMap = computeAllowedSourceStaves(startStaff, endStaff, effScope, effParts)
@@ -480,33 +490,30 @@ MuseScore {
         for (var k in chords) {
             var chord=chords[k]
             var tickHere=(chord.parent && chord.parent.tick)?chord.parent.tick:0
-            var setName=activeSetNameFor(chord.staffIdx,tickHere)
-            var activeSet=keyswitchSets[setName]||keyswitchSets["Default Low"]
-            var texts=segmentTechniqueTexts(chord)
-            var artiNames=chordArticulationNames(chord)
-            var pitches=[]
-            var techMap=activeSet.techniqueKeyMap||techniqueKeyMap
-            var aliasMap=(activeSet.techniqueAliases)?activeSet.techniqueAliases:(globalSettings.techniqueAliases?globalSettings.techniqueAliases:null)
-            if (!aliasMap) aliasMap={
-                    // phrasing
-                    "legato": ["legato", "leg.", "slur", "slurred"],
-                    "normal": ["normal", "norm.", "nor.", "ordinary", "ord.", "std.", "arco"],
-                    "arco":   ["arco", "normal", "ord.", "ordinary"],
-                    // mutes
-                    "con sord":   ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
-                    "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
-                    // position
-                    "sul pont":  ["sul pont", "sul pont.", "sul ponticello"],
-                    "sul tasto": ["sul tasto", "sul tast.", "flautando"],
-                    // timbre/attack
-                    "col legno": ["col legno", "col l.", "c.l."],
-                    "harmonic":  ["harmonic", "harm.", "harmonics", "natural harmonic", "artificial harmonic"],
-                    "spiccato":  ["spiccato", "spicc.", "spic."],
-                    "pizz":      ["pizz", "pizz.", "pizzicato"],
-                    "tremolo":   ["tremolo", "trem.", "tremolando"]
-                }
-            pitches=pitches.concat(findTechniqueKeyswitches(texts,techMap,aliasMap))
-            pitches=pitches.concat(findArticulationKeyswitches(artiNames,activeSet.articulationKeyMap||articulationKeyMap))
+            var setName = activeSetNameFor(chord.staffIdx, tickHere)
+
+            if (!setName) {
+              // No active set by tag or assignment => do not create keyswitches
+              continue
+            }
+            var activeSet = keyswitchSets[setName]
+            if (!activeSet) {
+              // Defensive: unknown/removed set name => skip
+              continue
+            }
+
+            var texts      = segmentTechniqueTexts(chord)
+            var artiNames  = chordArticulationNames(chord)
+            var pitches    = []
+
+            // Only use maps from the active set; no global fallback
+            var techMap    = activeSet.techniqueKeyMap || null
+            var aliasMap   = activeSet.techniqueAliases
+            if (!aliasMap && globalSettings && globalSettings.techniqueAliases)
+              aliasMap = globalSettings.techniqueAliases
+
+            pitches = pitches.concat(findTechniqueKeyswitches(texts, techMap, aliasMap))
+            pitches = pitches.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null))
 
             var seen={}
             for (var j in pitches) {
