@@ -346,6 +346,30 @@ MuseScore {
     return t
   }
 
+  // Decode/strip for UI-safe display of part/staff names
+  function stripHtmlTags(s) {
+    return String(s || "").replace(/<[^>]*>/g, "");
+  }
+
+  function decodeHtmlEntities(s) {
+    var t = String(s || "");
+    // common named entities
+    t = t.replace(/&nbsp;/g, " ")
+         .replace(/&amp;/g, "&")
+         .replace(/&lt;/g, "<")
+         .replace(/&gt;/g, ">")
+         .replace(/&quot;/g, "\"")
+         .replace(/&#39;/g, "'");
+    // numeric entities (decimal & hex)
+    t = t.replace(/&#([0-9]+);/g, function(_, n){ return String.fromCharCode(parseInt(n, 10) || 0); });
+    t = t.replace(/&#x([0-9a-fA-F]+);/g, function(_, h){ return String.fromCharCode(parseInt(h, 16) || 0); });
+    return t;
+  }
+
+  function normalizeUiText(s) {
+    return cleanName(decodeHtmlEntities(stripHtmlTags(s)));
+  }
+
   function staffBaseTrack(staffIdx) { return staffIdx * 4 }
 
   function partForStaff(staffIdx) {
@@ -368,7 +392,7 @@ MuseScore {
       var inst = p.instrumentAtTick(tick || 0)
       if (inst && inst.longName && inst.longName.length) nm = inst.longName
     }
-    return cleanName(nm)
+    return normalizeUiText(nm)   // decode entities + strip tags
   }
 
   function indexForStaff(staffIdx) {
@@ -954,7 +978,16 @@ MuseScore {
             delegate: ItemDelegate {
               id: rowDelegate
               width: ListView.view.width
-              text: cleanName(model.name)
+
+              // Render the row label as literal text (no mnemonics / HTML)
+              contentItem: Text {
+                text: cleanName(model.name)
+                textFormat: Text.PlainText
+                color: ui.theme.fontPrimaryColor
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+              }
+
               background: Rectangle {
                 anchors.fill: parent
                 radius: 6
@@ -1213,6 +1246,7 @@ MuseScore {
           StyledTextLabel {
             id: assignTitle
             Layout.alignment: Qt.AlignVCenter
+            textFormat: Text.PlainText // render literally, no mnemonics
             text: (selectedCountProp === 1 && currentStaffIdx >= 0)
                   ? qsTr('Assign set to ') + cleanName(staffNameByIdx(currentStaffIdx))
                   : qsTr('Assign set to %1 staves').arg(selectedCountProp)
