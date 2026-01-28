@@ -618,12 +618,12 @@ MuseScore {
 
     function setRegistryBorder(valid) {
         root.registryBorderColor = valid ? themeSeparator : warningColor
-        root.registryBorderWidth = valid ? 1 : 2
+        // root.registryBorderWidth = valid ? 1 : 2
     }
 
     function setGlobalsBorder(valid) {
         root.globalsBorderColor = valid ? themeSeparator : warningColor
-        root.globalsBorderWidth = valid ? 1 : 2
+        // root.globalsBorderWidth = valid ? 1 : 2
     }
 
     function validateRegistryText() {
@@ -934,6 +934,115 @@ MuseScore {
         anchors.margins: 12
         spacing: 10
 
+        // Root-level safety net for staff-list shortcuts
+        Keys.priority: Keys.BeforeItem
+        Keys.onPressed: function (event) {
+            // 1) Do NOT interfere with text editors or the set filter
+            if ((jsonArea && jsonArea.activeFocus) ||
+                    (globalsArea && globalsArea.activeFocus) ||
+                    (setSearchField && setSearchField.activeFocus)) {
+
+                return; // leave to the child control
+            }
+
+             // 2) Only act when the staves panel is the focus target
+            var stavesFocused = (staffList && staffList.activeFocus) || (stavesScroll && stavesScroll.activeFocus);
+            if (!stavesFocused)
+
+                return;
+
+            var shift = (event.modifiers & Qt.ShiftModifier);
+            var ctrlOrCmd = (event.modifiers & (Qt.ControlModifier | Qt.MetaModifier));
+
+            // Ctrl/Cmd + A  → select all staves
+            if (ctrlOrCmd && event.key === Qt.Key_A) {
+                selectAll();                                   // helper you already have
+                if (staffList.currentIndex < 0 && staffListModel.count > 0)
+                    staffList.currentIndex = 0;               // keep a sane anchor
+                event.accepted = true;
+
+                return;
+            }
+
+            // Shift + Up/Down → extend selection from current anchor
+            if (shift && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+                var idx = staffList.currentIndex >= 0 ? staffList.currentIndex : 0;
+                if (event.key === Qt.Key_Up)   idx = Math.max(0, idx - 1);
+                if (event.key === Qt.Key_Down) idx = Math.min(staffListModel.count - 1, idx + 1);
+                selectRange(idx);                               // uses your range logic
+                staffList.currentIndex = idx;                   // keep list’s current row coherent
+                event.accepted = true;
+
+                return;
+            }
+        }
+
+        // --- Application-level shortcuts (fallbacks across focus transitions) ---
+        Shortcut {
+            id: scSelectAllStaves
+            // Keep StandardKey for ⌘A on macOS; add "Ctrl+A" as an alternative
+            sequences: [ "Meta+A", "Ctrl+A" ]
+            context: Qt.WindowShortcut
+
+            enabled: (staffListModel.count > 0)
+                     && !(jsonArea && jsonArea.activeFocus)
+                     && !(globalsArea && globalsArea.activeFocus)
+                     && !(setSearchField && setSearchField.activeFocus)
+
+            onActivated: {
+                console.log("[KS] Shortcut fired: SelectAll (Meta/Ctrl+A)");
+                selectAll()
+                if (staffList.currentIndex < 0 && staffListModel.count > 0)
+                    staffList.currentIndex = 0
+            }
+        }
+
+        /* Shift+Up and Shift+Down as a safety net:
+           - We ONLY enable these when the staves list DOES NOT have focus.
+           - When the list has focus, its own Keys.onPressed already handles Shift+Arrows.
+           - This prevents double-handling if both fired.
+        */
+        Shortcut {
+            id: scShiftUp
+            sequences: [ "Shift+Up" ]
+            context: Qt.WindowShortcut
+
+            enabled: (staffListModel.count > 0)
+                     && !(jsonArea    && jsonArea.activeFocus)
+                     && !(globalsArea && globalsArea.activeFocus)
+                     && !(setSearchField && setSearchField.activeFocus)
+
+            onActivated: {
+                var cur = (staffList.currentIndex >= 0) ? staffList.currentIndex : 0;
+                var next = Math.max(0, cur - 1);
+                if (root.lastAnchorIndex < 0)
+                    root.lastAnchorIndex = cur;          // establish anchor immediately
+                selectRange(next);
+                staffList.currentIndex = next;
+            }
+        }
+
+        Shortcut {
+            id: scShiftDown
+            sequences: [ "Shift+Down" ]
+            context: Qt.WindowShortcut
+
+            enabled: (staffListModel.count > 0)
+                     && !(jsonArea    && jsonArea.activeFocus)
+                     && !(globalsArea && globalsArea.activeFocus)
+                     && !(setSearchField && setSearchField.activeFocus)
+
+            onActivated: {
+                var cur = (staffList.currentIndex >= 0) ? staffList.currentIndex : 0;
+                var last = Math.max(0, staffListModel.count - 1);
+                var next = Math.min(last, cur + 1);
+                if (root.lastAnchorIndex < 0)
+                    root.lastAnchorIndex = cur;          // establish anchor immediately
+                selectRange(next);
+                staffList.currentIndex = next;
+            }
+        }
+
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -964,10 +1073,49 @@ MuseScore {
                         focus: true
                         activeFocusOnTab: true
 
+                        /* 1) Grab these chords *before* app/global shortcuts see them
+                            Accept only the chords we want to force into the normal KeyPress path.
+                            - Shift+Up / Shift+Down: ensure range-select isn't stolen by ScrollView/Flickable
+                            - Cmd/Ctrl + A         : ensure the list handles Select All locally
+                            Do NOT accept when an editor/search field has focus (so those get ⌘A as text select).
+                        */
+                        Keys.onShortcutOverride: function (event) {
+                            console.log("[KS] override:", event.key, "mods:", event.modifiers, "accepted?", event.accepted);
+
+                            if ((jsonArea && jsonArea.activeFocus)
+                                    || (globalsArea && globalsArea.activeFocus)
+                                    || (setSearchField && setSearchField.activeFocus)) {
+
+                                return;
+                            }
+                            const isShift = !!(event.modifiers & Qt.ShiftModifier);
+                            const isCmd   = !!(event.modifiers & Qt.MetaModifier);     // ⌘ (sometimes not set)
+                            const isCtrl  = !!(event.modifiers & Qt.ControlModifier);  // in log: 67108864
+                            const isA     = (event.key === Qt.Key_A);
+                            const shUp    = isShift && (event.key === Qt.Key_Up);
+                            const shDown  = isShift && (event.key === Qt.Key_Down);
+
+                            // Accept the chords we want to handle as normal key presses on the list.
+                            if (shUp || shDown || (isA && (isCmd || isCtrl))) {
+                                event.accepted = true;   // <-- this prevents global shortcut activation
+                            }        // else leave it unaccepted so other shortcuts/keys behave as usual
+                        }
+
+                        // 2) Final fallback: handle ⌘/Ctrl + A right here if Shortcut didn't fire
                         Keys.onPressed: function (event) {
-                            var ctrlOrCmd = (event.modifiers & Qt.ControlModifier) || (event.modifiers & Qt.MetaModifier)
-                            var isShift = (event.modifiers & Qt.ShiftModifier)
-                            if (ctrlOrCmd && event.key === Qt.Key_A) { selectAll(); event.accepted = true; return }
+                            const isCmd  = !!(event.modifiers & Qt.MetaModifier); // ⌘ on macOS
+                            const isCtrl = !!(event.modifiers & Qt.ControlModifier); // sometimes delivered instead
+                            const isShift = !!(event.modifiers & Qt.ShiftModifier);
+                            if ((isCmd || isCtrl) && event.key === Qt.Key_A) {
+
+                                console.log("[KS] Keys.onPressed fallback: SelectAll");
+                                selectAll();
+                                if (staffList.currentIndex < 0 && staffListModel.count > 0)
+                                    staffList.currentIndex = 0;
+                                event.accepted = true;
+
+                                return;
+                            }
                             if (event.key === Qt.Key_Up) {
                                 var idx = Math.max(0, staffList.currentIndex - 1)
                                 if (isShift) selectRange(idx); else selectSingle(idx)
@@ -1016,6 +1164,9 @@ MuseScore {
                                     else selectSingle(idx)
                                     staffList.currentIndex = idx
                                     setSearchField.focus = false
+
+                                    // ensure the staves list has active focus
+                                    staffList.forceActiveFocus()
                                 }
                             }
                         }
