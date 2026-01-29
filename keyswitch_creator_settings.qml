@@ -246,6 +246,48 @@ MuseScore {
         return null
     }
 
+    // Build a midi->names map for tooltips based on the active set.
+    // Supports values like 26 or "26|127" (we only care about pitch).
+    function namesMapFromSetObj(setObj) {
+        var map = ({})
+        if (!setObj) return map
+
+        function addName(pitch, name) {
+            if (pitch === null || pitch === undefined) return
+            pitch = parseInt(pitch, 10)
+            if (isNaN(pitch) || pitch < 0 || pitch > 127) return
+            if (!map[pitch]) map[pitch] = []
+            // avoid duplicates if both technique/articulation map share names (rare, but safe)
+            if (map[pitch].indexOf(name) === -1) map[pitch].push(name)
+        }
+
+        if (setObj.articulationKeyMap) {
+            for (var k in setObj.articulationKeyMap) {
+                var p = pitchFromKsMapValue(setObj.articulationKeyMap[k])
+                if (p !== null) addName(p, k)
+            }
+        }
+
+        if (setObj.techniqueKeyMap) {
+            for (var t in setObj.techniqueKeyMap) {
+                var p2 = pitchFromKsMapValue(setObj.techniqueKeyMap[t])
+                if (p2 !== null) addName(p2, t)
+            }
+        }
+
+        return map
+    }
+
+    function activeNamesMapFromRegistryText(jsonText, setName) {
+        var reg = parseRegistrySafely(jsonText)
+        if (reg && reg.hasOwnProperty(setName)) return namesMapFromSetObj(reg[setName])
+
+        // fallback to already-parsed in-memory registry
+        if (keyswitchSets && keyswitchSets[setName]) return namesMapFromSetObj(keyswitchSets[setName])
+
+        return ({})
+    }
+
     function uniqMidi(list) {
         var seen = {}, out = []
         for (var i = 0; i < list.length; ++i) {
@@ -296,11 +338,17 @@ MuseScore {
 
         // No explicit set selected/assigned → clear keyboard highlights
         if (!setName || setName === "__none__") {
-            if (kbroot) kbroot.activeNotes = []
+            if (kbroot) {
+                kbroot.activeNotes = []
+                kbroot.noteLabelsMap = ({})
+            }
             return
         }
 
-        if (kbroot) kbroot.activeNotes = activeMidiFromRegistryText(jsonArea.text, setName)
+        if (kbroot) {
+            kbroot.activeNotes = activeMidiFromRegistryText(jsonArea.text, setName)
+            kbroot.noteLabelsMap = activeNamesMapFromRegistryText(jsonArea.text, setName)
+        }
     }
 
     //--------------------------------------------------------------------------------
@@ -1243,6 +1291,8 @@ MuseScore {
                     property color accent:      themeAccent        // use app/theme accent
                     property real  activeOverlayOpacityWhite: 0.65
                     property real  activeOverlayOpacityBlack: 0.80
+                    // map midi -> ["pizz", "staccato", ...] for tooltip line 2
+                    property var noteLabelsMap: ({}) // { 26:["pizz"], 25:["staccato"], ... }
 
                     onActiveNotesChanged: {
                         var m = {}
@@ -1286,8 +1336,14 @@ MuseScore {
                         return names[pc] + octaveFor(m)
                     }
 
-                    function tooltipText(m) {
-                        return "MIDI " + m + "\n" + noteName(m)
+                    function tooltipText(m) {    // Line 1: MIDI 0 (C-1)
+                        var line1 = "MIDI " + m + " (" + noteName(m) + ")"
+                        // Line 2: keyswitch names, if any
+                        var labels = noteLabelsMap && noteLabelsMap[m] ? noteLabelsMap[m] : null
+                        if (labels && labels.length) {
+                            return line1 + "\n" + labels.join(", ")
+                        }
+                        return line1
                     }
 
                     // NEW: active highlighting
