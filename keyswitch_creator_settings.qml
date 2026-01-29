@@ -21,7 +21,7 @@ import MuseScore 3.0
 
 MuseScore {
     id: root
-    version: "0.9.5"
+    version: "0.9.6"
     title: qsTr("Keyswitch Creator Settings")
     description: qsTr("Keyswitch Creator settings.")
     pluginType: "dialog"
