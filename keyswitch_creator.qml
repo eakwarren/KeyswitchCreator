@@ -154,7 +154,7 @@ MuseScore {
 
     function isEligibleSourceStaff(staffIdx) { return targetStaffForKeyswitch(staffIdx) !== -1 }
 
-    function normalizeTextBasic(s) { var t=(s||"").toString(); t=t.replace(/“\n”/g,'"').replace(/‘\n’/g,"'"); t=t.replace(/\u00A0/g," ").replace(/\s+/g," "); return t }
+    function normalizeTextBasic(s) { var t = (s || "").toString(); t = t.replace(/[“”]/g,'"').replace(/[‘’]/g,"'"); t = t.replace(/\u00A0/g," ").replace(/\s+/g," "); return t }
 
     function sameStaff(trackA, trackB) { return Math.floor(trackA/4) === Math.floor(trackB/4) }
 
@@ -172,21 +172,21 @@ MuseScore {
                     if (seg.annotations) {
                         for (var ai in seg.annotations) {
                             var ann = seg.annotations[ai]
-                            var annStaff = (ann.track == -1) ? s : Math.floor(ann.track/4)
-                            if ((ann.type == Element.STAFF_TEXT || ann.type == Element.SYSTEM_TEXT || ann.type == Element.EXPRESSION_TEXT) && annStaff == s) {
+                            var annStaff = (ann.track === -1) ? s : Math.floor(ann.track/4)
+                            if ((ann.type === Element.STAFF_TEXT || ann.type === Element.SYSTEM_TEXT || ann.type === Element.EXPRESSION_TEXT) && annStaff === s) {
                                 var tName = parseSetTag(ann.text || ""); if (tName.length) { if (!setTagTimeline[s]) setTagTimeline[s] = []; setTagTimeline[s].push({tick: seg.tick, setName: tName}); }
                             }
                         }
                     }
                     for (var v = 0; v < 4; ++v) {
                         var el = seg.elementAt ? seg.elementAt(s*4+v) : null
-                        if (el && el.type == Element.CHORD && el.notes) {
+                        if (el && el.type === Element.CHORD && el.notes) {
                             for (var ni in el.notes) {
                                 var note = el.notes[ni]
                                 if (!note.elements) continue
                                 for (var ei in note.elements) {
                                     var nel = note.elements[ei]
-                                    if (nel.type == Element.TEXT) {
+                                    if (nel.type === Element.TEXT) {
                                         var tn = parseSetTag(nel.text || "")
                                         if (tn.length) { if (!setTagTimeline[s]) setTagTimeline[s] = []; setTagTimeline[s].push({ tick: seg.tick, setName: tn }) }
                                     }
@@ -214,6 +214,126 @@ MuseScore {
         return name
     }
 
+    // --- NEW: KS:Text= tag parsing (can appear in Staff Text or System Text) ---
+    function parseTextTagValues(rawText) {
+        var s = normalizeTextBasic(rawText)
+        var lower = s.toLowerCase()
+        var out = []
+        var start = 0
+
+        while (true) {
+            var idx = lower.indexOf("ks:text", start)
+            if (idx < 0) break
+
+            var i = idx + 7  // length("ks:text") == 7
+            while (i < s.length && s[i] === " ") i++
+
+            if (i < s.length && s[i] === "=") {
+                i++
+                while (i < s.length && s[i] === " ") i++
+            }
+            if (i >= s.length) { start = idx + 7; continue }
+
+            var ch = s[i], val = ""
+            if (ch === '"' || ch === "'") {
+                var q = ch
+                i++
+                var j = s.indexOf(q, i)
+                val = (j === -1) ? s.substring(i).trim() : s.substring(i, j).trim()
+                start = (j === -1) ? s.length : (j + 1)
+            } else {
+                var j2 = i
+                while (j2 < s.length && s[j2] !== " ") j2++
+                val = s.substring(i, j2).trim()
+                start = j2
+            }
+
+            if (val.length)
+                out.push(val)
+        }
+
+        return out
+    }
+
+    // Resolve KS:Text=<value> directly against techniqueKeyMap (case-insensitive key match)
+    function findTaggedTechniqueKeyswitches(texts, techMap) {
+        var specs = []
+        if (!techMap) return specs
+
+        // Build a lowercase index for case-insensitive matching without changing user JSON
+        var lcIndex = {}
+        for (var k in techMap) {
+            if (!techMap.hasOwnProperty(k)) continue
+            lcIndex[String(k).toLowerCase()] = k
+        }
+
+        for (var ti = 0; ti < texts.length; ++ti) {
+            var vals = parseTextTagValues(texts[ti])
+            for (var vi = 0; vi < vals.length; ++vi) {
+                var wanted = String(vals[vi]).toLowerCase()
+                var realKey = lcIndex[wanted]
+                if (realKey === undefined) continue
+
+                var spec = parseKsMapValue(techMap[realKey])
+                if (spec) specs.push(spec)
+            }
+        }
+        return specs
+    }
+
+    // remove KS:Text=... directives so normal technique matching doesn't see tag contents
+    function stripKsTextDirectives(rawText) {
+        var s = normalizeTextBasic(rawText)
+        var lower = s.toLowerCase()
+        var out = ""
+        var pos = 0
+
+        while (true) {
+            var idx = lower.indexOf("ks:text", pos)
+            if (idx < 0) {
+                out += s.substring(pos)
+                break
+            }
+
+            // keep everything before the directive
+            out += s.substring(pos, idx)
+
+            // advance i to just after "ks:text"
+            var i = idx + 7
+            while (i < s.length && s[i] === " ") i++
+
+            // optional '=' and spaces
+            if (i < s.length && s[i] === "=") {
+                i++
+                while (i < s.length && s[i] === " ") i++
+            }
+
+            // now skip the value (quoted or single token)
+            if (i >= s.length) { pos = s.length; break }
+
+            var ch = s[i]
+            if (ch === '"' || ch === "'") {
+                var q = ch
+                i++
+                var j = s.indexOf(q, i)
+                pos = (j === -1) ? s.length : (j + 1)
+            } else {
+                var j2 = i
+                while (j2 < s.length && s[j2] !== " ") j2++
+                pos = j2
+            }
+        }
+
+        return out
+    }
+
+    function stripKsTextDirectivesFromList(texts) {
+        var out = []
+        for (var i = 0; i < texts.length; ++i)
+            out.push(stripKsTextDirectives(texts[i]))
+        return out
+    }
+
     // ---- KS:Scope / KS:Parts ----
     function parseScopeTag(rawText) {
         var s = normalizeTextBasic(rawText).toLowerCase()
@@ -221,7 +341,7 @@ MuseScore {
         var i = idx + 8; while (i < s.length && s[i] === ' ') i++
         if (i < s.length && s[i] === '=') { i++; while (i < s.length && s[i] === ' ') i++ }
         var val = s.substring(i).trim(); if (!val) return ""
-        if (val[0]=='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
+        if (val[0]==='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
         return (val==="part"||val==="staff") ? val : ""
     }
 
@@ -231,7 +351,7 @@ MuseScore {
         var i = idx + 8; while (i < s.length && s[i] === ' ') i++
         if (i < s.length && s[i] === '=') { i++; while (i < s.length && s[i] === ' ') i++ }
         var val = s.substring(i).trim(); if (!val) return ""
-        if (val[0]=='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
+        if (val[0]==='"' || val[0]==="'") { var q=val[0]; var j=val.indexOf(q,1); val=(j===-1)?val.slice(1):val.slice(1,j) } else { var sp=val.indexOf(' '); if (sp>0) val=val.substring(0,sp) }
         return (val==="all"||val==="anchor") ? val : ""
     }
 
@@ -245,8 +365,8 @@ MuseScore {
                     if (seg.annotations) {
                         for (var ai in seg.annotations) {
                             var ann = seg.annotations[ai]
-                            var annStaff = (ann.track == -1) ? s : Math.floor(ann.track/4)
-                            if ((ann.type == Element.STAFF_TEXT || ann.type == Element.SYSTEM_TEXT || ann.type == Element.EXPRESSION_TEXT) && annStaff == s) {
+                            var annStaff = (ann.track === -1) ? s : Math.floor(ann.track/4)
+                            if ((ann.type === Element.STAFF_TEXT || ann.type === Element.SYSTEM_TEXT || ann.type === Element.EXPRESSION_TEXT) && annStaff === s) {
                                 if (!scopeVal) scopeVal = parseScopeTag(ann.text || "")
                                 if (!partsVal) partsVal = parsePartsTag(ann.text || "")
                                 if (scopeVal && partsVal) return { scope: scopeVal, parts: partsVal }
@@ -255,12 +375,12 @@ MuseScore {
                     }
                     for (var v=0; v<4; ++v) {
                         var el = seg.elementAt ? seg.elementAt(s*4+v) : null
-                        if (el && el.type == Element.CHORD && el.notes) {
+                        if (el && el.type === Element.CHORD && el.notes) {
                             for (var ni in el.notes) {
                                 var note = el.notes[ni]; if (!note.elements) continue
                                 for (var ei in note.elements) {
                                     var nel = note.elements[ei]
-                                    if (nel.type == Element.TEXT) {
+                                    if (nel.type === Element.TEXT) {
                                         if (!scopeVal) scopeVal = parseScopeTag(nel.text || "")
                                         if (!partsVal) partsVal = parsePartsTag(nel.text || "")
                                         if (scopeVal && partsVal) return { scope: scopeVal, parts: partsVal }
@@ -290,29 +410,93 @@ MuseScore {
     }
 
     function segmentTechniqueTexts(chord) {
-        var out=[]; var seg=chord.parent
+        var out = []
+        var seg = chord.parent
+
+        // Segment-level Staff/System/Expression text
         if (seg && seg.annotations) {
             for (var i in seg.annotations) {
                 var ann = seg.annotations[i]
-                if (ann.type===Element.STAFF_TEXT
-                        || ann.type===Element.SYSTEM_TEXT
-                        || ann.type===Element.EXPRESSION_TEXT) {
-                    if (ann.type !== Element.STAFF_TEXT
-                            || sameStaff(ann.track, chord.track)) {
-                        var norm = normalizeTextBasic(ann.text).toLowerCase().trim();
+
+                // DIAG: what is actually in seg.annotations at this chord?
+                try {
+                    dbg("ann@tick=" + (seg ? seg.tick : -1)
+                        + " staff=" + chord.staffIdx
+                        + " count=" + (seg && seg.annotations ? seg.annotations.length : 0));
+                    if (seg && seg.annotations) {
+                        for (var di = 0; di < seg.annotations.length; ++di) {
+                            var a = seg.annotations[di];
+                            var aType = (a && a.type !== undefined) ? a.type : -999;
+                            var aName = "";
+                            try { aName = a.userName ? a.userName().toString() : ""; } catch (e) {}
+                            var aText = "";
+                            try { aText = (a.text !== undefined) ? normalizeTextBasic(a.text) : ""; } catch (e2) {}
+                            var aTrack = -999, aStaffIdx = -999;
+                            try { aTrack = (a.track !== undefined) ? a.track : -999; } catch (e3) {}
+                            try { aStaffIdx = (a.staffIdx !== undefined) ? a.staffIdx : -999; } catch (e4) {}
+
+                            dbg("ann  type=" + aType
+                                + " userName=" + aName
+                                + " track=" + aTrack
+                                + " staffIdx=" + aStaffIdx
+                                + " text='" + aText + "'");
+                        }
+                    }
+                } catch (e) { dbg("ann DIAG error: " + e); }
+
+                // Accept Staff/System/Expression text AND palette "Playing technique annotation".
+                // Observed in your log: "Playing technique annotation" has type=57 on this build.
+                var isPlayTech = false
+                try {
+                    var un = ann.userName ? String(ann.userName()).toLowerCase() : ""
+                    isPlayTech = un.indexOf("playing technique annotation") >= 0
+                } catch (e) {}
+
+                if (ann.type === Element.STAFF_TEXT
+                        || ann.type === Element.SYSTEM_TEXT
+                        || ann.type === Element.EXPRESSION_TEXT
+                        || ann.type === 57                      // playing technique annotation (observed)
+                        || isPlayTech) {                        // name-based fallback
+
+                    // Determine staff for this annotation (best effort)
+                    var annStaffIdx = -1
+                    try {
+                        if (ann.track !== undefined && ann.track !== -1) {
+                            annStaffIdx = Math.floor(ann.track / 4)
+                        } else if (ann.staffIdx !== undefined) {
+                            annStaffIdx = ann.staffIdx
+                        } else if (ann.type === Element.STAFF_TEXT || ann.type === Element.EXPRESSION_TEXT) {
+                            // Palette-drag: no track/staffIdx in annotations; treat as current chord's staff
+                            annStaffIdx = chord.staffIdx
+                        }
+                    } catch (e) { annStaffIdx = -1 }
+
+                    // after computing annStaffIdx
+                    dbg("ann staff decision: annType=" + ann.type
+                        + " chordStaff=" + chord.staffIdx
+                        + " annStaff=" + annStaffIdx);
+
+                    // SYSTEM_TEXT is global; Staff/Expression must match the chord's staff
+                    var staffOk = (ann.type === Element.SYSTEM_TEXT) || (annStaffIdx === chord.staffIdx)
+                    if (staffOk) {
+                        var norm = normalizeTextBasic(ann.text).toLowerCase().trim()
+                        // just before pushing norm:
+                        dbg("ann accepted: '" + norm + "'");
                         if (norm.length) out.push(norm)
                     }
                 }
             }
         }
+
+        // Note-attached plain text
         if (chord.notes) {
             for (var j in chord.notes) {
-                var note=chord.notes[j];
-                if (!note.elements) continue;
+                var note = chord.notes[j]
+                if (!note.elements) continue
                 for (var k in note.elements) {
-                    var nel=note.elements[k];
-                    if (nel.type===Element.TEXT) {
-                        var txt=normalizeTextBasic(nel.text).toLowerCase().trim();
+                    var nel = note.elements[k]
+                    if (nel.type === Element.TEXT) {
+                        var txt = normalizeTextBasic(nel.text).toLowerCase().trim()
                         if (txt.length) out.push(txt)
                     }
                 }
@@ -475,7 +659,7 @@ MuseScore {
         return specs
     }
 
-    function keyswitchExistsAt(cursor, pitch) { if (!cursor.element || cursor.element.type != Element.CHORD) return false; var chord=cursor.element; for (var i in chord.notes) if (chord.notes[i].pitch==pitch) return true; return false }
+    function keyswitchExistsAt(cursor, pitch) { if (!cursor.element || cursor.element.type !== Element.CHORD) return false; var chord=cursor.element; for (var i in chord.notes) if (chord.notes[i].pitch===pitch) return true; return false }
 
     function addKeyswitchNoteAt(sourceChord, pitch, velocity, firstOfChord, activeSet) {
         var track = sourceChord.track
@@ -494,10 +678,20 @@ MuseScore {
 
         c.setDuration(num, den)
         if (dedupeAcrossVoices && firstOfChord && wasEmittedCross(c.staffIdx, c.tick)) return false
-        ensureWritableSlot(c, num, den)
+
+        // Only create a writable slot if there is nothing (or something unexpected) at this position.
+        // IMPORTANT: ensureWritableSlot() adds a rest, which would overwrite an existing chord.
+        var existing = c.element
+        var existingIsChord = (existing && existing.type === Element.CHORD)
+        var existingIsRest  = (existing && existing.type === Element.REST)
+        if (!existing || (!existingIsChord && !existingIsRest))
+            ensureWritableSlot(c, num, den)
 
         if (skipIfExists && keyswitchExistsAt(c, pitch)) return false
-        try { c.addNote(pitch, false) } catch(e) { dbg("addNote failed at tick="+c.tick+" pitch="+pitch); return false }
+
+        // If a chord already exists here, stack into it. Otherwise create a new chord.
+        var addToChord = existingIsChord
+        try { c.addNote(pitch, addToChord) } catch(e) { dbg("addNote failed at tick="+c.tick+" pitch="+pitch); return false }
         c.rewindToFraction(startFrac)
         if (!keyswitchExistsAt(c, pitch)) { dbg("post-add verification failed at tick="+c.tick+" pitch="+pitch); return false }
 
@@ -505,12 +699,12 @@ MuseScore {
             markEmittedCross(c.staffIdx, c.tick)
 
         // apply velocity (and optionally hide) to the note we just inserted
-        if (c.element && c.element.type == Element.CHORD) {
+        if (c.element && c.element.type === Element.CHORD) {
             var ch = c.element
             if (ch.notes) {
                 for (var i in ch.notes) {
                     var nn = ch.notes[i]
-                    if (nn.pitch == pitch) {
+                    if (nn.pitch === pitch) {
                         // Apply absolute velocity
                         setKeyswitchNoteVelocity(nn, velocity)
                         // Preserve existing behavior
@@ -548,7 +742,7 @@ MuseScore {
         for (var pidx in perPart) {
             var arr = perPart[pidx]
             if (effScope === "part") { for (var i=0;i<arr.length;++i) allowed[arr[i]] = true }
-            else { var minS=arr[0]; for (var i2=1;i2<arr.length;++i2) if (arr[i2] < minS) minS=arr[i2]; allowed[minS] = true }
+            else { for (var i3=0; i3<arr.length; ++i3) allowed[arr[i3]] = true }
         }
         return allowed
     }
@@ -562,17 +756,36 @@ MuseScore {
         if (curScore.selection.isRange) {
             var startTick = curScore.selection.startSegment.tick
             var endTick   = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1
-            var startStaff= curScore.selection.startStaff
-            var endStaff  = curScore.selection.endStaff
-
-            var overrides = scopeOverrideInSelection(startStaff, endStaff, startTick, endTick)
+            var startStaff = curScore.selection.startStaff
+            // MuseScore selection.endStaff behaves as an exclusive bound; convert to inclusive for our <= loops
+            var endStaffInc = Math.max(startStaff, curScore.selection.endStaff - 1)
+            // Expand staff bounds with any text elements present in the selection (palette-drag or Cmd+T)
+            var selMin =  99999
+            var selMax = -1
+            for (var ei in curScore.selection.elements) {
+                var el = curScore.selection.elements[ei]
+                var sIdx = -1
+                try {
+                    if (el.track !== undefined && el.track !== -1) sIdx = Math.floor(el.track / 4)
+                    else if (el.staffIdx !== undefined) sIdx = el.staffIdx
+                } catch (e) { sIdx = -1 }
+                if (sIdx >= 0) {
+                    if (sIdx < selMin) selMin = sIdx
+                    if (sIdx > selMax) selMax = sIdx
+                }
+            }
+            if (selMax >= 0) {
+                if (selMin < startStaff) startStaff = selMin
+                if (selMax > endStaffInc) endStaffInc = selMax
+            }
+            var overrides = scopeOverrideInSelection(startStaff, endStaffInc, startTick, endTick)
             var effScope  = overrides.scope ? overrides.scope : rangeScopeMode
             var effParts  = overrides.parts ? overrides.parts : selectionPartMode
 
             // any multi‑part range selection (regardless of which staff it starts on) processes all touched parts
             // unless explicitly overridden by a ks:parts tag
             var partsTouched = {}
-            for (var sX=startStaff; sX<=endStaff; ++sX) { var pX = partInfoForStaff(sX); if (pX) partsTouched[pX.index] = true }
+            for (var sX = startStaff; sX <= endStaffInc; ++sX) { var pX = partInfoForStaff(sX); if (pX) partsTouched[pX.index] = true }
             var touchedCount = 0; for (var k in partsTouched) touchedCount++
             dbg("selection parts touched="+touchedCount+" / totalParts="+partCount())
 
@@ -583,17 +796,17 @@ MuseScore {
                 dbg("parts: auto-widen to 'all' (multi-part selection)")
             }
 
-            var allowedMap = computeAllowedSourceStaves(startStaff, endStaff, effScope, effParts)
+            var allowedMap = computeAllowedSourceStaves(startStaff, endStaffInc, effScope, effParts)
             dbg("scope: effective='"+effScope+"' parts: effective='"+effParts+"'")
             dbg("allowed source staves: "+Object.keys(allowedMap).sort().join(", "))
 
-            for (var s=startStaff; s<=endStaff; ++s) {
+            for (var s = startStaff; s <= endStaffInc; ++s) {
                 if (!allowedMap[s]) continue
                 for (var v=0; v<4; ++v) {
                     var c=curScore.newCursor(); c.track=s*4+v; c.rewindToTick(startTick)
                     while (c.tick < endTick) {
                         var el=c.element
-                        if (el && el.type==Element.CHORD && el.noteType==NoteType.NORMAL) {
+                        if (el && el.type===Element.CHORD && el.noteType===NoteType.NORMAL) {
                             var sIdx=el.staffIdx
                             var ok=isEligibleSourceStaff(sIdx)
                             dbg("scan: staff="+sIdx+" eligible="+ok)
@@ -607,7 +820,7 @@ MuseScore {
             for (var i in curScore.selection.elements) {
                 var el=curScore.selection.elements[i]
                 var chord=null; if (el.type==Element.NOTE && el.parent && el.parent.type==Element.CHORD) chord=el.parent; else if (el.type==Element.CHORD) chord=el; else continue
-                if (chord.noteType != NoteType.NORMAL) continue
+                if (chord.noteType !== NoteType.NORMAL) continue
                 var sIdx2=chord.staffIdx; var ok2=isEligibleSourceStaff(sIdx2)
                 dbg("scan(list): staff="+sIdx2+" eligible="+ok2)
                 if (ok2) chords.push(chord); else { sawIneligible=true; if (firstIneligibleStaffIdx<0) firstIneligibleStaffIdx=sIdx2; var pi2=partInfoForStaff(sIdx2); if (pi2) ineligiblePartIdx[pi2.index]=true }
@@ -627,6 +840,7 @@ MuseScore {
 
             if (!setName) {
                 // No active set by tag or assignment => do not create keyswitches
+                dbg("skip: no active set for staff="+chord.staffIdx+" tick="+tickHere);
                 continue
             }
             var activeSet = keyswitchSets[setName]
@@ -636,6 +850,7 @@ MuseScore {
             }
 
             var texts      = segmentTechniqueTexts(chord)
+            dbg("texts@tick=" + tickHere + " staff=" + chord.staffIdx + " => " + texts.join(" | "))
             var artiNames  = chordArticulationNames(chord)
             var specs   = []
 
@@ -645,12 +860,15 @@ MuseScore {
             if (!aliasMap && globalSettings && globalSettings.techniqueAliases)
                 aliasMap = globalSettings.techniqueAliases
 
-            specs = specs.concat(findTechniqueKeyswitches(texts, techMap, aliasMap))
+            specs = specs.concat(findTaggedTechniqueKeyswitches(texts, techMap))
+            var textsNoKsText = stripKsTextDirectivesFromList(texts)
+            specs = specs.concat(findTechniqueKeyswitches(textsNoKsText, techMap, aliasMap))
             specs = specs.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null))
 
             var seen = {}
-            for (var j in specs) {
+            for (var j = 0; j < specs.length; ++j) {
                 var spec = specs[j]
+
                 if (!spec) continue
 
                 var p = spec.pitch
@@ -669,7 +887,13 @@ MuseScore {
         if (created>0 && warnOnPartialSuccess) {
             for (var idx in ineligiblePartIdx) {
                 if (ineligiblePartIdx[idx]) {
-                    for (var s=0; s<curScore.staves.length; ++s) { var pi=partInfoForStaff(s); if (pi && pi.index==idx) { partialParts.push(nameForPartByRange(s,0)); break } }
+                    var idxNum = parseInt(idx, 10)
+                    for (var s=0; s<curScore.staves.length; ++s) {
+                        var pi=partInfoForStaff(s);
+                        if (pi && pi.index === idxNum) {
+                            partialParts.push(nameForPartByRange(s,0)); break
+                        }
+                    }
                 }
             }
         }
