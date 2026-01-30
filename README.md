@@ -17,21 +17,21 @@ Developed with ❤️ by Eric Warren
    * Windows: [USER]\Documents\MuseScore4\Plugins
    * Mac: [USER]/Documents/MuseScore4/Plugins
    * Linux: [USER]/Documents/MuseScore4/Plugins
-2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized each keyswitch staff's size, color, and clef for better recognition.
+2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's size, color, and clef for better recognition.
 
-(pic)
+    <img width="551" height="121" alt="keyswitch_staff_example" src="https://github.com/user-attachments/assets/d4a9f38f-5941-4de1-a17e-bcf10626bbdf" />
 
-For extremely low keyswitches, add 15ma bassa lines to raise them on the staff, or 15ma alta for high keyswitches. _Note: Place and extend lines prior to running Keyswitch Creator, or adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
+   For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Place and extend lines prior to running Keyswitch Creator, or adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
 
-(pic)
+   (pic)
 
 3. Open Plugins > Manage Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
 
-(pic)
+    <img width="1248" height="441" alt="plugins_enabled" src="https://github.com/user-attachments/assets/2248db16-c155-49d1-b96e-6473b0bd2ab1" />
 
-4. Open the Keyswitch Creator Settings plugin to create and assign sets to each staff.
+4. Open the Keyswitch Creator Settings plugin to create and assign sets to each staff.  Shift-clicking selects a range of staves and Cmd/Ctrl-clicking selects multiple staves. Cmd/Ctrl+A selects all staves.
 
-(large pic)
+    <img width="1386" height="840" alt="settings" src="https://github.com/user-attachments/assets/1825d6f6-cfee-487b-bf8d-4f01fef4a576" />
 
 5. Make a selection in the score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set Cmd/Ctrl+Shift+K as a shortcut.)
 
@@ -41,17 +41,27 @@ For extremely low keyswitches, add 15ma bassa lines to raise them on the staff, 
 ## Extended Score Text Features
 Add any of the following text tags to the score to customize keyswitch creation.
 
-#### `KS:Set="Default Low"` or `KS:Set BBCSO_Strings` 
+#### KS:Set
 Activates a set on that staff from that point onward. Helpful when you change instruments mid-score.
 
-#### `KS:Text=CustomTechnique` or `KS:Text="con sord" KS:Text=legato`
+`KS:Set="Default Low"` or `KS:Set BBCSO_Strings` 
+
+
+#### KS:Text
 Assigns custom keyswitches based on entries in the set's `techniqueKeyMap`. Define multiple tags in one text element. 
 
-#### `KS:Scope=part` or `KS:Scope=staff` 
+`KS:Text=CustomTechnique` or `KS:Text="con sord" KS:Text=legato`
+
+
+#### KS:Scope
 In range selections, `part` processes all staves of each touched part; `staff` restricts to the touched staves only. First tag found in the range wins.
 
-#### `KS:Scope=part` or `KS:Scope=staff`
+`KS:Scope=part` or `KS:Scope=staff` 
+
+
+#### KS:Parts
 In range selections, `all` processes every touched part; `anchor` restricts to the part of the selection’s starting staff. Without a tag, multi‑part selections auto‑widen to `all`.
+`KS:Parts=all` or `KS:SParts=anchor`
 
 
 ## Settings Window
@@ -107,7 +117,8 @@ Global `techniqueAliases` allow for matching slight variations on technique spel
 #### JSON Error Highlighting
 Pinpoint bad JSON with heuristics for common faults like missing quotation marks or commas in the editor windows.
 
-(pic)
+<img width="1155" height="429" alt="registry error" src="https://github.com/user-attachments/assets/745673f2-5627-4368-885a-f2f9c48cca6c" />
+
 
 
 ## Keyswitch Sets
