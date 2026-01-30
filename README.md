@@ -2,7 +2,7 @@
 A MuseScore Studio (v4.7+) plugin that creates keyswitches based on articulation symbols and technique text in the score. These notes then drive articulation changes in VST instruments.
 
 
-The plugin has two parts
+The plugin has two parts:
 1. A robust settings dialog that allows assignment of keyswitch sets per staff, displays an intuitive map of keyswitch sets, and provides editors for set creation and global customization.
 
 2. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff _directly below_ the played staff, within the same instrument/part.
@@ -19,11 +19,12 @@ Developed with ❤️ by Eric Warren
    * Linux: [USER]/Documents/MuseScore4/Plugins
 2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's size, color, and clef for better recognition.
 
-    <img width="551" height="121" alt="keyswitch_staff_example" src="https://github.com/user-attachments/assets/d4a9f38f-5941-4de1-a17e-bcf10626bbdf" />
+   <img width="546" height="114" alt="keyswitch staff example" src="https://github.com/user-attachments/assets/fcf3d9a6-8977-47b2-88d4-ad35b5626d67" />
 
    For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Place and extend lines prior to running Keyswitch Creator, or adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
 
-   (pic)
+   <img width="357" height="92" alt="15ma bassa" src="https://github.com/user-attachments/assets/6b71ab9a-66ef-4a2e-9192-4150fa1a370e" />
+
 
 3. Open Plugins > Manage Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
 
@@ -31,11 +32,13 @@ Developed with ❤️ by Eric Warren
 
 4. Open the Keyswitch Creator Settings plugin to create and assign sets to each staff.  Shift-clicking selects a range of staves and Cmd/Ctrl-clicking selects multiple staves. Cmd/Ctrl+A selects all staves.
 
-    <img width="1386" height="840" alt="settings" src="https://github.com/user-attachments/assets/1825d6f6-cfee-487b-bf8d-4f01fef4a576" />
+    <img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
+
 
 5. Make a selection in the score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set Cmd/Ctrl+Shift+K as a shortcut.)
 
-(pic)
+    <img width="711" height="294" alt="ks applied" src="https://github.com/user-attachments/assets/d8ec904a-2da8-484f-8870-be0e5ea54dbf" />
+
 
 
 ## Extended Score Text Features
