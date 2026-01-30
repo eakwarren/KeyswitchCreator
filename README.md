@@ -1,9 +1,9 @@
 # Keyswitch Creator
-A MuseScore Studio (v4.7+) plugin that creates keyswitches based on articulation symbols and technique text in the score. These notes then drive articulation changes in VST instruments.
+A MuseScore Studio (v4.7+) plugin that automates keyswitch creation based on articulation symbols and technique text in the score. These notes then drive articulation changes in VST instruments.
 
 
 The plugin has two parts:
-1. A robust settings dialog that allows assignment of keyswitch sets per staff, displays an intuitive map of keyswitch sets, and provides editors for set creation and global customization.
+1. A robust settings dialog that allows assignment of keyswitch sets per staff, displays an intuitive map of keyswitches in sets, and provides editors for set creation and global customization.
 
 2. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff _directly below_ the played staff, within the same instrument/part.
 
@@ -17,14 +17,13 @@ Developed with ❤️ by Eric Warren
    * Windows: [USER]\Documents\MuseScore4\Plugins
    * Mac: [USER]/Documents/MuseScore4/Plugins
    * Linux: [USER]/Documents/MuseScore4/Plugins
-2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's size, color, and clef for better recognition.
+2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's size, color, and clef to help it stand out from the score. Hide the staff when not working with keyswitches.
 
    <img width="546" height="114" alt="keyswitch staff example" src="https://github.com/user-attachments/assets/fcf3d9a6-8977-47b2-88d4-ad35b5626d67" />
 
    For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Place and extend lines prior to running Keyswitch Creator, or adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
 
    <img width="357" height="92" alt="15ma bassa" src="https://github.com/user-attachments/assets/6b71ab9a-66ef-4a2e-9192-4150fa1a370e" />
-
 
 3. Open Plugins > Manage Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
 
@@ -34,18 +33,15 @@ Developed with ❤️ by Eric Warren
 
     <img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
 
-
-5. Make a selection in the score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set Cmd/Ctrl+Shift+K as a shortcut.)
+5. Make a selection in the main score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set Cmd/Ctrl+Shift+K as a shortcut.)
 
     <img width="711" height="294" alt="ks applied" src="https://github.com/user-attachments/assets/d8ec904a-2da8-484f-8870-be0e5ea54dbf" />
 
-
-
 ## Extended Score Text Features
-Add any of the following text tags to the score to customize keyswitch creation.
+Add any of the following text tags to the main score to customize keyswitch creation.
 
 #### KS:Set
-Activates a set on that staff from that point onward. Helpful when you change instruments mid-score.
+Activates a set on a staff from that point onward. Helpful when you change instruments mid-score.
 
 `KS:Set="Default Low"` or `KS:Set BBCSO_Strings` 
 
@@ -57,13 +53,13 @@ Assigns custom keyswitches based on entries in the set's `techniqueKeyMap`. Defi
 
 
 #### KS:Scope
-In range selections, `part` processes all staves of each touched part; `staff` restricts to the touched staves only. First tag found in the range wins.
+In range selections, `staff` restricts to the selected staff only (default), `part` processes all staves of each selected part/instrument. First tag found in the range wins.
 
 `KS:Scope=part` or `KS:Scope=staff` 
 
 
 #### KS:Parts
-In range selections, `all` processes every touched part; `anchor` restricts to the part of the selection’s starting staff. Without a tag, multi‑part selections auto‑widen to `all`.
+In range selections, `all` processes every selected part/instrument; `anchor` restricts to the part of the selection’s starting staff. Without a tag, multi‑part selections auto‑widen to `all`.
 `KS:Parts=all` or `KS:SParts=anchor`
 
 
@@ -93,7 +89,7 @@ Each top‑level key is a set name. Map values accept a number (midi note) or st
 
 
 #### Global Settings
-The global `durationPolicy` specifies if keyswitch notes mirror the duration of their `source` note, or if each has a `fixed` value. (Defaults to 16th notes, but editable in the plugin code.)
+The global `durationPolicy` specifies if keyswitch notes mirror the duration of their `source` note (default), or if each has a `fixed` value. (Fixed to 16th notes, but editable in the plugin code.)
 
 Global `techniqueAliases` allow for matching slight variations on technique spelling.
 
@@ -118,7 +114,7 @@ Global `techniqueAliases` allow for matching slight variations on technique spel
 
 
 #### JSON Error Highlighting
-Pinpoint bad JSON with heuristics for common faults like missing quotation marks or commas in the editor windows.
+Pinpoint bad JSON with heuristics for common faults like missing quotation marks, braces, or commas in the editor windows.
 
 <img width="1155" height="429" alt="registry error" src="https://github.com/user-attachments/assets/745673f2-5627-4368-885a-f2f9c48cca6c" />
 
@@ -143,4 +139,4 @@ MuseScore Studio and VST instrument developers, wherever they may roam.
 
 
 ## Release Notes
-v0.9.6 1/29/26 Initial beta release.
+v0.9.6 1/29/26 Initial beta.
