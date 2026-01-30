@@ -827,10 +827,12 @@ MuseScore {
             dbg("allowed source staves: " + Object.keys(allowedMap).sort().join(", "))
 
             for (var t = startStaff * 4; t < 4 * (endStaffInc + 1); ++t) {
-                if (!allowedMap[staffIdxFromTrack(t)])
+                var trackStaff = staffIdxFromTrack(t)
+                if (!allowedMap[trackStaff])
                     continue
-                if (!isEligibleSourceStaff(sIdx))
+                if (!isEligibleSourceStaff(trackStaff))
                     continue
+
                 var c = curScore.newCursor()
                 c.track = t
                 c.rewindToTick(startTick)
@@ -838,13 +840,23 @@ MuseScore {
                     var el = c.element
                     if (el && el.type === Element.CHORD && el.noteType === NoteType.NORMAL) {
                         var sIdx = el.staffIdx
-
                         dbg("scan: staff=" + sIdx)
                         chords.push(el)
                     }
                     if (!c.next())
                         break
                 }
+            }
+            while (c.tick < endTick) {
+                var el = c.element
+                if (el && el.type === Element.CHORD && el.noteType === NoteType.NORMAL) {
+                    var sIdx = el.staffIdx
+
+                    dbg("scan: staff=" + sIdx)
+                    chords.push(el)
+                }
+                if (!c.next())
+                    break
             }
         } else {
             for (var el of curScore.selection.elements) {
