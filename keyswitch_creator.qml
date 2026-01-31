@@ -1095,89 +1095,60 @@ MuseScore {
         var out = []
         var seg = chord.parent
 
-        // segment-level Staff/System/Expression text
-        for (var ann of seg.annotations) {
-            // DIAG: what is actually in seg.annotations at this chord?
-            try {
-                dbg("ann@tick=" + (seg ? seg.tick : -1) + " staff=" + chord.staffIdx + " count=" + (seg && seg.annotations
-                                                                                                    ? seg.annotations.length : 0))
-                if (seg && seg.annotations) {
-                    for (var di = 0; di < seg.annotations.length; ++di) {
-                        var a = seg.annotations[di]
-                        var aType = (a && a.type !== undefined) ? a.type : -999
-                        var aName = ""
-                        try {
-                            aName = a.userName ? a.userName().toString() : ""
-                        } catch (e) {}
-                        var aText = ""
-                        try {
-                            aText = (a.text !== undefined) ? normalizeTextBasic(a.text) : ""
-                        } catch (e2) {}
-                        var aTrack = -999, aStaffIdx = -999
-                        try {
-                            aTrack = (a.track !== undefined) ? a.track : -999
-                        } catch (e3) {}
-                        try {
-                            aStaffIdx = (a.staffIdx !== undefined) ? a.staffIdx : -999
-                        } catch (e4) {}
+        // segment-level Staff/System/Expression text (incl. 'Playing technique annotation')
+        if (seg && seg.annotations) {
+            for (var idx = 0; idx < seg.annotations.length; ++idx) {
+                var ann = seg.annotations[idx]
+                if (!ann)
+                    continue
 
-                        dbg("ann  type=" + aType + " userName=" + aName + " track=" + aTrack + " staffIdx=" + aStaffIdx + " text='" + aText
-                            + "'")
+                var isPlayTech = false
+                try { // name-based fallback (seen on some builds)
+                    var un = ann.userName ? String(ann.userName()).toLowerCase() : ""
+                    isPlayTech = un.indexOf("playing technique annotation") >= 0
+                } catch (e) {}
+
+                if (ann.type === Element.STAFF_TEXT || ann.type === Element.SYSTEM_TEXT || ann.type === Element.EXPRESSION_TEXT || ann.type
+                        === 57 || isPlayTech) {
+
+                    // best-effort staff determination
+                    var annStaffIdx = -1
+                    try {
+                        if (ann.track !== undefined && ann.track !== -1)
+                            annStaffIdx = Math.floor(ann.track / 4)
+                        else if (ann.staffIdx !== undefined)
+                            annStaffIdx = ann.staffIdx
+                        else if (ann.type === Element.STAFF_TEXT || ann.type === Element.EXPRESSION_TEXT)
+                            annStaffIdx = chord.staffIdx
+                        // palette-drag fallback
+                    } catch (e) {
+                        annStaffIdx = -1
                     }
-                }
-            } catch (e) {
-                dbg("ann DIAG error: " + e)
-            }
 
-            // accept Staff/System/Expression text AND palette "Playing technique annotation".
-            // observed in your log: "Playing technique annotation" has type=57 on this build.
-            var isPlayTech = false
-            try {
-                var un = ann.userName ? String(ann.userName()).toLowerCase() : ""
-                isPlayTech = un.indexOf("playing technique annotation") >= 0
-            } catch (e) {}
-
-            if (ann.type === Element.STAFF_TEXT || ann.type === Element.SYSTEM_TEXT || ann.type === Element.EXPRESSION_TEXT || ann.type === 57
-                    ||
-                    // playing technique annotation (observed)
-                    isPlayTech) { // name-based fallback
-
-                // determine staff for this annotation (best effort)
-                var annStaffIdx = -1
-                try {
-                    if (ann.track !== undefined && ann.track !== -1) {
-                        annStaffIdx = Math.floor(ann.track / 4)
-                    } else if (ann.staffIdx !== undefined) {
-                        annStaffIdx = ann.staffIdx
-                    } else if (ann.type === Element.STAFF_TEXT || ann.type === Element.EXPRESSION_TEXT) {
-                        // palette-drag: no track/staffIdx in annotations; treat as current chord's staff
-                        annStaffIdx = chord.staffIdx
+                    // SYSTEM_TEXT is global; Staff/Expression must match chord's staff
+                    var staffOk = (ann.type === Element.SYSTEM_TEXT) || (annStaffIdx === chord.staffIdx)
+                    if (staffOk) {
+                        var norm = normalizeTextBasic(ann.text || "").toLowerCase().trim()
+                        if (norm.length)
+                            out.push(norm)
                     }
-                } catch (e) {
-                    annStaffIdx = -1
-                }
-
-                // after computing annStaffIdx
-                dbg("ann staff decision: annType=" + ann.type + " chordStaff=" + chord.staffIdx + " annStaff=" + annStaffIdx);
-
-                // SYSTEM_TEXT is global; Staff/Expression must match the chord's staff
-                var staffOk = (ann.type === Element.SYSTEM_TEXT) || (annStaffIdx === chord.staffIdx)
-                if (staffOk) {
-                    var norm = normalizeTextBasic(ann.text).toLowerCase().trim()
-                    dbg("ann accepted: '" + norm + "'")
-                    if (norm.length)
-                        out.push(norm)
                 }
             }
         }
 
         // note-attached plain text
-        for (var note of chord.notes) {
-            for (var nel of note.elements) {
-                if (nel.type === Element.TEXT) {
-                    var txt = normalizeTextBasic(nel.text).toLowerCase().trim()
-                    if (txt.length)
-                        out.push(txt)
+        if (chord.notes) {
+            for (var j in chord.notes) {
+                var note = chord.notes[j]
+                if (!note.elements)
+                    continue
+                for (var k in note.elements) {
+                    var nel = note.elements[k]
+                    if (nel.type === Element.TEXT) {
+                        var txt = normalizeTextBasic(nel.text || "").toLowerCase().trim()
+                        if (txt.length)
+                            out.push(txt)
+                    }
                 }
             }
         }
