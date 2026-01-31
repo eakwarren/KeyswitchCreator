@@ -871,17 +871,6 @@ MuseScore {
                         break
                 }
             }
-            while (c.tick < endTick) {
-                var el = c.element
-                if (el && el.type === Element.CHORD && el.noteType === NoteType.NORMAL) {
-                    var sIdx = el.staffIdx
-
-                    dbg("scan: staff=" + sIdx)
-                    chords.push(el)
-                }
-                if (!c.next())
-                    break
-            }
         } else {
             for (var el of curScore.selection.elements) {
                 var chord = null
@@ -1101,7 +1090,6 @@ MuseScore {
                 var ann = seg.annotations[idx]
                 if (!ann)
                     continue
-
                 var isPlayTech = false
                 try { // name-based fallback (seen on some builds)
                     var un = ann.userName ? String(ann.userName()).toLowerCase() : ""
