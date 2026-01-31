@@ -1265,8 +1265,9 @@ MuseScore {
         if (!curScore || srcStaffIdx < 0 || srcStaffIdx >= curScore.staves.length)
             return -1
         var last = staffIdxFromTrack(curScore.staves[srcStaffIdx].part.endTrack) - 1
-        dbg(qsTr("targetStaffForKeyswitch(range): src=%1 -> target=%2").arg(srcStaffIdx).arg(last))
-        return (last > srcStaffIdx) ? last : -1
+        var ret = (last > srcStaffIdx) ? last : -1
+        dbg(qsTr("targetStaffForKeyswitch(range): src=%1 -> target=%2").arg(srcStaffIdx).arg(ret))
+        return ret
     }
 
     // Build a "token" regex that matches alias surrounded by start/end or any non-word char.
