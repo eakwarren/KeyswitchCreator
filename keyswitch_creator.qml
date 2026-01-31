@@ -772,15 +772,20 @@ MuseScore {
         return curScore ? curScore.parts.length : 0
     }
 
+    // Returns the part index (not startTrack) and keeps multi‑part selection logic correct.
     function partInfoForStaff(staffIdx) {
-        var staff = curScore.staves[staffIdx]
-        if (staff) {
-            return {
-                index: staff.part.startTrack,
-                start: staff.part.startTrack,
-                end: staff.part.endTrack,
-                part: staff.part
-            }
+        var staffTrack = staffIdx * 4
+        if (!curScore || !curScore.parts)
+            return null
+        for (var i = 0; i < curScore.parts.length; ++i) {
+            var p = curScore.parts[i]
+            if (staffTrack >= p.startTrack && staffTrack < p.endTrack)
+                return {
+                    index: i,
+                    start: p.startTrack,
+                    end: p.endTrack,
+                    part: p
+                }
         }
         return null
     }
