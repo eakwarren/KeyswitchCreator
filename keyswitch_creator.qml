@@ -855,20 +855,34 @@ MuseScore {
                 var trackStaff = staffIdxFromTrack(t)
                 if (!allowedMap[trackStaff])
                     continue
-                if (!isEligibleSourceStaff(trackStaff))
-                    continue
+                var eligible = isEligibleSourceStaff(trackStaff)
+                var hadNormalChord = false
+
                 var c = curScore.newCursor()
                 c.track = t
                 c.rewindToTick(startTick)
+
                 while (c.tick < endTick) {
                     var el = c.element
                     if (el && el.type === Element.CHORD && el.noteType === NoteType.NORMAL) {
-                        var sIdx = el.staffIdx
-                        dbg("scan: staff=" + sIdx)
-                        chords.push(el)
+                        hadNormalChord = true
+                        if (eligible) {
+                            var sIdx = el.staffIdx
+                            dbg("scan: staff=" + sIdx)
+                            chords.push(el)
+                        }
                     }
                     if (!c.next())
                         break
+                }
+
+                if (!eligible && hadNormalChord) {
+                    sawIneligible = true
+                    if (firstIneligibleStaffIdx < 0)
+                        firstIneligibleStaffIdx = trackStaff
+                    var piN = partInfoForStaff(trackStaff)
+                    if (piN)
+                        ineligiblePartIdx[piN.index] = true
                 }
             }
         } else {
@@ -1249,6 +1263,8 @@ MuseScore {
 
     onRun: {
         dbg("onRun: begin")
+        // reset per-run prompt suppression
+        promptShown = false
         loadRegistryAndAssignments()
         if (!curScore) {
             dbg("No score open; quitting")
@@ -1308,7 +1324,10 @@ MuseScore {
             curScore.endCmd(true)
             dbg("ERROR: " + e.toString())
         }
-        quit()
+        // if a dialog was opened inside processSelection(), keep the plugin alive
+        // so the user can read it. The dialog's onAccepted calls quit().
+        if (!promptShown)
+            quit()
     }
 
     Settings {
