@@ -301,53 +301,73 @@ MuseScore {
         var endTick = curScore.lastSegment ? (curScore.lastSegment.tick + 1) : 0
         if (curScore.selection && curScore.selection.isRange)
             endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : endTick
-        dbg("collectSetTagsInRange: begin -> endTick=" + endTick)
+        dbg("collectSetTagsInRange: begin -> endTick=" + endTick);
 
-        for (var seg = curScore.firstSegment(); seg && seg.tick < endTick; seg = seg.next) {
-            if (seg.annotations) {
-                for (var ai in seg.annotations) {
-                    var ann = seg.annotations[ai]
-                    var annStaff = ann.staffIdx
-                    if ((ann.type === Element.STAFF_TEXT || ann.type === Element.SYSTEM_TEXT || ann.type === Element.EXPRESSION_TEXT)) {
-                        var tName = parseSetTag(ann.text || "")
-                        if (tName.length) {
-                            if (!setTagTimeline[annStaff])
-                                setTagTimeline[annStaff] = []
-                            setTagTimeline[annStaff].push({
-                                                              tick: seg.tick,
-                                                              setName: tName
-                                                          })
+        // walk each staff with a cursor, guard against sparse/undefined annotations and missing staffIdx
+        // which is not guaranteed for palette-dragged text or System text
+        for (var s = 0; s < curScore.staves.length; ++s) {
+            var c = curScore.newCursor()
+            c.track = s * 4
+            c.rewind(Cursor.SCORE_START)
+            while (c.segment && c.tick <= endTick) {
+                var seg = c.segment
+                if (seg) {
+                    // Staff/System/Expression text at the segment
+                    if (seg.annotations) {
+                        for (var ai in seg.annotations) {
+                            var ann = seg.annotations[ai]
+                            if (!ann)
+                                continue
+                            // guard against sparse arrays, get staff for this annotation
+                            var annStaff = (ann.track === -1) ? s : Math.floor(ann.track / 4)
+
+                            if ((ann.type === Element.STAFF_TEXT || ann.type === Element.SYSTEM_TEXT || ann.type
+                                 === Element.EXPRESSION_TEXT) && annStaff === s) {
+                                var tName = parseSetTag(ann.text || "")
+                                if (tName.length) {
+                                    if (!setTagTimeline[s])
+                                        setTagTimeline[s] = []
+                                    setTagTimeline[s].push({
+                                                               tick: seg.tick,
+                                                               setName: tName
+                                                           })
+                                }
+                            }
                         }
                     }
-                }
-            }
-            for (var t = 0; t < curScore.ntracks; ++t) {
-                var el = seg.elementAt(t)
-                if (el && el.type === Element.CHORD) {
-                    for (var note of el.notes) {
-                        for (var nel of note.elements) {
-                            if (nel.type === Element.TEXT) {
-                                var tn = parseSetTag(nel.text || "")
-                                if (tn.length) {
-                                    if (!setTagTimeline[nel.staffIdx])
-                                        setTagTimeline[nel.staffIdx] = []
-                                    setTagTimeline[nel.staffIdx].push({
-                                                                          tick: seg.tick,
-                                                                          setName: tn
-                                                                      })
+                    // note-attached plain Text on this staff at this segment
+                    for (var v = 0; v < 4; ++v) {
+                        var el = seg.elementAt ? seg.elementAt(s * 4 + v) : null
+                        if (el && el.type === Element.CHORD && el.notes) {
+                            for (var ni in el.notes) {
+                                var note = el.notes[ni]
+                                if (!note.elements)
+                                    continue
+                                for (var ei in note.elements) {
+                                    var nel = note.elements[ei]
+                                    if (nel.type === Element.TEXT) {
+                                        var tn = parseSetTag(nel.text || "")
+                                        if (tn.length) {
+                                            if (!setTagTimeline[s])
+                                                setTagTimeline[s] = []
+                                            setTagTimeline[s].push({
+                                                                       tick: seg.tick,
+                                                                       setName: tn
+                                                                   })
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                if (!c.next())
+                    break
             }
-            for (var sid in setTagTimeline) {
-                if (!setTagTimeline.hasOwnProperty(sid))
-                    continue
-                setTagTimeline[sid].sort(function (a, b) {
+            if (setTagTimeline[s])
+                setTagTimeline[s].sort(function (a, b) {
                     return a.tick - b.tick
                 })
-            }
         }
         dbg("collectSetTagsInRange: end")
     }
@@ -832,7 +852,6 @@ MuseScore {
                     continue
                 if (!isEligibleSourceStaff(trackStaff))
                     continue
-
                 var c = curScore.newCursor()
                 c.track = t
                 c.rewindToTick(startTick)
