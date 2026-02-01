@@ -931,7 +931,9 @@ MuseScore {
         })
     }
 
-    function scrollToSetInRegistry(setName) {
+    function scrollToSetInRegistry(setName, opts) {
+        // opts: { focus: boolean } — default false (don’t steal focus on passive updates)
+        var focusEditor = !!(opts && opts.focus)
         if (root.hasRegistryJsonError)
             return
         // cancel any queued "scroll to set" while an error is present
@@ -985,10 +987,12 @@ MuseScore {
                 var clamped = Math.max(0, Math.min(targetY, maxY))
 
                 flk.contentY = clamped
-                jsonArea.forceActiveFocus()
-                try {
-                    jsonArea.cursorVisible = true
-                } catch (e) {}
+                if (focusEditor && !(staffList && (staffList.activeFocus || stavesScroll.activeFocus))) {
+                    jsonArea.forceActiveFocus()
+                    try {
+                        jsonArea.cursorVisible = true
+                    } catch (e) {}
+                }
             })
         })
     }
@@ -1843,7 +1847,9 @@ MuseScore {
 
                                             // this button selected
                                             setButtonsFlow.uiSelectedSet = model.name
-                                            scrollToSetInRegistry(model.name)
+                                            scrollToSetInRegistry(model.name, {
+                                                                      focus: true
+                                                                  })
                                         }
 
                                         updateKeyboardActiveNotes();
@@ -2218,7 +2224,9 @@ MuseScore {
             if (root.hasRegistryJsonError)
                 return
             if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__")
-                scrollToSetInRegistry(setButtonsFlow.uiSelectedSet)
+                scrollToSetInRegistry(setButtonsFlow.uiSelectedSet, {
+                                          focus: false
+                                      })
         }
 
         target: setButtonsFlow
