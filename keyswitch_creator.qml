@@ -126,6 +126,7 @@ MuseScore {
     property string selectionPartMode: "anchor" // "anchor" or "all"
     property var setTagTimeline: ({})
     property bool skipIfExists: true
+    property var slurStartByStaff: ({})
     property var staffToSet: ({})
     // Techniques (written)
     property var techniqueKeyMap: ({
@@ -144,6 +145,10 @@ MuseScore {
                                    })
     property bool useSourceDuration: true
     property bool warnOnPartialSuccess: true
+
+    // Optional: interpret graphical slurs as a 'legato' trigger (best-effort).
+    // If MuseScore doesn't expose slur spanners to plugins, this has no effect.
+    property bool interpretSlurAsLegato: true
 
     function activeSetNameFor(staffIdx, tick) {
         var tl = setTagTimeline[staffIdx] || []
@@ -283,6 +288,19 @@ MuseScore {
         return names
     }
 
+    // Slur detection for Mu 4.7+: consult slurStartByStaff, with a fallback to "_any".
+    function hasSlurStartAtChord(chord) {
+        try {
+            var sIdx = chord.staffIdx
+            var t = (chord.parent && chord.parent.tick) ? chord.parent.tick : 0
+            if (slurStartByStaff && slurStartByStaff[String(sIdx)] && slurStartByStaff[String(sIdx)][t])
+                return true
+            if (slurStartByStaff && slurStartByStaff["_any"] && slurStartByStaff["_any"][t])
+                return true
+        } catch (e) {}
+        return false
+    }
+
     // Parse per-keyswitch velocity
     // Accepts:
     // 26       -> { pitch:26, velocity: defaultKsVelocity }
@@ -369,6 +387,102 @@ MuseScore {
                 })
         }
         dbg("collectSetTagsInRange: end")
+    }
+
+    // Convert a Fraction-like object to absolute ticks (Mu 4.7).
+    function fractionToTicks(fr) {
+        try {
+            if (typeof fr === 'number')
+                return fr
+            if (fr && fr.ticks !== undefined) // many wrappers expose .ticks
+                return parseInt(fr.ticks, 10)
+            if (fr && fr.numerator !== undefined && fr.denominator !== undefined) {
+                var num = parseInt(fr.numerator, 10)
+                var den = parseInt(fr.denominator, 10)
+                if (!isNaN(num) && !isNaN(den) && den !== 0)
+                    return Math.floor(num * division / den)
+                // division = ticks per quarter
+            }
+        } catch (e) {}
+        return 0
+    }
+
+    // ---- Spanner property helpers (Mu 4.7+) -----------------------------------
+    function spStartTick(s) {
+        // prefer 'spannerTick', then 'tick'; else 'startSegment.tick'
+        try {
+            if (s.spannerTick !== undefined)
+                return fractionToTicks(s.spannerTick)
+        } catch (e0) {}
+        try {
+            if (s.tick !== undefined)
+                return fractionToTicks(s.tick)
+        } catch (e1) {}
+        try {
+            if (s.startSegment && s.startSegment.tick !== undefined)
+                return fractionToTicks(s.startSegment.tick)
+        } catch (e2) {}
+        return 0
+    }
+
+    function spStartStaffIdx(s) {
+        // Prefer staff.index; else derive from 'track' (start track) or 'spannerTrack2' if present.
+        try {
+            if (s.staff && s.staff.index !== undefined)
+                return s.staff.index
+        } catch (e0) {}
+        try {
+            if (s.track !== undefined)
+                return Math.floor(s.track / 4)
+        } catch (e1) {}
+        try {
+            if (s.spannerTrack2 !== undefined)
+                return Math.floor(s.spannerTrack2 / 4)
+        } catch (e2) {}
+        // As an absolute last resort, try startSegment's element parent staff if exposed
+        try {
+            if (s.startSegment && s.startSegment.parent && s.startSegment.parent.staffIdx !== undefined)
+                return s.startSegment.parent.staffIdx
+        } catch (e3) {}
+        return -1
+    }
+
+    // Build a map of slur starts from curScore.spanners (Mu 4.7+).
+    //   slurStartByStaff[staffIdx][tick] = true
+    function buildSlurStartMapFromSpanners(startTick, endTick, allowedMap) {
+        slurStartByStaff = ({})
+        if (!curScore || !curScore.spanners)
+            return
+        var sp = curScore.spanners
+        var collected = 0
+
+        for (var i = 0; i < sp.length; ++i) {
+            var s = sp[i]
+            if (!s)
+                continue
+
+            // Accept SLUR (some builds also surface SLUR_SEGMENT in lists; ignore those here)
+            if (s.type !== Element.SLUR)
+                continue
+            var tStart = spStartTick(s)
+            if (typeof startTick === 'number' && typeof endTick === 'number') {
+                if (!(tStart >= startTick && tStart < endTick))
+                    continue
+            }
+
+            var staffIdx = spStartStaffIdx(s)
+            if (allowedMap && staffIdx >= 0 && allowedMap.hasOwnProperty(staffIdx) && !allowedMap[staffIdx])
+                continue
+            var key = (staffIdx >= 0) ? String(staffIdx) : "_any"
+            if (!slurStartByStaff[key])
+                slurStartByStaff[key] = ({})
+            if (!slurStartByStaff[key][tStart]) {
+                slurStartByStaff[key][tStart] = true
+                collected++
+            }
+        }
+
+        dbg("slur-starts via spanners=" + collected)
     }
 
     function computeAllowedSourceStaves(startStaff, endStaff, effScope, effPartsMode) {
@@ -913,6 +1027,34 @@ MuseScore {
 
         dbg2("chords collected", chords.length)
         collectSetTagsInRange()
+        if (debugEnabled && curScore && curScore.spanners && curScore.spanners.length) {
+            for (var __i = 0; __i < Math.min(8, curScore.spanners.length); ++__i) {
+                var __s = curScore.spanners[__i]
+                try {
+                    dbg("SP[" + __i + "]: type=" + __s.type + " t=" + spStartTick(__s) + " staff=" + spStartStaffIdx(__s))
+                } catch (_e) {}
+            }
+        }
+
+        // Build slur-start map from 'curScore.spanners' for the time and staff window we’re about to process.
+        var _minT = 0, _maxT = 0, _haveT = false
+        var _allow = {}
+        for (var _i = 0; _i < chords.length; ++_i) {
+            var _ch = chords[_i]
+            var _t = (_ch.parent && _ch.parent.tick) ? _ch.parent.tick : 0
+            if (!_haveT) {
+                _minT = _t
+                _maxT = _t
+                _haveT = true
+            } else {
+                if (_t < _minT)
+                    _minT = _t
+                if (_t > _maxT)
+                    _maxT = _t
+            }
+            _allow[_ch.staffIdx] = true
+        }
+        buildSlurStartMapFromSpanners(_haveT ? _minT : 0, _haveT ? (_maxT + 1) : 0, _allow)
 
         chords.sort(function (a, b) {
             if (a.fraction.lessThan(b.fraction))
@@ -956,7 +1098,33 @@ MuseScore {
             specs = specs.concat(findTaggedTechniqueKeyswitches(texts, techMap))
             var textsNoKsText = stripKsTextDirectivesFromList(texts)
             specs = specs.concat(findTechniqueKeyswitches(textsNoKsText, techMap, aliasMap))
-            specs = specs.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null))
+            specs = specs.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null));
+
+            // Slur ⇒ legato (emit once at slur start)
+            if (interpretSlurAsLegato && techMap && hasSlurStartAtChord(chord)) {
+                var legKey = null
+                // direct lookup preferred
+                if (techMap.hasOwnProperty('legato'))
+                    legKey = 'legato'
+                // fallback: find a key whose aliases include 'legato' or 'slur'
+                if (!legKey && aliasMap) {
+                    for (var k in aliasMap) {
+                        var arr = aliasMap[k]
+                        if (!arr)
+                            continue
+                        var low = arr.join('\u0001').toLowerCase()
+                        if (low.indexOf('legato') >= 0 || low.indexOf('slur') >= 0) {
+                            legKey = k
+                            break
+                        }
+                    }
+                }
+                if (legKey && techMap.hasOwnProperty(legKey)) {
+                    var specL = parseKsMapValue(techMap[legKey])
+                    if (specL)
+                        specs.push(specL)
+                }
+            }
 
             var seen = {}
             for (var j = 0; j < specs.length; ++j) {
