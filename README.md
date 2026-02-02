@@ -19,7 +19,7 @@ Developed with ❤️ by Eric Warren
 
    <img width="546" height="114" alt="keyswitch staff example" src="https://github.com/user-attachments/assets/fcf3d9a6-8977-47b2-88d4-ad35b5626d67" />
 
-   For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
+   For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator. (Typically the C-1 range where C4 is middle C.)_
 
    <img width="324" height="84" alt="15ma bassa" src="https://github.com/user-attachments/assets/6b71ab9a-66ef-4a2e-9192-4150fa1a370e" />
 
