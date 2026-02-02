@@ -81,6 +81,7 @@ MuseScore {
     // Error overlays (line index -> y = lineIndex * lineHeight)
     property bool showRegistryErrorOverlay: false
     property var staffToSet: ({})
+    property string staffToSetMetaTagKey: "keyswitch_creator.staffToSet"
 
     // Theme colors (safe fallbacks)
     readonly property color themeAccent: (ui && ui.theme && ui.theme.accentColor) ? ui.theme.accentColor : "#2E7DFF"
@@ -665,7 +666,8 @@ MuseScore {
         updateKeyboardActiveNotes()
 
         validateRegistryText()
-        validateGlobalsText();
+        validateGlobalsText()
+        loadStaffAssignmentsFromScore();
 
         // quick visibility check in the console
         console.log("[KS] staffListModel.count =", staffListModel.count)
@@ -823,7 +825,6 @@ MuseScore {
         // persist raw strings
         ksPrefs.setsJSON = jsonArea.text
         ksPrefs.globalJSON = globalsArea.text
-        ksPrefs.staffToSetJSON = JSON.stringify(staffToSet)
         if (ksPrefs.sync) {
             try {
                 ksPrefs.sync()
@@ -867,6 +868,47 @@ MuseScore {
         } else {
             // still saved the raw text, but it's not valid JSON yet -> keep warning
             setRegistryBorder(false)
+        }
+    }
+
+    // Write current staffToSet mapping into this score's Project Properties meta tag
+    function writeStaffAssignmentsToScore() {
+        if (!curScore || !curScore.setMetaTag)
+            return false
+        curScore.startCmd()
+        try {
+            curScore.setMetaTag(staffToSetMetaTagKey, JSON.stringify(staffToSet))
+            curScore.endCmd()
+            console.log("[KS] wrote staffToSet to score meta tag")
+            return true
+        } catch (e) {
+            try {
+                curScore.endCmd(true)
+            } catch (e2) {}
+            console.log("[KS] failed to write staffToSet to score meta tag: " + String(e))
+            return false
+        }
+    }
+
+    // Load staffToSet mapping from this score's Project Properties (if present)
+    function loadStaffAssignmentsFromScore() {
+        if (!curScore || !curScore.metaTag)
+            return false
+        try {
+            var raw = curScore.metaTag(staffToSetMetaTagKey)
+            if (!raw || !raw.length)
+                return false
+            var parsed = JSON.parse(raw)
+            if (!parsed || typeof parsed !== "object")
+                return false
+            staffToSet = parsed
+            refreshUISelectedSet()
+            updateKeyboardActiveNotes()
+            console.log("[KS] loaded staffToSet from score meta tag")
+            return true
+        } catch (e) {
+            console.log("[KS] failed to load staffToSet from score meta tag: " + String(e))
+            return false
         }
     }
 
@@ -1739,6 +1781,7 @@ MuseScore {
                             updateKeyboardActiveNotes()
                         }
                     }
+
                     SearchField {
                         id: setSearchField
 
@@ -2202,6 +2245,8 @@ MuseScore {
 
                 onClicked: {
                     saveData()
+                    writeStaffAssignmentsToScore()
+                    writeStaffAssignmentsToScore()
                     saveToastAnim.restart()
                     // quit()
                 }

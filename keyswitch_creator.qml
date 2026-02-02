@@ -128,6 +128,8 @@ MuseScore {
     property bool skipIfExists: true
     property var slurStartByStaff: ({})
     property var staffToSet: ({})
+    property string staffToSetMetaTagKey: "keyswitch_creator.staffToSet"
+
     // Techniques (written)
     property var techniqueKeyMap: ({
                                        "normal": 14,
@@ -665,13 +667,10 @@ MuseScore {
             sets = defaultKeyswitchSets
         }
         keyswitchSets = sets
-        var a
-        try {
-            a = ksPrefs.staffToSetJSON ? JSON.parse(ksPrefs.staffToSetJSON) : {}
-        } catch (e2) {
-            a = {}
-        }
-        staffToSet = a
+
+        var perScore = readStaffAssignmentsFromScore()
+        staffToSet = perScore ? perScore : {}
+
         var g
         try {
             g = ksPrefs.globalJSON ? JSON.parse(ksPrefs.globalJSON) : defaultGlobalSettings
@@ -679,8 +678,23 @@ MuseScore {
             g = defaultGlobalSettings
         }
         globalSettings = g
+
         dbg2("plugin version", version)
         dbg2("registry keys", Object.keys(keyswitchSets).join(", "))
+    }
+
+    function readStaffAssignmentsFromScore() {
+        if (!curScore || !curScore.metaTag)
+            return null
+        try {
+            var raw = curScore.metaTag(staffToSetMetaTagKey)
+            if (raw && raw.length) {
+                var parsed = JSON.parse(raw)
+                if (parsed && typeof parsed === "object")
+                    return parsed
+            }
+        } catch (e) {}
+        return null
     }
 
     function markEmittedCross(staffIdx, tick) {
