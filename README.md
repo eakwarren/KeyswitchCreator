@@ -7,7 +7,7 @@ The plugin has two parts:
 
 2. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff _directly below_ the played staff, within the same instrument/part.
 
-(insert image with score in background)
+<img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
 
 Developed with ❤️ by Eric Warren
 
@@ -119,7 +119,7 @@ Pinpoint bad JSON with heuristics for common faults like missing quotation marks
 
 
 ## Keyswitch Sets
-The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor. _Note: Ensure proper json formatting rules with commas and brackets in the right places. The error highlighting will help you identify any issues._
+The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor. _Note: Ensure proper json formatting rules with commas and brackets in the right places. The error highlighting should help identify any issues._
 
 
 ## Known Issues
@@ -137,4 +137,4 @@ MuseScore Studio and VST instrument developers, wherever they may roam.
 
 
 ## Release Notes
-v0.9.6 1/29/26 Initial beta.
+v0.9.7 2/2/26 Initial release.
