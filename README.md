@@ -13,17 +13,15 @@ Developed with ❤️ by Eric Warren
 
 
 ## Setup
-1. Download the latest release version on the right. Unzip to your MuseScore Plugins directory.
-   * Windows: [USER]\Documents\MuseScore4\Plugins
-   * Mac: [USER]/Documents/MuseScore4/Plugins
-   * Linux: [USER]/Documents/MuseScore4/Plugins
+1. Download the latest release version on the right. Unzip to your MuseScore Plugins directory. Usually at [USER]/Documents/MuseScore4/Plugins
+
 2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's size, color, and clef to help it stand out from the score. Hide the staff when not working with keyswitches.
 
    <img width="546" height="114" alt="keyswitch staff example" src="https://github.com/user-attachments/assets/fcf3d9a6-8977-47b2-88d4-ad35b5626d67" />
 
-   For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Place and extend lines prior to running Keyswitch Creator, or adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
+   For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator._
 
-   <img width="357" height="92" alt="15ma bassa" src="https://github.com/user-attachments/assets/6b71ab9a-66ef-4a2e-9192-4150fa1a370e" />
+   <img width="324" height="84" alt="15ma bassa" src="https://github.com/user-attachments/assets/6b71ab9a-66ef-4a2e-9192-4150fa1a370e" />
 
 3. Open Plugins > Manage Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
 
@@ -33,7 +31,7 @@ Developed with ❤️ by Eric Warren
 
     <img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
 
-5. Make a selection in the main score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set Cmd/Ctrl+Shift+K as a shortcut.)
+5. Make a selection in the main score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set ⌘⇧+K as a shortcut.)
 
     <img width="711" height="294" alt="ks applied" src="https://github.com/user-attachments/assets/d8ec904a-2da8-484f-8870-be0e5ea54dbf" />
 
