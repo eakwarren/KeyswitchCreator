@@ -2013,6 +2013,61 @@ MuseScore {
                                             root.updateKeyboardActiveNotes()
                                             root.validateRegistryText()
                                         }
+
+                                        // Ensure edit shortcuts work AND let the editor keep Space, Return, Delete
+                                        // so MuseScore's app-level shortcuts don't steal them on Linux/Ubuntu.
+                                        Keys.onShortcutOverride: function (event) {
+                                            const mods = event.modifiers
+                                            const ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
+                                            const alt = !!(mods & Qt.AltModifier)
+                                            const shift = !!(mods & Qt.ShiftModifier);
+
+                                            // Treat these as text-input keys when no Ctrl/Cmd/Alt modifiers:
+                                            // Space, Return/Enter, Delete, Backspace
+                                            if (!ctrlOrCmd && !alt && (event.key === Qt.Key_Space || event.key === Qt.Key_Return
+                                                                       || event.key === Qt.Key_Enter || event.key === Qt.Key_Delete
+                                                                       || event.key === Qt.Key_Backspace)) {
+                                                event.accepted = true
+                                                return
+                                            }
+
+                                            // Editing shortcuts (work across platforms)
+                                            if ((ctrlOrCmd && (event.key === Qt.Key_V    // Paste
+                                                               || event.key === Qt.Key_C    // Copy
+                                                               || event.key === Qt.Key_X    // Cut
+                                                               || event.key === Qt.Key_A))  // Select All
+                                                    || (shift && event.key === Qt.Key_Insert)                       // Paste (Shift+Insert)
+                                                    || ((mods & Qt.ControlModifier) && event.key === Qt.Key_Insert) // Copy  (Ctrl+Insert)
+                                                    || (shift && event.key === Qt.Key_Delete)) {                    // Cut   (Shift+Delete)
+                                                event.accepted = true
+                                                return
+                                            }
+                                        }
+
+                                        // local, widget-scoped shortcuts that only fire when this TextArea has focus
+                                        Shortcut {
+                                            // paste: cover platform standard key + Linux alternate
+                                            sequences: [StandardKey.Paste, "Ctrl+V", "Shift+Insert"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: jsonArea.paste()
+                                        }
+                                        Shortcut {
+                                            // copy: cover platform standard key + Linux alternate
+                                            sequences: [StandardKey.Copy, "Ctrl+C", "Ctrl+Insert"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: jsonArea.copy()
+                                        }
+                                        Shortcut {
+                                            // cut: cover platform standard key + Linux alternate
+                                            sequences: [StandardKey.Cut, "Ctrl+X", "Shift+Delete"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: jsonArea.cut()
+                                        }
+                                        Shortcut {
+                                            sequences: [StandardKey.SelectAll, "Ctrl+A"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: jsonArea.selectAll()
+                                        }
                                     }
 
                                     // Line height probe for consistent Y mapping
@@ -2115,6 +2170,55 @@ MuseScore {
                                         onTextChanged: {
                                             root.updateKeyboardActiveNotes()
                                             root.validateGlobalsText()
+                                        }
+
+                                        // Ensure Space / Return / Delete act as typing keys in the globals editor.
+                                        Keys.onShortcutOverride: function (event) {
+                                            const mods = event.modifiers
+                                            const ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
+                                            const alt = !!(mods & Qt.AltModifier)
+                                            const shift = !!(mods & Qt.ShiftModifier);
+
+                                            // Keep these as text-input keys (no Ctrl/Cmd/Alt):
+                                            if (!ctrlOrCmd && !alt && (event.key === Qt.Key_Space || event.key === Qt.Key_Return
+                                                                       || event.key === Qt.Key_Enter || event.key === Qt.Key_Delete
+                                                                       || event.key === Qt.Key_Backspace)) {
+                                                event.accepted = true
+                                                return
+                                            }
+
+                                            // Editing shortcuts
+                                            if ((ctrlOrCmd && (event.key === Qt.Key_V    // Paste
+                                                               || event.key === Qt.Key_C    // Copy
+                                                               || event.key === Qt.Key_X    // Cut
+                                                               || event.key === Qt.Key_A))  // Select All
+                                                    || (shift && event.key === Qt.Key_Insert)                       // Paste (Shift+Insert)
+                                                    || ((mods & Qt.ControlModifier) && event.key === Qt.Key_Insert) // Copy  (Ctrl+Insert)
+                                                    || (shift && event.key === Qt.Key_Delete)) {                    // Cut   (Shift+Delete)
+                                                event.accepted = true
+                                                return
+                                            }
+                                        }
+
+                                        Shortcut {
+                                            sequences: [StandardKey.Paste, "Ctrl+V", "Shift+Insert"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: globalsArea.paste()
+                                        }
+                                        Shortcut {
+                                            sequences: [StandardKey.Copy, "Ctrl+C", "Ctrl+Insert"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: globalsArea.copy()
+                                        }
+                                        Shortcut {
+                                            sequences: [StandardKey.Cut, "Ctrl+X", "Shift+Delete"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: globalsArea.cut()
+                                        }
+                                        Shortcut {
+                                            sequences: [StandardKey.SelectAll, "Ctrl+A"]
+                                            context: Qt.WidgetShortcut
+                                            onActivated: globalsArea.selectAll()
                                         }
                                     }
 
