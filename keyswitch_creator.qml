@@ -21,7 +21,7 @@ MuseScore {
     description: qsTr("Creates keyswitch notes on a staff below in the same instrument.")
     thumbnailName: "keyswitch_creator.png"
     title: qsTr("Keyswitch Creator")
-    version: "0.9.6"
+    version: "0.9.7"
 
     // Articulations (note-attached symbols)
     property var articulationKeyMap: ({
