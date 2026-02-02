@@ -119,7 +119,7 @@ Pinpoint bad JSON with heuristics for common faults like missing quotation marks
 
 
 ## Keyswitch Sets
-(Links to files on Github to add to registry. Place in Plugin/Sets folder to add to Github.)
+The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor. _Note: Ensure proper json formatting rules with commas and brackets in the right places. The error highlighting will help you identify any issues._
 
 
 ## Known Issues

@@ -1,0 +1,97 @@
+    "BFO Basses a4":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96,"pizz":98} 
+    }, 
+    "BFO Brass Ens":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Celli a5":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24,"pizz":26,"tremolo":27} 
+    }, 
+    "BFO Horns a4":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo Bass Clarinet":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo Bassoon":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo Cello":{ 
+        "articulationKeyMap":{"staccato":26},
+        "techniqueKeyMap":{"legato":24,"normal":25} 
+    }, 
+    "BFO Solo Clarinet":{ 
+        "articulationKeyMap":{"staccato":26},
+        "techniqueKeyMap":{"legato":24,"normal":25} 
+    }, 
+    "BFO Solo Contrabassoon":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo English Horn":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24} 
+    }, 
+    "BFO Solo Flute":{ 
+        "articulationKeyMap":{"staccato":26},
+        "techniqueKeyMap":{"legato":24,"normal":25} 
+    }, 
+    "BFO Solo Horn":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo Oboe":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24} 
+    }, 
+    "BFO Solo Piccolo":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24} 
+    }, 
+    "BFO Solo Trombone":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo Trumpet":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24} 
+    }, 
+    "BFO Solo Tuba":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Solo Violin":{ 
+        "articulationKeyMap":{"staccato":26},
+        "techniqueKeyMap":{"legato":24,"normal":25} 
+    }, 
+    "BFO String Ens":{ 
+        "articulationKeyMap":{"staccato":98},
+        "techniqueKeyMap":{"normal":97} 
+    }, 
+    "BFO Trombones a3":{ 
+        "articulationKeyMap":{"staccato":97},
+        "techniqueKeyMap":{"normal":96} 
+    }, 
+    "BFO Trumpets a3":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24} 
+    }, 
+    "BFO Violas a5":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24,"pizz":26,"tremolo":27} 
+    }, 
+    "BFO Violins a8":{ 
+        "articulationKeyMap":{"staccato":25},
+        "techniqueKeyMap":{"normal":24,"pizz":26,"tremolo":27} 
+    }, 
+    "BFO Woodwind Ens":{ 
+        "articulationKeyMap":{"staccato":110},
+        "techniqueKeyMap":{"normal":109} 
+    }
+    

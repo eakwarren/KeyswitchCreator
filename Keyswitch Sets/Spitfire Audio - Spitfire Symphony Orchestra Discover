@@ -1,0 +1,64 @@
+    "SSOD Piccolo":{ 
+        "articulationKeyMap":{"staccato":6},
+        "techniqueKeyMap":{"normal":0} 
+    },
+    "SSOD Flute":{ 
+        "articulationKeyMap":{"staccato":7},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Oboe":{ 
+        "articulationKeyMap":{"staccato":5},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Clarinet":{ 
+        "articulationKeyMap":{"staccato":3},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Bass Clarient":{ 
+        "articulationKeyMap":{"staccato":2},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Bassoon":{ 
+        "articulationKeyMap":{"staccato":6},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Horns a2":{ 
+        "articulationKeyMap":{"staccato":5},
+        "techniqueKeyMap":{"normal":0} 
+    },
+    "SSOD Trumpet a2":{ 
+        "articulationKeyMap":{"staccato":4},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Trombone a2":{ 
+        "articulationKeyMap":{"staccato":4},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Bass Trombone":{ 
+        "articulationKeyMap":{"staccato":4},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Tuba":{ 
+        "articulationKeyMap":{"staccato":4},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Violins":{ 
+        "articulationKeyMap":{"staccato":8, "spiccato":8, "pizz":15, "tremolo":22},
+        "techniqueKeyMap":{"normal":0} 
+    }, 
+    "SSOD Violas":{ 
+        "articulationKeyMap":{"staccato":7, "spiccato":7, "pizz":14, "tremolo":21},
+        "techniqueKeyMap":{"normal":0} 
+    },   
+    "SSOD Celli":{ 
+        "articulationKeyMap":{"staccato":7, "spiccato":7, "pizz":14, "tremolo":21},
+        "techniqueKeyMap":{"normal":0} 
+    },  
+    "SSOD Basses":{ 
+        "articulationKeyMap":{"staccato":5, "spiccato":5, "pizz":11, "tremolo":16},
+        "techniqueKeyMap":{"normal":0} 
+    },
+    "SSOD Woodwind Ens":{ 
+        "articulationKeyMap":{"staccato":6, "spiccato":6},
+        "techniqueKeyMap":{"normal":5} 
+    }
