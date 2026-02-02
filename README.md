@@ -29,7 +29,7 @@ Developed with ❤️ by Eric Warren
 
 4. Open the Keyswitch Creator Settings plugin to create and assign sets to each staff.  Shift-clicking selects a range of staves and Cmd/Ctrl-clicking selects multiple staves. Cmd/Ctrl+A selects all staves.
 
-    <img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
+    <img width="961" height="360" alt="assign" src="https://github.com/user-attachments/assets/f2c491e9-957b-49e6-8fea-5c49631205e2" />
 
 5. Make a selection in the main score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set ⌘⇧+K as a shortcut.)
 
@@ -114,7 +114,8 @@ Global `techniqueAliases` allow for matching slight variations on technique spel
 #### JSON Error Highlighting
 Pinpoint bad JSON with heuristics for common faults like missing quotation marks, braces, or commas in the editor windows.
 
-<img width="1155" height="429" alt="registry error" src="https://github.com/user-attachments/assets/745673f2-5627-4368-885a-f2f9c48cca6c" />
+<img width="387" height="177" alt="json error" src="https://github.com/user-attachments/assets/ec4315b0-c8c7-4af6-ac17-6b32fbbf62f6" />
+
 
 
 
