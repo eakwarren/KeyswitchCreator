@@ -12,7 +12,7 @@
 //===============================================================================
 
 import QtQuick
-import QtQuick.Dialogs
+// import QtQuick.Dialogs
 import MuseScore 3.0
 
 MuseScore {
@@ -1181,28 +1181,28 @@ MuseScore {
         if (!preflightFailed && created == 0 && sawIneligible && !promptShown) {
             promptShown = true
             var n = nameForPartByRange(firstIneligibleStaffIdx >= 0 ? firstIneligibleStaffIdx : 0, 0)
-            ksStaffPrompt.title = qsTr("Keyswitch staff not found")
-            ksStaffPrompt.text = qsTr(
+            infobox.title = qsTr("Keyswitch staff not found")
+            infobox.text = qsTr(
                         "The staff directly below %1 does not belong to the same instrument. Create another staff below %1 then rerun Keyswitch Creator.").arg(
                         n)
             try {
-                ksStaffPrompt.open()
+                infobox.open()
             } catch (e) {
                 try {
-                    ksStaffPrompt.visible = true
+                    infobox.visible = true
                 } catch (e2) {}
             }
         } else if (!preflightFailed && created > 0 && partialParts.length > 0 && !promptShown && warnOnPartialSuccess) {
             promptShown = true
-            ksStaffPrompt.title = qsTr("Some parts had no keyswitch staff")
-            ksStaffPrompt.text = qsTr(
+            infobox.title = qsTr("Some parts had no keyswitch staff")
+            infobox.text = qsTr(
                         "No keyswitches were added for: %1. Add a keyswitch staff below those parts, then rerun Keyswitch Creator.").arg(
                         partialParts.join(", "))
             try {
-                ksStaffPrompt.open()
+                infobox.open()
             } catch (e) {
                 try {
-                    ksStaffPrompt.visible = true
+                    infobox.visible = true
                 } catch (e2) {}
             }
         }
@@ -1520,8 +1520,9 @@ MuseScore {
 
         category: "Keyswitch Creator"
     }
+
     MessageDialog {
-        id: ksStaffPrompt
+        id: infobox
 
         text: ""
         title: ""
