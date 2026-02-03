@@ -63,7 +63,19 @@ In range selections, `all` processes every selected part/instrument; `anchor` re
 
 ## Settings Window
 
-(pic) with callouts
+<img width="961" height="360" alt="assign" src="https://github.com/user-attachments/assets/f2c491e9-957b-49e6-8fea-5c49631205e2" />
+
+#### Staff List
+The column on the left lists all the staves in the score. Click a staff to activate it and then select a Keyswitch Set button for that staff.
+
+Cmd/Ctrl+A will select all staves. Shift+click will select a range of staves, while Cmd/Ctrl+click will multi-select staves. Shift+up/down arrows are additional shortcuts to quickly select a range of staves.
+
+#### Keyswitch Set Button Panel
+The panel of buttons to the right of the Staff List each represent a keyswitch set. With one or more staves selected, click to assign the keyswitch set to a staff. Click again to un-assign.
+
+The piano keyboard at the top shows what keyswitches are part of the active set. Hover over the keys to see the midi note, velocity (if any), and name.
+
+Clear all staff assignments with the button at the top. (Helpful when setting up a new template.) Filter large numbers of sets to zero in on desired sets.
 
 #### Set Registry
 Each top‑level key is a set name. Map values accept a number (midi note) or string (midi note|velocity). Velocity defautls to 64 if omitted. Per set durationPolicy and techniqueAliases can override Global settings.
@@ -116,7 +128,12 @@ Pinpoint bad JSON with heuristics for common faults like missing quotation marks
 
 <img width="387" height="177" alt="json error" src="https://github.com/user-attachments/assets/ec4315b0-c8c7-4af6-ac17-6b32fbbf62f6" />
 
+#### Reset, Save, and Close Buttons
+The Reset editor to default button will reset the active editor window to default values. This only affects the current editor on screen.
 
+The Save button writes the registry and global settings values to the computer file system. It also saves the staff => set assignments to the score.
+
+The Close button closes the Settings window.
 
 
 ## Keyswitch Sets
