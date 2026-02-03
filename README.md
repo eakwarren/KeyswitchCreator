@@ -66,7 +66,7 @@ In range selections, `all` processes every selected part/instrument; `anchor` re
 <img width="961" height="360" alt="assign" src="https://github.com/user-attachments/assets/f2c491e9-957b-49e6-8fea-5c49631205e2" />
 
 #### Staff List
-The column on the left lists all the staves in the score. Click a staff to activate it and then select a Keyswitch Set button for that staff.
+The column on the left lists all the staves in the score. Click a staff to activate it and then select a Keyswitch Set button to assign the set to the staff.
 
 Cmd/Ctrl+A will select all staves. Shift+click will select a range of staves, while Cmd/Ctrl+click will multi-select staves. Shift+up/down arrows are additional shortcuts to quickly select a range of staves.
 
@@ -75,7 +75,7 @@ The panel of buttons to the right of the Staff List each represent a keyswitch s
 
 The piano keyboard at the top shows what keyswitches are part of the active set. Hover over the keys to see the midi note, velocity (if any), and name.
 
-Clear all staff assignments with the button at the top. (Helpful when setting up a new template.) Filter large numbers of sets to zero in on desired sets.
+Clear all staff assignments with the button at the top. (Helpful when setting up a new template.) Filter large numbers of sets to focus on desired sets.
 
 #### Set Registry
 Each top‑level key is a set name. Map values accept a number (midi note) or string (midi note|velocity). Velocity defautls to 64 if omitted. Per set durationPolicy and techniqueAliases can override Global settings.
@@ -136,7 +136,7 @@ The Save button writes the registry and global settings values to the computer f
 The Close button closes the Settings window.
 
 
-## Keyswitch Sets
+## Additional Keyswitch Sets
 The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor. _Note: Ensure proper json formatting rules with commas and brackets in the right places. The error highlighting should help identify any issues._
 
 
