@@ -12,7 +12,6 @@
 //===============================================================================
 
 import QtQuick
-// import QtQuick.Dialogs
 import MuseScore 3.0
 
 MuseScore {
