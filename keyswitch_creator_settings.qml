@@ -554,6 +554,37 @@ MuseScore {
         return -1
     }
 
+    // Treat printable chars and common text-edit/navigation keys as editor-owned
+    function shouldEditorAcceptKey(event) {
+        // Accept any printable character (ASCII printable or any 1-char text),
+        // regardless of AltGr, etc. Ctrl/Cmd combos typically yield empty text.
+        var txt = (event && typeof event.text === "string") ? event.text : ""
+        var isPrintable = (txt.length === 1 && txt >= " " && txt !== "\u007f")
+        if (isPrintable)
+            return true
+
+        // also accept common text-edit controls with no Ctrl/Cmd/Alt shortcut intent.
+        var mods = event ? event.modifiers : 0
+        var ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
+        var alt = !!(mods & Qt.AltModifier)
+
+        if (!ctrlOrCmd && !alt) {
+            switch (event.key) {
+            case Qt.Key_Space:
+            case Qt.Key_Return:
+            case Qt.Key_Enter:
+            case Qt.Key_Delete:
+            case Qt.Key_Backspace:
+            case Qt.Key_Left:
+            case Qt.Key_Right:
+            case Qt.Key_Up:
+            case Qt.Key_Down:
+                return true
+            }
+        }
+        return false
+    }
+
     // Count '\n' before pos to get a 0-based line index
     function lineIndexForPos(text, pos) {
         var s = String(text || "")
@@ -2017,21 +2048,16 @@ MuseScore {
                                         // Ensure edit shortcuts work AND let the editor keep Space, Return, Delete
                                         // so MuseScore's app-level shortcuts don't steal them on Linux/Ubuntu.
                                         Keys.onShortcutOverride: function (event) {
-                                            const mods = event.modifiers
-                                            const ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
-                                            const alt = !!(mods & Qt.AltModifier)
-                                            const shift = !!(mods & Qt.ShiftModifier);
-
-                                            // Treat these as text-input keys when no Ctrl/Cmd/Alt modifiers:
-                                            // Space, Return/Enter, Delete, Backspace
-                                            if (!ctrlOrCmd && !alt && (event.key === Qt.Key_Space || event.key === Qt.Key_Return
-                                                                       || event.key === Qt.Key_Enter || event.key === Qt.Key_Delete
-                                                                       || event.key === Qt.Key_Backspace)) {
+                                            // 1) Let the editor keep *text* keys and Return/Delete/etc.
+                                            if (root.shouldEditorAcceptKey(event)) {
                                                 event.accepted = true
                                                 return
                                             }
 
-                                            // Editing shortcuts (work across platforms)
+                                            // 2) Editing shortcuts we want to own at the editor level
+                                            const mods = event.modifiers
+                                            const ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
+                                            const shift = !!(mods & Qt.ShiftModifier)
                                             if ((ctrlOrCmd && (event.key === Qt.Key_V    // Paste
                                                                || event.key === Qt.Key_C    // Copy
                                                                || event.key === Qt.Key_X    // Cut
@@ -2172,29 +2198,20 @@ MuseScore {
                                             root.validateGlobalsText()
                                         }
 
-                                        // Ensure Space / Return / Delete act as typing keys in the globals editor.
                                         Keys.onShortcutOverride: function (event) {
-                                            const mods = event.modifiers
-                                            const ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
-                                            const alt = !!(mods & Qt.AltModifier)
-                                            const shift = !!(mods & Qt.ShiftModifier);
-
-                                            // Keep these as text-input keys (no Ctrl/Cmd/Alt):
-                                            if (!ctrlOrCmd && !alt && (event.key === Qt.Key_Space || event.key === Qt.Key_Return
-                                                                       || event.key === Qt.Key_Enter || event.key === Qt.Key_Delete
-                                                                       || event.key === Qt.Key_Backspace)) {
+                                            if (root.shouldEditorAcceptKey(event)) {
                                                 event.accepted = true
                                                 return
                                             }
-
-                                            // Editing shortcuts
-                                            if ((ctrlOrCmd && (event.key === Qt.Key_V    // Paste
-                                                               || event.key === Qt.Key_C    // Copy
-                                                               || event.key === Qt.Key_X    // Cut
-                                                               || event.key === Qt.Key_A))  // Select All
-                                                    || (shift && event.key === Qt.Key_Insert)                       // Paste (Shift+Insert)
-                                                    || ((mods & Qt.ControlModifier) && event.key === Qt.Key_Insert) // Copy  (Ctrl+Insert)
-                                                    || (shift && event.key === Qt.Key_Delete)) {                    // Cut   (Shift+Delete)
+                                            const mods = event.modifiers
+                                            const ctrlOrCmd = !!(mods & (Qt.ControlModifier | Qt.MetaModifier))
+                                            const shift = !!(mods & Qt.ShiftModifier)
+                                            if ((ctrlOrCmd && (event.key === Qt.Key_V || event.key === Qt.Key_C || event.key === Qt.Key_X
+                                                               || event.key === Qt.Key_A)) || (shift && event.key === Qt.Key_Insert) || ((
+                                                                                                                                             mods & Qt.ControlModifier)
+                                                                                                                                         && event.key
+                                                                                                                                         === Qt.Key_Insert)
+                                                    || (shift && event.key === Qt.Key_Delete)) {
                                                 event.accepted = true
                                                 return
                                             }
