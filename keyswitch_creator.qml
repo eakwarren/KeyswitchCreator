@@ -48,6 +48,7 @@ MuseScore {
 
     property var defaultGlobalSettings: ({
                                              "durationPolicy": "source",
+                                             "formatKeyswitchStaff": "true",
                                              "techniqueAliases": {
                                                  // phrasing
                                                  "legato": ["legato", "leg.", "slur", "slurred"],
@@ -128,6 +129,7 @@ MuseScore {
     property var slurStartByStaff: ({})
     property var staffToSet: ({})
     property string staffToSetMetaTagKey: "keyswitch_creator.staffToSet"
+    property var formattedKsStaff: ({}) // staffIdx (string) -> true once formatted this run
 
     // Techniques (written)
     property var techniqueKeyMap: ({
@@ -177,7 +179,12 @@ MuseScore {
 
         var c = curScore.newCursor()
         c.track = tgtStaff * 4
-        c.rewindToFraction(startFrac)
+        c.rewindToFraction(startFrac);
+
+        // one switch for KS note/chord visual formatting in this function
+        var fmtEnabled = (globalSettings && globalSettings.formatKeyswitchStaff !== undefined) ? globalSettings.formatKeyswitchStaff :
+                                                                                                 "true"
+        var fmtOn = flagIsTrue(fmtEnabled)
 
         var policy = (activeSet && activeSet.durationPolicy) ? activeSet.durationPolicy : (globalSettings && globalSettings.durationPolicy)
                                                                ? globalSettings.durationPolicy : (useSourceDuration ? "source" : "fixed")
@@ -221,9 +228,16 @@ MuseScore {
         if (dedupeAcrossVoices && firstOfChord)
             markEmittedCross(c.staffIdx, c.tick);
 
-        // apply velocity (and optionally hide) to the note we just inserted
+        // apply velocity, optionally hide, and optionally attach the note we just inserted to staff line
         if (c.element && c.element.type === Element.CHORD) {
             var ch = c.element
+
+            if (fmtOn) {
+                try {
+                    ch.noStem = true
+                } catch (eCH) {}
+            }
+
             if (ch.notes) {
                 for (var i in ch.notes) {
                     var nn = ch.notes[i]
@@ -235,6 +249,20 @@ MuseScore {
                             try {
                                 nn.visible = false
                             } catch (e) {}
+                        }
+                        // stemless fallback on the note, in case staff-level Stemless is unavailable
+                        if (fmtOn) {
+                            try {
+                                nn.noStem = true
+                            } catch (eNS) {}
+                        }
+                        // attach note to staff line
+                        if (fmtOn) {
+                            try {
+                                nn.fixed = true
+                                // index 0 (single staff line)
+                                // nn.fixedLine = 0
+                            } catch (eFix) {}
                         }
                     }
                 }
@@ -554,6 +582,204 @@ MuseScore {
 
     function escapeRegex(s) {
         return s.replace(/[\\\-\\/\\^$*+?.()\\[\\]{}]/g, '\\$&')
+    }
+
+    // Return true if the value is "true" (string) or boolean true.
+    function flagIsTrue(val) {
+        if (val === true)
+            return true
+        if (val === "true")
+            return true
+        if (typeof val === "string") {
+            var s = val.trim().toLowerCase()
+            return (s === "true" || s === "1" || s === "yes")
+        }
+        return false
+    }
+
+    // Insert a Staff type change (STC) on the given staff once per run.
+    // Anchor at 'insertTick' (selection start); if that yields no segment,
+    // fall back to SCORE_START. ADD the element first, then set properties.
+    function applyKsStaffFormattingIfNeeded(tgtStaffIdx, insertTick) {
+        try {
+            if (tgtStaffIdx < 0)
+                return
+            var key = String(tgtStaffIdx)
+            if (formattedKsStaff[key])
+                return
+            var enabled = (globalSettings && globalSettings.formatKeyswitchStaff !== undefined) ? globalSettings.formatKeyswitchStaff :
+                                                                                                  "true"
+
+            if (!flagIsTrue(enabled)) {
+                formattedKsStaff[key] = true
+                return
+            }
+
+            var c = curScore.newCursor()
+            c.track = tgtStaffIdx * 4;
+
+            // Prefer selection-start tick; else fall back to SCORE_START
+            var hasSeg = false
+            if (typeof insertTick === 'number') {
+                c.rewindToTick(insertTick)
+                if (c.segment)
+                    hasSeg = true
+            }
+            if (!hasSeg) {
+                c.rewind(Cursor.SCORE_START)
+                if (c.segment)
+                    hasSeg = true
+            }
+            if (!hasSeg) {
+                formattedKsStaff[key] = true
+                return
+            }
+
+            dbg("[KS] KS format: staff=" + tgtStaffIdx + " at tick=" + c.tick);
+
+            // --- 1) Create and ADD the Staff type change element ---
+            var stc = newElement(Element.STAFFTYPE_CHANGE)
+            try {
+                c.add(stc)
+            } catch (eAdd) {
+                dbg("[KS] add(STC) failed: " + String(eAdd))
+                formattedKsStaff[key] = true
+                return
+            }
+
+            // --- 2) Now set properties (prefer underlying StaffType) ---
+            function safeSet(fn) {
+                try {
+                    fn()
+                } catch (__) {}
+            }
+            var st = null
+            try {
+                st = stc.staffType
+            } catch (eST) {
+                st = null
+            }
+
+            if (st) {
+                // StaffType-level settings
+                // safeSet(function () {
+                //     st.lines = 1
+                // })
+                // safeSet(function () {
+                //     st.lineDistance = 1.0
+                // });
+
+                // // Visibility toggles
+                // safeSet(function () {
+                //     st.genClef = false
+                // })
+                // safeSet(function () {
+                //     st.genTimesig = false
+                // })
+                // safeSet(function () {
+                //     st.genKeysig = false
+                // })
+                // safeSet(function () {
+                //     st.showLedgerLines = false
+                // })
+                // safeSet(function () {
+                //     st.showBarlines = true
+                // });
+
+                // Stemless
+                safeSet(function () {
+                    st.stemless = true
+                });
+
+                // Notehead scheme → Pitch names
+                safeSet(function () {
+                    if (typeof PluginAPI !== "undefined" && PluginAPI.NoteHeadScheme && PluginAPI.NoteHeadScheme.PITCH_NAME !== undefined) {
+                        st.noteHeadScheme = PluginAPI.NoteHeadScheme.PITCH_NAME
+                    } else {
+                        // common fallback used by many builds for "Pitch names"
+                        st.noteHeadScheme = 1
+                    }
+                })
+            } else {
+                // Fallback: some builds expose wrapper properties right on the STC
+                // safeSet(function () {
+                //     stc.lines = 1
+                // })
+                // safeSet(function () {
+                //     stc.lineDistance = 1.0
+                // })
+                // safeSet(function () {
+                //     stc.genClef = false
+                // })
+                // safeSet(function () {
+                //     stc.genTimesig = false
+                // })
+                // safeSet(function () {
+                //     stc.genKeysig = false
+                // })
+                // safeSet(function () {
+                //     stc.showLedgerLines = false
+                // })
+                // safeSet(function () {
+                //     stc.showBarlines = true
+                // })
+                safeSet(function () {
+                    stc.stemless = true
+                })
+                safeSet(function () {
+                    if (typeof PluginAPI !== "undefined" && PluginAPI.NoteHeadScheme && PluginAPI.NoteHeadScheme.PITCH_NAME !== undefined) {
+                        stc.headScheme = PluginAPI.NoteHeadScheme.PITCH_NAME
+                    } else {
+                        stc.headScheme = 1
+                    }
+                })
+                safeSet(function () {
+                    if (stc.headScheme === undefined)
+                        stc.noteHeadScheme = 1
+                })
+            }
+
+            // Hide the magenta STC icon
+            safeSet(function () {
+                stc.visible = false
+            })
+            safeSet(function () {
+                stc.offsetY = -1000
+            });
+
+            // (Optional) force layout if your build requires it for Lines/Stemless to appear immediately
+            try {
+                if (curScore && curScore.doLayout)
+                    curScore.doLayout()
+            } catch (_e) {}
+        } catch (e) {
+            dbg("applyKsStaffFormattingIfNeeded failed: " + String(e))
+        } finally {
+            formattedKsStaff[String(tgtStaffIdx)] = true
+        }
+    }
+
+    // Format all target KS staves for a given staff window before scanning chords.
+    // 'allowedMap' is the map of source staves we actually process in this run.
+    // 'insertTick' is where to anchor the Staff type change (selection start is safest).
+    function applyKsFormattingForSourceWindow(startStaff, endStaff, allowedMap, insertTick) {
+        try {
+            var enabled = (globalSettings && globalSettings.formatKeyswitchStaff !== undefined) ? globalSettings.formatKeyswitchStaff :
+                                                                                                  "true"
+
+            if (!flagIsTrue(enabled))
+                return
+            for (var s = startStaff; s <= endStaff; ++s) {
+                if (!allowedMap[s])
+                    continue
+                var tgt = targetStaffForKeyswitch(s)
+                if (tgt >= 0)
+                    applyKsStaffFormattingIfNeeded(tgt, insertTick)
+                // << pass the tick
+            }
+        } catch (e) {
+            dbg("applyKsFormattingForSourceWindow failed: " + String(e))
+        }
     }
 
     // Map known aliases explicitly
@@ -922,6 +1148,7 @@ MuseScore {
         sawIneligible = false
         firstIneligibleStaffIdx = -1
         var ineligiblePartIdx = {}
+        formattedKsStaff = ({})
         dbg("processSelection: begin")
 
         var chords = []
@@ -975,7 +1202,10 @@ MuseScore {
 
             var allowedMap = computeAllowedSourceStaves(startStaff, endStaffInc, effScope, effParts)
             dbg("scope: effective='" + effScope + "' parts: effective='" + effParts + "'")
-            dbg("allowed source staves: " + Object.keys(allowedMap).sort().join(", "))
+            dbg("allowed source staves: " + Object.keys(allowedMap).sort().join(", "));
+
+            // format KS staves once up front at selection start (avoid mutating the score mid-scan)
+            applyKsFormattingForSourceWindow(startStaff, endStaffInc, allowedMap, startTick)
 
             for (var t = startStaff * 4; t < 4 * (endStaffInc + 1); ++t) {
                 var trackStaff = staffIdxFromTrack(t)

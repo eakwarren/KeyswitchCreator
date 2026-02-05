@@ -284,6 +284,7 @@ MuseScore {
     function defaultGlobalSettingsObj() {
         return {
             "durationPolicy": "source",
+            "formatKeyswitchStaff": "true",
             "techniqueAliases": {
                 // phrasing
                 "legato": ["legato", "leg.", "slur", "slurred"],
@@ -408,6 +409,8 @@ MuseScore {
     function formatGlobalsCompact(glob) {
         var lines = ['{']
         lines.push('    "durationPolicy":' + JSON.stringify(glob.durationPolicy || "source") + ',')
+        var fks = (glob.formatKeyswitchStaff !== undefined) ? glob.formatKeyswitchStaff : "true"
+        lines.push('    "formatKeyswitchStaff":' + JSON.stringify(fks) + ',')
         lines.push('    "techniqueAliases":{')
         var alias = glob.techniqueAliases || {}
         var ak = Object.keys(alias)
