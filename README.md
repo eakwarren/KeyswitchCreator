@@ -4,24 +4,22 @@ A MuseScore Studio (v4.7+) plugin that automates keyswitch creation based on art
 
 The plugin has two parts:
 1. A robust settings dialog that allows assignment of keyswitch sets per staff, displays an intuitive map of keyswitches in sets, and provides editors for set creation and global customization.
+   
+   <img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
+    
+3. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff _directly below_ the played staff, within the same instrument/part.
 
-2. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff _directly below_ the played staff, within the same instrument/part.
+   <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" /> 
 
-<img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
 
-Developed with ❤️ by Eric Warren
 
 
 ## Setup
 1. Download the latest release version on the right. Unzip to your MuseScore Plugins directory. Usually at [USER]/Documents/MuseScore4/Plugins
 
-2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's size, color, and clef to help it stand out from the score. Hide the staff when not working with keyswitches.
+2. Open a score and add keyswitch staves to the bottom of each VST instrument in the Layout panel. Here, I've customized a flute keyswitch staff's number of lines to help it stand out from the score. Use with `formatKeyswitchStaff` below to create a tidy appearance. Close the staff when not working with keyswitches.
 
-   <img width="546" height="114" alt="keyswitch staff example" src="https://github.com/user-attachments/assets/fcf3d9a6-8977-47b2-88d4-ad35b5626d67" />
-
-   For extremely low or high keyswitches, add 15ma bassa / alta lines to reduce ledger lines. _Note: Adjust note octaves after applying pitch modifications so notes remain at values written by Keyswitch Creator. (Typically the C-1 range where C4 is middle C.)_
-
-   <img width="324" height="84" alt="15ma bassa" src="https://github.com/user-attachments/assets/6b71ab9a-66ef-4a2e-9192-4150fa1a370e" />
+    <img width="558" height="113" alt="updated staff customization" src="https://github.com/user-attachments/assets/e367f4ac-f6b5-4e35-b8a2-27b3015d47c1" />
 
 3. Open Plugins > Manage Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
 
@@ -33,7 +31,8 @@ Developed with ❤️ by Eric Warren
 
 5. Make a selection in the main score (leave blank for entire score) and run the Keyswitch Creator plugin. (I set ⌘⇧+K as a shortcut.)
 
-    <img width="711" height="294" alt="ks applied" src="https://github.com/user-attachments/assets/d8ec904a-2da8-484f-8870-be0e5ea54dbf" />
+    <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" />
+
 
 ## Extended Score Text Features
 Add any of the following text tags to the main score to customize keyswitch creation.
