@@ -84,14 +84,13 @@ Each top‑level key is a set name. Map values accept a number (midi note) or st
     "Default Low": {
         "articulationKeyMap": {"staccato": 0, "accent": 3, "marcato": 4, "tenuto": "2|80"},
         "techniqueKeyMap": {"normal": 14, "pizz": 16, "tremolo": 17, "con sord": "18|20", "legato": 24},
-        "durationPolicy": "source"          // OPTIONAL
     },
     "My Library": {
         "articulationKeyMap": {"staccato": 36, "accent": 37, "marcato": 38},
         "techniqueKeyMap": {"arco": 60, "pizz": "61\n1", "sul pont": 62, "senza sord": 63},
         "durationPolicy": "fixed",          //OPTIONAL
         "techniqueAliases": {
-            "pizz": ["pizz.", "pizzicato"]  // OPTIONAL
+            "pizz": ["pizz.", "pluck"]  // OPTIONAL
         }
     }
 }
@@ -99,13 +98,19 @@ Each top‑level key is a set name. Map values accept a number (midi note) or st
 
 
 #### Global Settings
-The global `durationPolicy` specifies if keyswitch notes mirror the duration of their `source` note (default), or if each has a `fixed` value. (Fixed to 16th notes, but editable in the plugin code.)
+The global settings editor allows customization of various options that affect keyswitch creation. 
 
-Global `techniqueAliases` allow for matching slight variations on technique spelling.
+`durationPolicy` Specifies if keyswitch notes mirror the duration of their `source` note (default), or if each has a `fixed` value. (Fixed to 16th notes, but editable in the plugin code.)
+
+`formatKeyswitchStaff` Auto-format the keyswitch staff to show note names on note heads, remove stems, and attach the note to a single staff line. _Note: Because certain staff properties are read-only in the plugin api, set Lines to 1 in Staff/Part properties manually in each keyswitch staff to optimize the view._ Use the status bar in the bottom left corner of the score window to inspect the keyswitch octave. 
+(images)
+
+`techniqueAliases` Match slight variations on technique spelling.
 
 ```
 {
     "durationPolicy":"source",
+    "formatKeyswitchStaff": "true",
     "techniqueAliases":{
         "legato":["legato","leg.","slur","slurred"],
         "normal":["normal","normale","norm.","nor.","ordinary","ord.","standard","std.","arco"],
@@ -155,4 +160,4 @@ MuseScore Studio and VST instrument developers, wherever they may roam.
 
 
 ## Release Notes
-v0.9.7 2/2/26 Initial release.
+v0.9.7 2/4/26 Initial release.
