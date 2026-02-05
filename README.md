@@ -103,7 +103,15 @@ The global settings editor allows customization of various options that affect k
 `durationPolicy` Specifies if keyswitch notes mirror the duration of their `source` note (default), or if each has a `fixed` value. (Fixed to 16th notes, but editable in the plugin code.)
 
 `formatKeyswitchStaff` Auto-format the keyswitch staff to show note names on note heads, remove stems, and attach the note to a single staff line. _Note: Because certain staff properties are read-only in the plugin api, set Lines to 1 in Staff/Part properties manually in each keyswitch staff to optimize the view._ Use the status bar in the bottom left corner of the score window to inspect the keyswitch octave. 
-(images)
+
+With auto-formatting (true)
+
+<img width="407" height="193" alt="formatKeyswitchStaff=true (default)" src="https://github.com/user-attachments/assets/f00bfa87-a41d-4818-a52e-92764b32fa59" />
+
+Without auto-formatting (false)
+
+<img width="411" height="439" alt="formatKeyswitchStaff=false" src="https://github.com/user-attachments/assets/9c534e08-40f4-4b97-a297-5e5f139549d8" />
+
 
 `techniqueAliases` Match slight variations on technique spelling.
 
