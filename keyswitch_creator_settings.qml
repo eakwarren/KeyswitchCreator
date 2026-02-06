@@ -774,6 +774,48 @@ MuseScore {
         return map
     }
 
+    function activeVelocityMapFromRegistryText(jsonText, setName) {
+        var reg = parseRegistrySafely(jsonText)
+        if (reg && reg.hasOwnProperty(setName))
+            return velocitiesMapFromSetObj(reg[setName])
+        // fallback to already-parsed in-memory registry
+        if (keyswitchSets && keyswitchSets[setName])
+            return velocitiesMapFromSetObj(keyswitchSets[setName])
+        return ({})
+    }
+
+    // Build a midi -> velocity map for the active set.
+    // If multiple entries map to the same MIDI note with different velocities,
+    // we keep the first discovered velocity (consistent & deterministic).
+    function velocitiesMapFromSetObj(setObj) {
+        var map = ({})
+        if (!setObj)
+            return map
+
+        function consider(v) {
+            var p = pitchFromKsMapValue(v)
+            var vel = velocityFromKsMapValue(v)
+            if (p === null || vel === null)
+                return
+            p = parseInt(p, 10)
+            vel = parseInt(vel, 10)
+            if (isNaN(p) || isNaN(vel) || p < 0 || p > 127 || vel < 0 || vel > 127)
+                return
+            if (map[p] === undefined)
+                map[p] = vel
+        }
+
+        if (setObj.articulationKeyMap) {
+            for (var k in setObj.articulationKeyMap)
+                consider(setObj.articulationKeyMap[k])
+        }
+        if (setObj.techniqueKeyMap) {
+            for (var t in setObj.techniqueKeyMap)
+                consider(setObj.techniqueKeyMap[t])
+        }
+        return map
+    }
+
     function normalizeUiText(s) {
         return cleanName(decodeHtmlEntities(stripHtmlTags(s)))
     }
@@ -809,16 +851,18 @@ MuseScore {
     function pitchFromKsMapValue(v) {
         if (typeof v === "number")
             return parseInt(v, 10)
-
         if (typeof v === "string") {
-            var s = v.trim()
-            var bar = s.indexOf("|")
-            if (bar >= 0)
-                s = s.substring(0, bar)
+            var s = v.trim();
+            // Support "26|127" and "26\n127"
+            var sep = s.indexOf('|')
+            if (sep >= 0)
+                s = s.substring(0, sep)
+            var nl = s.indexOf("\n")
+            if (nl >= 0)
+                s = s.substring(0, nl)
             var n = parseInt(s, 10)
             return isNaN(n) ? null : n
         }
-
         if (v && typeof v === "object") {
             // not advertised yet, but harmless if someone uses it
             if (v.pitch !== undefined) {
@@ -832,6 +876,47 @@ MuseScore {
             if (Array.isArray(v) && v.length > 0) {
                 var p3 = parseInt(v[0], 10)
                 return isNaN(p3) ? null : p3
+            }
+        }
+        return null
+    }
+
+    // Extract velocity from a KS value.
+    // Supports:
+    //   number        -> null (no velocity specified)
+    //   "26|127"      -> 127
+    //   "26\n127"     -> 127
+    //   {velocity:..} -> that number
+    //   {vel:..}      -> that number
+    //   [26,127]      -> 127
+    function velocityFromKsMapValue(v) {
+        if (typeof v === "number")
+            return null
+        if (typeof v === "string") {
+            var s = v.trim();
+            // Accept "26|127" and "26\n127"
+            var pos = s.indexOf('|')
+            if (pos < 0)
+                pos = s.indexOf("\n")
+            if (pos >= 0) {
+                var right = s.substring(pos + 1).trim()
+                var n = parseInt(right, 10)
+                return isNaN(n) ? null : Math.max(0, Math.min(127, n))
+            }
+            return null
+        }
+        if (v && typeof v === "object") {
+            if (v.velocity !== undefined) {
+                var a = parseInt(v.velocity, 10)
+                return isNaN(a) ? null : Math.max(0, Math.min(127, a))
+            }
+            if (v.vel !== undefined) {
+                var b = parseInt(v.vel, 10)
+                return isNaN(b) ? null : Math.max(0, Math.min(127, b))
+            }
+            if (Array.isArray(v) && v.length > 1) {
+                var c = parseInt(v[1], 10)
+                return isNaN(c) ? null : Math.max(0, Math.min(127, c))
             }
         }
         return null
@@ -1191,6 +1276,7 @@ MuseScore {
             if (kbroot) {
                 kbroot.activeNotes = []
                 kbroot.noteLabelsMap = ({})
+                kbroot.noteVelocityMap = ({})
             }
             return
         }
@@ -1198,6 +1284,7 @@ MuseScore {
         if (kbroot) {
             kbroot.activeNotes = activeMidiFromRegistryText(jsonArea.text, setName)
             kbroot.noteLabelsMap = activeNamesMapFromRegistryText(jsonArea.text, setName)
+            kbroot.noteVelocityMap = activeVelocityMapFromRegistryText(jsonArea.text, setName)
         }
     }
 
@@ -1584,6 +1671,7 @@ MuseScore {
                     property bool middleCIsC4: true
                     // map midi -> ["pizz", "staccato", ...] for tooltip line 2
                     property var noteLabelsMap: ({}) // { 26:["pizz"], 25:["staccato"], ... }
+                    property var noteVelocityMap: ({}) // { 26:127, 25:64, ... }
 
                     property int startMidi: 0 // inclusive
                     property string view: "small" // "small" | "medium" | "large"
@@ -1629,10 +1717,14 @@ MuseScore {
                         return Math.floor(m / 12) - (kbroot.middleCIsC4 ? 1 : 2)
                     }
 
-                    function tooltipText(m) {    // Line 1: MIDI 0 (C-1)
-                        var line1 = "MIDI " + m + " (" + noteName(m) + ")"
+                    function tooltipText(m) {
+                        // Line 1: MIDI 0 (C-1) or MIDI 0|vel (C-1)
+                        var vel = (noteVelocityMap && noteVelocityMap[m] !== undefined) ? noteVelocityMap[m] : null
+                        var line1 = vel === null ? ("MIDI " + m + " (" + noteName(m) + ")") : ("MIDI " + m + "|" + vel + " (" + noteName(m)
+                                                                                               + ")");
+
                         // Line 2: keyswitch names, if any
-                        var labels = noteLabelsMap && noteLabelsMap[m] ? noteLabelsMap[m] : null
+                        var labels = (noteLabelsMap && noteLabelsMap[m]) ? noteLabelsMap[m] : null
                         if (labels && labels.length) {
                             return line1 + "\n" + labels.join(", ")
                         }
