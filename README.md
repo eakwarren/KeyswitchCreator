@@ -63,17 +63,20 @@ In range selections, `all` processes every selected part/instrument; `anchor` re
 
 ## Settings Window
 
-<img width="961" height="360" alt="assign" src="https://github.com/user-attachments/assets/f2c491e9-957b-49e6-8fea-5c49631205e2" />
+<img width="1387" height="840" alt="updated staff window" src="https://github.com/user-attachments/assets/6c377893-45cd-4957-97dc-10e821de69fa" />
 
 #### Staff List
 The column on the left lists all the staves in the score. Click a staff to activate it and then select a Keyswitch Set button to assign the set to the staff.
 
 Cmd/Ctrl+A will select all staves. Shift+click will select a range of staves, while Cmd/Ctrl+click will multi-select staves. Shift+up/down arrows are additional shortcuts to quickly select a range of staves.
 
+#### Piano Keyboard
+The piano keyboard at the top shows what keyswitches are part of the active set. Hover over the keys to see the midi note (and velocity if set) and keyswitch name.
+> [!NOTE]
+> MuseScore displays midi note 60 as C4 (so lowest octave is C-1) by default. To change this so note 60 is displayed as C3 (lowest octave is C-2) set `property bool middleCIsC4: false` in the settings plugin file.
+
 #### Keyswitch Set Button Panel
 The panel of buttons to the right of the Staff List each represent a keyswitch set. With one or more staves selected, click to assign the keyswitch set to a staff. Click again to un-assign.
-
-The piano keyboard at the top shows what keyswitches are part of the active set. Hover over the keys to see the midi note, velocity (if any), and name.
 
 Clear all staff assignments with the button at the top. (Helpful when setting up a new template.) Filter large numbers of sets to focus on desired sets.
 
