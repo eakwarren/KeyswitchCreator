@@ -78,7 +78,7 @@ The piano keyboard at the top shows what keyswitches are part of the active set.
 Clear all staff assignments with the button at the top. (Helpful when setting up a new template.) Filter large numbers of sets to focus on desired sets.
 
 #### Set Registry
-Each top‑level key is a set name. Map values accept a number (midi note) or string (midi note|velocity). Velocity defautls to 64 if omitted. Per set durationPolicy and techniqueAliases can override Global settings.
+Each top‑level key is a set name. Map values accept a number (midi note) or string (midi note|velocity). Velocity defautls to 64 if omitted. Per set `durationPolicy` and `techniqueAliases` can override Global settings.
 ```
 {
     "Default Low": {
@@ -88,9 +88,9 @@ Each top‑level key is a set name. Map values accept a number (midi note) or st
     "My Library": {
         "articulationKeyMap": {"staccato": 36, "accent": 37, "marcato": 38},
         "techniqueKeyMap": {"arco": 60, "pizz": "61\n1", "sul pont": 62, "senza sord": 63},
-        "durationPolicy": "fixed",          //OPTIONAL
+        "durationPolicy": "fixed",          //OPTIONAL OVERRIDE
         "techniqueAliases": {
-            "pizz": ["pizz.", "pluck"]  // OPTIONAL
+            "pizz": ["pizz.", "pluck"]  // OPTIONAL OVERRIDE
         }
     }
 }
