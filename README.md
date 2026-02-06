@@ -88,7 +88,7 @@ Each top‑level key is a set name. Map values accept a number (midi note) or st
     "My Library": {
         "articulationKeyMap": {"staccato": 36, "accent": 37, "marcato": 38},
         "techniqueKeyMap": {"arco": 60, "pizz": "61\n1", "sul pont": 62, "senza sord": 63},
-        "durationPolicy": "fixed",          //OPTIONAL OVERRIDE
+        "durationPolicy": "fixed",      //OPTIONAL OVERRIDE
         "techniqueAliases": {
             "pizz": ["pizz.", "pluck"]  // OPTIONAL OVERRIDE
         }
