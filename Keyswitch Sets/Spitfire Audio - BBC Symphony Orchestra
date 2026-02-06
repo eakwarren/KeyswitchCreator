@@ -724,17 +724,4 @@
             "hits": 0,
             "rolls": 1
         }
-    },
-    "BBCSO": {
-        "articulationKeyMap": {
-            "staccatissimo": 4,
-            "marcato": 5
-        },
-        "techniqueKeyMap": {
-            "legato": 0,
-            "long": 1,
-            "trill_major2nd": 2,
-            "trill_minor2nd": 3,
-            "long_flutter": 6
-        }
     }
