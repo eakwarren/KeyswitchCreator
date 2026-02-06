@@ -7,7 +7,7 @@ The plugin has two parts:
    
    <img width="1387" height="840" alt="legato" src="https://github.com/user-attachments/assets/893a6429-4d0d-4e0b-89de-2737f07a8e85" />
     
-3. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff _directly below_ the played staff, within the same instrument/part.
+3. A runtime plugin that scans a selection (or entire score) and applies keyswitches to the staff **_directly below_** the played staff, within the same instrument/part.
 
    <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" /> 
 
@@ -57,6 +57,7 @@ In range selections, `staff` restricts to the selected staff only (default), `pa
 
 #### KS:Parts
 In range selections, `all` processes every selected part/instrument; `anchor` restricts to the part of the selection’s starting staff. Without a tag, multi‑part selections auto‑widen to `all`.
+
 `KS:Parts=all` or `KS:SParts=anchor`
 
 
@@ -101,7 +102,10 @@ The global settings editor allows customization of various options that affect k
 
 `durationPolicy` Specifies if keyswitch notes mirror the duration of their `source` note (default), or if each has a `fixed` value. (Fixed to 16th notes, but editable in the plugin code.)
 
-`formatKeyswitchStaff` Auto-format the keyswitch staff to show note names on note heads, remove stems, and attach the note to a single staff line. _Note: Because certain staff properties are read-only in the plugin api, set Lines to 1 in Staff/Part properties manually in each keyswitch staff to optimize the view._ Use the status bar in the bottom left corner of the score window to inspect the keyswitch octave. 
+`formatKeyswitchStaff` Auto-format the keyswitch staff to show note names on note heads, remove stems, and attach the note to a single staff line. Use the status bar in the bottom left corner of the score window to inspect the keyswitch octave.
+
+> [!IMPORTANT]
+> Because certain staff properties are read-only in the plugin api, set Lines to 1 in Staff/Part properties manually in each keyswitch staff to optimize the view.
 
 <img width="407" height="193" alt="formatKeyswitchStaff=true (default)" src="https://github.com/user-attachments/assets/f00bfa87-a41d-4818-a52e-92764b32fa59" />
 
@@ -148,7 +152,9 @@ The Close button closes the Settings window.
 
 
 ## Additional Keyswitch Sets
-The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor. _Note: Ensure proper json formatting rules with commas and brackets in the right places. The error highlighting should help identify any issues._
+The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor.
+> [!IMPORTANT]
+> When adding sets, use proper json formatting rules with commas and brackets in the right places. The error highlighting should help identify any issues.
 
 
 ## Known Issues
@@ -166,4 +172,4 @@ MuseScore Studio and VST instrument developers, wherever they may roam.
 
 
 ## Release Notes
-v0.9.7 2/4/26 Initial release.
+v0.9.7 2/6/26 Initial release.
