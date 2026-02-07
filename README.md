@@ -109,7 +109,7 @@ The global settings editor allows customization of various options that affect k
 
 > [!IMPORTANT]
 > Because certain staff properties are read-only in the plugin api, set Lines to 1 in Staff/Part properties manually in each keyswitch staff to optimize the view.
-220
+
 <img width="220" height="104" alt="formatKeyswitchStaff=true (default)" src="https://github.com/user-attachments/assets/f00bfa87-a41d-4818-a52e-92764b32fa59" />
 
 With auto-formatting (true)
