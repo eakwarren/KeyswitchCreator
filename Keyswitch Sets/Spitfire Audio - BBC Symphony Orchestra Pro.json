@@ -1,0 +1,719 @@
+    "BBCP Violins 1": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Spiccato CS": 19,
+            "Sul Pont": 18,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Tremolo CS": 17,
+            "Tremolo Sul Pont": 16,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Violins 2": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Spiccato CS": 19,
+            "Sul Pont": 18,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Tremolo CS": 17,
+            "Tremolo Sul Pont": 16,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Basses": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Long Sul Tasto": 11,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Spiccato CS": 19,
+            "Sul Pont": 18,
+            "Tremolo": 8,
+            "Tremolo CS": 17,
+            "Tremolo Sul Pont": 16,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Viola Leaders": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Violins 1 Leaders": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Celli Leaders": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Violas": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Spiccato CS": 19,
+            "Sul Pont": 18,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Tremolo CS": 17,
+            "Tremolo Sul Pont": 16,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Celli": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Spiccato CS": 19,
+            "Sul Pont": 18,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Tremolo CS": 17,
+            "Tremolo Sul Pont": 16,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Bass Leaders": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Violins 2 Leaders": {
+        "articulationKeyMap": {
+            "marcato": 15,
+            "staccatissimo": 4,
+            "staccato": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Col Legno": 7,
+            "Flautando": 3,
+            "Harmonics": 12,
+            "Harmonics Shorter": 13,
+            "legato": 0,
+            "Long CS": 2,
+            "Pizzicato": 6,
+            "Pizzicato Bartok": 14,
+            "Sul Tasto": 11,
+            "Tremolo": 8,
+            "Trill HT": 10,
+            "Trill WT": 9
+        }
+    },
+    "BBCP Tuba": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Horns a4": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 10,
+            "Marcato Mute": 12,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 11,
+            "Trill HT": 9,
+            "Trill WT": 8,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Trumpet": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 10,
+            "Marcato Mute": 12,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 11,
+            "Trill HT": 9,
+            "Trill WT": 8,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Contrabass Trombone": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Sforzando": 5
+        }
+    },
+    "BBCP Tenor Trombones a3": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 8,
+            "Marcato Mute": 10,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 9,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Tenor Trombone": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 8,
+            "Marcato Mute": 10,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 9,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Trumpets a3": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 10,
+            "Marcato Mute": 12,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 11,
+            "Trill HT": 9,
+            "Trill WT": 8,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Bass Trombones a2": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 8,
+            "Marcato Mute": 10,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 9,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Contrabass Tuba": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Sforzando": 5
+        }
+    },
+    "BBCP Cimbasso": {
+        "articulationKeyMap": {
+            "marcato": 2,
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Long Cuive": 3,
+            "Sforzando": 4
+        }
+    },
+    "BBCP Horn": {
+        "articulationKeyMap": {
+            "marcato": 3,
+            "staccatissimo": 2
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Long Cuive": 4,
+            "Long Mute": 10,
+            "Marcato Mute": 12,
+            "Multi Tongue": 7,
+            "Sforzando": 5,
+            "Staccatissimo Mute": 11,
+            "Trill HT": 9,
+            "Trill WT": 8,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Toys": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Castanets": 0,
+            "Cowbell": 3,
+            "Guiro Longer": 6,
+            "Guiro Shorter": 5,
+            "Slight Bells": 4,
+            "Vibraslap": 2,
+            "Woodblock": 1
+        }
+    },
+    "BBCP Xylophone": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Rolls": 1
+        }
+    },
+    "BBCP Tubular Bells": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Long Damped": 2,
+            "Rolls": 1
+        }
+    },
+    "BBCP Vibraphone": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCP Harp": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Long Damped": 1,
+            "Long Damped Medium": 2,
+            "Tremolo": 3,
+            "FX Glissando": 4
+        }
+    },
+    "BBCP Celeste": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Long Damped": 1,
+            "Long Damped Medium": 2
+        }
+    },
+    "BBCP Timpani": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Long Damped": 6,
+            "Long Hotrods": 4,
+            "Long Hotrods Damped": 8,
+            "Long Soft": 2,
+            "Long Soft Damped": 9,
+            "Long Super Damped": 7,
+            "Rolls": 1,
+            "Rolls Hotrods": 5,
+            "Rolls Soft": 3
+        }
+    },
+    "BBCP Untuned Percussion": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Anvil": 0,
+            "Bass Drum 1": 1,
+            "Bass Drum 2": 2,
+            "Cymbals": 3,
+            "Military-Drum": 4,
+            "Piatti": 5,
+            "Snare 1": 6,
+            "Snare 2": 7,
+            "Tam Tam": 8,
+            "Tambourine": 9,
+            "Tenor-Drum": 10,
+            "Toys": 11,
+            "Triangle": 12
+        }
+    },
+    "BBCP Marimba": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Rolls": 1
+        }
+    },
+    "BBCP Glockenspiel": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Rolls": 1
+        }
+    },
+    "BBCP Crotales": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Long Bowed": 1
+        }
+    },
+    "BBCP Bassoons a3": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Contrabassoon": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Bass Flute": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Bassoon": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Oboe": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2
+        }
+    },
+    "BBCP Clarinets a3": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Bass Clarinet": {
+        "articulationKeyMap": {
+            "marcato": 5,
+            "staccatissimo": 4
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 6
+        }
+    },
+    "BBCP Clarinet": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Cor Anglais": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Trill HT": 3,
+            "Trill WT": 2
+        }
+    },
+    "BBCP Contrabass Clarinet": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Flute": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Piccolo": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "FX Fall": 10,
+            "FX Rip": 9,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    },
+    "BBCP Oboes a3": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2
+        }
+    },
+    "BBCP Flutes a3": {
+        "articulationKeyMap": {
+            "marcato": 6,
+            "staccatissimo": 4,
+            "tenuto": 5
+        },
+        "techniqueKeyMap": {
+            "Long": 1,
+            "legato": 0,
+            "Multi Tongue": 8,
+            "Trill HT": 3,
+            "Trill WT": 2,
+            "FX Flutter": 7
+        }
+    }

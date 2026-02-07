@@ -1,0 +1,318 @@
+    "SSOD Grand Piano": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Direct": "0|1",
+            "Tape": "0|2"
+        }
+    },
+    "SSOD Harp": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Bisbigliando": "0|11",
+            "Flageolet": "0|29",
+            "FX": "0|90",
+            "Pdlt": "0|18",
+            "Slid": "0|2"
+        }
+    },
+    "SSOD Bass Clarinet": {
+        "articulationKeyMap": {
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Piccolo Flute": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Flutter": "0|11",
+            "Harmonics": "0|10",
+            "Multi Tongue": "0|75",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Oboe Solo": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Flutter": "0|11",
+            "legato": "0|20",
+            "Multi Tongue": "0|75",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Bassoon Solo": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Flutter Flutter": "0|11",
+            "Harmonics": "0|10",
+            "Multi Tongue": "0|75",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71",
+            "FX Fall": "0|101",
+            "FX Rip": "0|100"
+        }
+    },
+    "SSOD Flute Solo": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Flutter": "0|11",
+            "Harmonics": "0|10",
+            "Long Hollow": "0|8",
+            "Multi Tongue": "0|75",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Celli": {
+        "articulationKeyMap": {
+            "marcato": "0|9",
+            "staccatissimo": "0|42",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Col Legno": "0|58",
+            "Flautando": "0|8",
+            "FX": "0|90",
+            "Harmonics": "0|10",
+            "Harmonics Shorter": "0|61",
+            "Long Blend CS": "0|5",
+            "Long CS": "0|7",
+            "Long Molto Vibrato": "0|16",
+            "Marcato Shorter": "0|52",
+            "Pizzicato": "0|56",
+            "Pizzicato Bartok": "0|57",
+            "Short Brushed": "0|48",
+            "Short Brushed CS": "0|62",
+            "Short CS": "0|47",
+            "Sul Pont": "0|18",
+            "Sul Pont CS": "0|19",
+            "Sul Tasto Super": "0|114",
+            "Tremolo": "0|11",
+            "Tremolo 150": "0|81",
+            "Tremolo 150 CS": "0|84",
+            "Tremolo 180": "0|82",
+            "Tremolo CS": "0|12",
+            "Tremolo Sul Pont": "0|13",
+            "Trill 3rd Maj": "0|73",
+            "Trill 3rd Min": "0|72",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Violas": {
+        "articulationKeyMap": {
+            "marcato": "0|9",
+            "staccatissimo": "0|42",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Col Legno": "0|58",
+            "Flautando": "0|8",
+            "FX": "0|90",
+            "Harmonics": "0|10",
+            "Harmonics Shorter": "0|61",
+            "Long Blend CS": "0|5",
+            "Long CS": "0|7",
+            "Long Molto Vibrato": "0|16",
+            "Marcato Shorter": "0|52",
+            "Pizzicato": "0|56",
+            "Pizzicato Bartok": "0|57",
+            "Short Brushed": "0|48",
+            "Short Brushed CS": "0|62",
+            "Short CS": "0|47",
+            "Sul Pont": "0|18",
+            "Sul Pont CS": "0|19",
+            "Sul Tasto Super": "0|114",
+            "Tremolo": "0|11",
+            "Tremolo 150": "0|81",
+            "Tremolo 180": "0|82",
+            "Tremolo Mute": "0|12",
+            "Tremolo Sul Pont": "0|13",
+            "Trill 3rd Maj": "0|73",
+            "Trill 3rd Min": "0|72",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Basses": {
+        "articulationKeyMap": {
+            "marcato": "0|9",
+            "staccatissimo": "0|42",
+            "staccato": "0|49",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Col Legno": "0|58",
+            "Flautando": "0|8",
+            "FX": "0|90",
+            "Harmonics": "0|10",
+            "Harmonics Shorter": "0|61",
+            "Marcato Shorter": "0|52",
+            "Pizzicato": "0|56",
+            "Pizzicato Bartok": "0|57",
+            "Spiccato Overlay": "0|41",
+            "Sul Pont": "0|18",
+            "Sul Pont Distorted": "0|113",
+            "Sul Tasto Super": "0|114",
+            "Tremolo": "0|11",
+            "Tremolo 150": "0|81",
+            "Tremolo 180": "0|82",
+            "Tremolo Sul Pont": "0|13",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Violins": {
+        "articulationKeyMap": {
+            "marcato": "0|9",
+            "staccatissimo": "0|42",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Col Legno": "0|58",
+            "Flautando": "0|8",
+            "FX": "0|90",
+            "Harmonics": "0|10",
+            "Harmonics Shorter": "0|61",
+            "Long Blend CS": "0|5",
+            "Long CS": "0|7",
+            "Long Molto Vibrato": "0|16",
+            "Long Sul-G": "0|112",
+            "Marcato Shorter": "0|52",
+            "Pizzicato": "0|56",
+            "Pizzicato Bartok": "0|57",
+            "Short Brushed": "0|48",
+            "Short Brushed CS": "0|62",
+            "Short CS": "0|47",
+            "Sul Pont": "0|18",
+            "Sul Pont CS": "0|19",
+            "Sul Tasto": "0|17",
+            "Sul Tasto Super": "0|114",
+            "Tremolo": "0|11",
+            "Tremolo 150": "0|81",
+            "Tremolo 150 CS": "0|84",
+            "Tremolo 180": "0|82",
+            "Tremolo Sul Pont": "0|13",
+            "Trill 3rd Maj": "0|73",
+            "Trill 3rd Min": "0|72",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Tuba Solo": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Fall": "0|101",
+            "FX Rip": "0|100",
+            "Long Stopped": "0|7",
+            "Short Stopped": "0|47"
+        }
+    },
+    "SSOD Bass Trombone A2": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Fall": "0|101",
+            "FX Glissando": "0|90",
+            "FX Rip": "0|100",
+            "Long Cuivre": "0|9",
+            "Multi Tongue": "0|75"
+        }
+    },
+    "SSOD Horns A2": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccatissimo": "0|42",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "Flutter Tongue": "0|11",
+            "FX Fall": "0|101",
+            "FX Rip": "0|100",
+            "Long Bells Up": "0|17",
+            "Long Cuivre": "0|9",
+            "Long Stopped": "0|7",
+            "Marcato Bells Up": "0|55",
+            "Multi Tongue": "0|75",
+            "Staccatissimo Bells Up": "0|49",
+            "Staccato Bells Up": "0|59",
+            "Tenuto Bells Up": "0|54",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    },
+    "SSOD Tenor Trombone A2": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Fall": "0|101",
+            "FX Glissando": "0|90",
+            "FX Rip": "0|100",
+            "Long Cuivre": "0|9",
+            "Multi Tongue": "0|75",
+            "Tremolo": "0|11"
+        }
+    },
+    "SSOD Trumpet A2": {
+        "articulationKeyMap": {
+            "marcato": "0|52",
+            "staccato": "0|40",
+            "tenuto": "0|50"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "FX Fall": "0|101",
+            "FX Rip": "0|100",
+            "Long Mariachi": "0|2",
+            "Long Stopped": "0|7",
+            "Multi Tongue": "0|75",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71"
+        }
+    }

@@ -1,0 +1,160 @@
+    "BBCD Violin 1": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Pizzicato": 2,
+            "Tremolo": 3
+        }
+    },
+    "BBCD Violin 2": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Pizzicato": 2,
+            "Tremolo": 3
+        }
+    },
+    "BBCD Basses": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Pizzicato": 2
+        }
+    },
+    "BBCD Violas": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Pizzicato": 2,
+            "Tremolo": 3
+        }
+    },
+    "BBCD Celli": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0,
+            "Pizzicato": 2,
+            "Tremolo": 3
+        }
+    },
+    "BBCD Tuba": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Horns A4": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Bass Trombone A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Tenor Trombone A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Trumpet A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Trombone A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Harp and Celeste": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Celeste": 1,
+            "Harp": 0
+        }
+    },
+    "BBCD Percussion": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Timpani": 0,
+            "Untuned Percussion": 1
+        }
+    },
+    "BBCD Tuned Percussion": {
+        "articulationKeyMap": {},
+        "techniqueKeyMap": {
+            "Glockenspiel": 3,
+            "Marimba": 1,
+            "Tubular Bells": 0,
+            "Xylophone": 2
+        }
+    },
+    "BBCD Bassoon A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Clarinets A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Piccolo": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Flutes A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    },
+    "BBCD Oboe A3": {
+        "articulationKeyMap": {
+            "staccatissimo": 1
+        },
+        "techniqueKeyMap": {
+            "Long": 0
+        }
+    }
