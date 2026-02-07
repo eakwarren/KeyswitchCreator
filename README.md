@@ -109,12 +109,12 @@ The global settings editor allows customization of various options that affect k
 
 > [!IMPORTANT]
 > Because certain staff properties are read-only in the plugin api, set Lines to 1 in Staff/Part properties manually in each keyswitch staff to optimize the view.
-
-<img width="407" height="193" alt="formatKeyswitchStaff=true (default)" src="https://github.com/user-attachments/assets/f00bfa87-a41d-4818-a52e-92764b32fa59" />
+220
+<img width="220" height="104" alt="formatKeyswitchStaff=true (default)" src="https://github.com/user-attachments/assets/f00bfa87-a41d-4818-a52e-92764b32fa59" />
 
 With auto-formatting (true)
 
-<img width="411" height="439" alt="formatKeyswitchStaff=false" src="https://github.com/user-attachments/assets/9c534e08-40f4-4b97-a297-5e5f139549d8" />
+<img width="220" height="235" alt="formatKeyswitchStaff=false" src="https://github.com/user-attachments/assets/9c534e08-40f4-4b97-a297-5e5f139549d8" />
 
 Without auto-formatting (false)
 
@@ -155,7 +155,7 @@ The Close button closes the Settings window.
 
 
 ## Additional Keyswitch Sets
-The Keyswitch Sets folder contains a few sets that you can copy/paste into the Registry editor.
+The Keyswitch Sets folder contains a few example sets to copy/paste into the Registry editor. There's also a Python script that converts Logic Pro articulation set .plist files to .json sets.
 > [!IMPORTANT]
 > When adding sets, use proper json formatting rules with commas and brackets in the right places. The error highlighting should help identify any issues.
 
