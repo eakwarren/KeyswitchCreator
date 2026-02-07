@@ -56,7 +56,7 @@ One per line; '#' comments allowed. Entries from --inputs-file overwrite same-na
 
 Usage:
 Recurse a top-level directory and sort sets by name
-python3 logic_plist_to_keyswitchcreator_sets.py path/to/file or folder  --sort-sets --out 'All Keyswitch Sets.json'
+python3 logic_plist_to_keyswitchcreator_sets.py /path/to/file-or-folder  --sort-sets --out 'All Keyswitch Sets.json'
 
 Provide an inputs file and wrap in outer braces
 python3 logic_plist_to_keyswitchcreator_sets.py --inputs-file /path/to/inputs.txt --wrap --out "All Keyswitch Sets.json"
