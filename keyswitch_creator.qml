@@ -24,40 +24,79 @@ MuseScore {
 
     // Articulations (note-attached symbols)
     property var articulationKeyMap: ({
-                                          "staccato": 0,
-                                          "staccatissimo": 1,
-                                          "tenuto": 2,
-                                          "accent": 3,
-                                          "marcato": 4,
-                                          "sforzato": 5,
-                                          "loure": 6,
-                                          "fermata": 7,
-                                          "trill": 8,
-                                          "mordent": 9,
-                                          "mordent inverted": 10,
-                                          "turn": 11,
-                                          "harmonics": 12,
-                                          "mute": 13
+                                          "slur": 0,
+                                          "accent": 1,
+                                          "staccato": 2,
+                                          "staccatissimo": 3,
+                                          "tenuto": 4,
+                                          "loure": 5,
+                                          "marcato": 6,
+                                          "accent-staccato": 7,
+                                          "marcato-staccato": 8,
+                                          "marcato-tenuto": 9,
+                                          "stacatissimo stroke": 10,
+                                          "stacatissimo wedge": 11,
+                                          "stress": 12,
+                                          "tenuto-accent": 13,
+                                          "unstress": 14,
+                                          "open": 15,
+                                          "muted": 16,
+                                          "harmonic": 17,
+                                          "up bow": 18,
+                                          "down bow": 19,
+                                          "soft accent": 20,
+                                          "soft accent-staccato": 21,
+                                          "soft accent-tenuto": 22,
+                                          "soft accent-tenuto-staccato": 23,
+                                          "fade in": 24,
+                                          "fade out": 25,
+                                          "volume swell": 26,
+                                          "sawtooth line segment": 27,
+                                          "wide sawtooth line segment": 28,
+                                          "vibrato large faster": 29,
+                                          "vibrato large slowest": 30,
+                                          "snap pizzicato": 31,
+                                          "half-open 2": 32,
+                                          "tremolo bar": 33
                                       })
+
+    // Techniques (written)
+    property var techniqueKeyMap: ({
+                                       "arco": 34,
+                                       "normal": 35,
+                                       "legato": 36,
+                                       "pizz.": 37,
+                                       "tremolo": 38,
+                                       "vibrato": 39,
+                                       "col legno": 40,
+                                       "harmonics": 41,
+                                       "sul pont.": 42,
+                                       "sul tasto": 43,
+                                       "mute": 44,
+                                       "open": 45,
+                                       "detache": 46,
+                                       "martele": 47,
+                                       "jazz tone": 48,
+                                       "distort": 49,
+                                       "overdrive": 50
+                                   })
 
     // Debug
     property bool debugEnabled: true
     property bool dedupeAcrossVoices: true
 
-    // Settings
-
+    // Global Settings
     property var defaultGlobalSettings: ({
-                                             "durationPolicy": "source",
-                                             "formatKeyswitchStaff": "true",
-                                             "techniqueAliases": {
+                                             durationPolicy: "source",
+                                             formatKeyswitchStaff: "true",
+                                             techniqueAliases: {
                                                  // phrasing
                                                  "legato": ["legato", "leg.", "slur", "slurred"],
-                                                 "normal": ["normal", "normale", "norm.", "nor.", "ordinary", "ord.", "standard", "std.", "arco"],
-
-
+                                                 "normal": ["normal", "normale", "norm.", "nor.", "ordinary", "ord.", "standard", "std."],
                                                  // mutes
-                                                 "con sord": ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
-                                                 "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
+                                                 "con sord": ["con sord", "con sord.", "con sordino", "sord", "sord.", "with mute", "mute",
+                                                     "muted", "stopped"],
+                                                 "senza sord": ["senza sord", "senza sord.", "senza sordino", "open"],
                                                  // position
                                                  "sul pont": ["sul pont", "sul pont.", "sul ponticello"],
                                                  "sul tasto": ["sul tasto", "sul tast.", "flautando"],
@@ -70,41 +109,69 @@ MuseScore {
                                              }
                                          })
 
-    // Registry & Global Settings store
+    // Registry
+    // Slur is a spanner element entered via the Lines system / shortcut S
+    // It’s not an articulation
     property var defaultKeyswitchSets: ({
-                                            "Default Low": {
+                                            "Default": {
                                                 articulationKeyMap: {
-                                                    "staccato": 0,
-                                                    "staccatissimo": 1,
-                                                    "tenuto": 2,
-                                                    "accent": 3,
-                                                    "marcato": 4,
-                                                    "sforzato": 5,
-                                                    "loure": 6,
-                                                    "fermata": 7,
-                                                    "trill": 8,
-                                                    "mordent": 9,
-                                                    "mordent inverted": 10,
-                                                    "turn": 11,
-                                                    "harmonics": 12,
-                                                    "mute": 13
+                                                    "slur": 0,
+                                                    "accent": 1,
+                                                    "staccato": 2,
+                                                    "staccatissimo": 3,
+                                                    "tenuto": 4,
+                                                    "loure": 5,
+                                                    "marcato": 6,
+                                                    "accent-staccato": 7,
+                                                    "marcato-staccato": 8,
+                                                    "marcato-tenuto": 9,
+                                                    "stacatissimo stroke": 10,
+                                                    "stacatissimo wedge": 11,
+                                                    "stress": 12,
+                                                    "tenuto-accent": 13,
+                                                    "unstress": 14,
+                                                    "open": 15,
+                                                    "muted": 16,
+                                                    "harmonic": 17,
+                                                    "up bow": 18,
+                                                    "down bow": 19,
+                                                    "soft accent": 20,
+                                                    "soft accent-staccato": 21,
+                                                    "soft accent-tenuto": 22,
+                                                    "soft accent-tenuto-staccato": 23,
+                                                    "fade in": 24,
+                                                    "fade out": 25,
+                                                    "volume swell": 26,
+                                                    "sawtooth line segment": 27,
+                                                    "wide sawtooth line segment": 28,
+                                                    "vibrato large faster": 29,
+                                                    "vibrato large slowest": 30,
+                                                    "snap pizzicato": 31,
+                                                    "half-open 2": 32,
+                                                    "tremolo bar": 33
                                                 },
                                                 techniqueKeyMap: {
-                                                    "normal": 14,
-                                                    "arco": 15,
-                                                    "pizz": 16,
-                                                    "tremolo": 17,
-                                                    "con sord": 18,
-                                                    "senza sord": 19,
-                                                    "sul pont": 20,
-                                                    "sul tasto": 21,
-                                                    "harmonic": 22,
-                                                    "col legno": 23,
-                                                    "legato": 24,
-                                                    "spiccato": 25
+                                                    "arco": 34,
+                                                    "normal": 35,
+                                                    "legato": 36,
+                                                    "pizz.": 37,
+                                                    "tremolo": 38,
+                                                    "vibrato": 39,
+                                                    "col legno": 40,
+                                                    "harmonics": 41,
+                                                    "sul pont.": 42,
+                                                    "sul tasto": 43,
+                                                    "mute": 44,
+                                                    "open": 45,
+                                                    "detache": 46,
+                                                    "martele": 47,
+                                                    "jazz tone": 48,
+                                                    "distort": 49,
+                                                    "overdrive": 50
                                                 }
                                             }
                                         })
+
     property int defaultKsVelocity: 64
     property var emittedCross: ({})
     property int firstIneligibleStaffIdx: -1
@@ -131,21 +198,6 @@ MuseScore {
     property string staffToSetMetaTagKey: "keyswitch_creator.staffToSet"
     property var formattedKsStaff: ({}) // staffIdx (string) -> true once formatted this run
 
-    // Techniques (written)
-    property var techniqueKeyMap: ({
-                                       "normal": 14,
-                                       "arco": 15,
-                                       "pizz": 16,
-                                       "tremolo": 17,
-                                       "con sord": 18,
-                                       "senza sord": 19,
-                                       "sul pont": 20,
-                                       "sul tasto": 21,
-                                       "harmonic": 22,
-                                       "col legno": 23,
-                                       "legato": 24,
-                                       "spiccato": 25
-                                   })
     property bool useSourceDuration: true
     property bool warnOnPartialSuccess: true
 
@@ -329,6 +381,25 @@ MuseScore {
                             considerArticulation(el)
                         }
                     } catch (e) {}
+                }
+            }
+        }
+
+        // 3) Note-level non-ARTICULATION palette items we still want to treat as articulations
+        if (chord && chord.notes) {
+            for (var j2 in chord.notes) {
+                var n2 = chord.notes[j2]
+                if (!n2 || !n2.elements)
+                    continue
+                for (var e2 in n2.elements) {
+                    var el2 = n2.elements[e2]
+                    try {
+                        // Harmonic mark (separate DOM type in MS4)
+                        if (el2 && (el2.type === Element.HARMONIC_MARK || (el2.userName && String(el2.userName()).toLowerCase().indexOf(
+                                                                               "harmonic") >= 0))) {
+                            names.push("harmonic")
+                        }
+                    } catch (eHM) {}
                 }
             }
         }
@@ -828,6 +899,11 @@ MuseScore {
                 pushKey("accent")
             else if (k.indexOf("marcato") >= 0)
                 pushKey("marcato")
+            else if (k.indexOf("harmonic") >= 0) {
+                // allow either "harmonic" or "harmonics" in user maps
+                pushKey("harmonic")
+                pushKey("harmonics")
+            }
         }
         return specs
     }
@@ -1654,29 +1730,37 @@ MuseScore {
                 dbg("[KS] arti@tick=" + _tickHere + " => " + artiNames.join(", ") + " | specs=" + specs.length)
             } catch (eDbgA) {}
 
-            // Slur ⇒ legato (emit once at slur start)
-            if (interpretSlurAsLegato && techMap && hasSlurStartAtChord(chord)) {
-                var legKey = null
-                // direct lookup preferred
-                if (techMap.hasOwnProperty('legato'))
-                    legKey = 'legato'
-                // fallback: find a key whose aliases include 'legato' or 'slur'
-                if (!legKey && aliasMap) {
-                    for (var k in aliasMap) {
-                        var arr = aliasMap[k]
-                        if (!arr)
-                            continue
-                        var low = arr.join('\u0001').toLowerCase()
-                        if (low.indexOf('legato') >= 0 || low.indexOf('slur') >= 0) {
-                            legKey = k
-                            break
+            // Slur handling: prefer articulationKeyMap['slur'] at slur start; else fall back to technique 'legato'
+            if (interpretSlurAsLegato && hasSlurStartAtChord(chord)) {
+                var slurSpec = null
+                if (activeSet && activeSet.articulationKeyMap && activeSet.articulationKeyMap.hasOwnProperty('slur')) {
+                    slurSpec = parseKsMapValue(activeSet.articulationKeyMap['slur'])
+                }
+                if (slurSpec) {
+                    specs.push(slurSpec)
+                } else if (techMap) {
+                    var legKey = null
+                    // direct lookup preferred
+                    if (techMap.hasOwnProperty('legato'))
+                        legKey = 'legato'
+                    // fallback: find a key whose aliases include 'legato' or 'slur'
+                    if (!legKey && aliasMap) {
+                        for (var k in aliasMap) {
+                            var arr = aliasMap[k]
+                            if (!arr)
+                                continue
+                            var low = arr.join('\u0001').toLowerCase()
+                            if (low.indexOf('legato') >= 0 || low.indexOf('slur') >= 0) {
+                                legKey = k
+                                break
+                            }
                         }
                     }
-                }
-                if (legKey && techMap.hasOwnProperty(legKey)) {
-                    var specL = parseKsMapValue(techMap[legKey])
-                    if (specL)
-                        specs.push(specL)
+                    if (legKey && techMap.hasOwnProperty(legKey)) {
+                        var specL = parseKsMapValue(techMap[legKey])
+                        if (specL)
+                            specs.push(specL)
+                    }
                 }
             }
 

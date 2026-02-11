@@ -283,15 +283,15 @@ MuseScore {
 
     function defaultGlobalSettingsObj() {
         return {
-            "durationPolicy": "source",
-            "formatKeyswitchStaff": "true",
-            "techniqueAliases": {
+            durationPolicy: "source",
+            formatKeyswitchStaff: "true",
+            techniqueAliases: {
                 // phrasing
                 "legato": ["legato", "leg.", "slur", "slurred"],
-                "normal": ["normal", "normale", "norm.", "nor.", "ordinary", "ord.", "standard", "std.", "arco"],
+                "normal": ["normal", "normale", "norm.", "nor.", "ordinary", "ord.", "standard", "std."],
                 // mutes
-                "con sord": ["con sord", "con sord.", "con sordino", "with mute", "muted", "sord."],
-                "senza sord": ["senza sord", "senza sord.", "senza sordino", "open", "without mute"],
+                "con sord": ["con sord", "con sord.", "con sordino", "sord", "sord.", "with mute", "mute", "muted", "stopped"],
+                "senza sord": ["senza sord", "senza sord.", "senza sordino", "open"],
                 // position
                 "sul pont": ["sul pont", "sul pont.", "sul ponticello"],
                 "sul tasto": ["sul tasto", "sul tast.", "flautando"],
@@ -305,70 +305,65 @@ MuseScore {
         }
     }
 
+    // Slur is a spanner element entered via the Lines system / shortcut S
+    // It’s not an articulation
     function defaultRegistryObj() {
         return {
-            "Default Low": {
-                "articulationKeyMap": {
-                    "staccato": 0,
-                    "staccatissimo": 1,
-                    "tenuto": 2,
-                    "accent": 3,
-                    "marcato": 4,
-                    "sforzato": 5,
-                    "loure": 6,
-                    "fermata": 7,
-                    "trill": 8,
-                    "mordent": 9,
-                    "mordent inverted": 10,
-                    "turn": 11,
-                    "harmonics": 12,
-                    "mute": 13
+            "Default": {
+                articulationKeyMap: {
+                    "slur": 0,
+                    "accent": 1,
+                    "staccato": 2,
+                    "staccatissimo": 3,
+                    "tenuto": 4,
+                    "loure": 5,
+                    "marcato": 6,
+                    "accent-staccato": 7,
+                    "marcato-staccato": 8,
+                    "marcato-tenuto": 9,
+                    "stacatissimo stroke": 10,
+                    "stacatissimo wedge": 11,
+                    "stress": 12,
+                    "tenuto-accent": 13,
+                    "unstress": 14,
+                    "open": 15,
+                    "muted": 16,
+                    "harmonic": 17,
+                    "up bow": 18,
+                    "down bow": 19,
+                    "soft accent": 20,
+                    "soft accent-staccato": 21,
+                    "soft accent-tenuto": 22,
+                    "soft accent-tenuto-staccato": 23,
+                    "fade in": 24,
+                    "fade out": 25,
+                    "volume swell": 26,
+                    "sawtooth line segment": 27,
+                    "wide sawtooth line segment": 28,
+                    "vibrato large faster": 29,
+                    "vibrato large slowest": 30,
+                    "snap pizzicato": 31,
+                    "half-open 2": 32,
+                    "tremolo bar": 33
                 },
-                "techniqueKeyMap": {
-                    "normal": 14,
-                    "arco": 15,
-                    "pizz": 16,
-                    "tremolo": 17,
-                    "con sord": 18,
-                    "senza sord": 19,
-                    "sul pont": 20,
-                    "sul tasto": 21,
-                    "harmonic": 22,
-                    "col legno": 23,
-                    "legato": 24,
-                    "spiccato": 25
-                }
-            },
-            "Default High": {
-                "articulationKeyMap": {
-                    "staccato": 127,
-                    "staccatissimo": 126,
-                    "tenuto": 125,
-                    "accent": 124,
-                    "marcato": 123,
-                    "sforzato": 122,
-                    "loure": 121,
-                    "fermata": 120,
-                    "trill": 119,
-                    "mordent": 118,
-                    "mordent inverted": 117,
-                    "turn": 116,
-                    "harmonics": 115,
-                    "mute": 114
-                },
-                "techniqueKeyMap": {
-                    "normal": 113,
-                    "arco": 112,
-                    "pizz": 111,
-                    "tremolo": 110,
-                    "con sord": 109,
-                    "senza sord": 108,
-                    "sul pont": 107,
-                    "sul tasto": 106,
-                    "harmonic": 105,
-                    "col legno": 104,
-                    "legato": 103,
-                    "spiccato": 102
+                techniqueKeyMap: {
+                    "arco": 34,
+                    "normal": 35,
+                    "legato": 36,
+                    "pizz.": 37,
+                    "tremolo": 38,
+                    "vibrato": 39,
+                    "col legno": 40,
+                    "harmonics": 41,
+                    "sul pont.": 42,
+                    "sul tasto": 43,
+                    "mute": 44,
+                    "open": 45,
+                    "detache": 46,
+                    "martele": 47,
+                    "jazz tone": 48,
+                    "distort": 49,
+                    "overdrive": 50
                 }
             }
         }
@@ -406,49 +401,9 @@ MuseScore {
         return _lineStart(s, rawPos)
     }
 
-    function formatGlobalsCompact(glob) {
-        var lines = ['{']
-        lines.push('    "durationPolicy":' + JSON.stringify(glob.durationPolicy || "source") + ',')
-        var fks = (glob.formatKeyswitchStaff !== undefined) ? glob.formatKeyswitchStaff : "true"
-        lines.push('    "formatKeyswitchStaff":' + JSON.stringify(fks) + ',')
-        lines.push('    "techniqueAliases":{')
-        var alias = glob.techniqueAliases || {}
-        var ak = Object.keys(alias)
-        for (var i = 0; i < ak.length; ++i) {
-            var k = ak[i]
-            lines.push('        ' + JSON.stringify(k) + ':' + JSON.stringify(alias[k]) + (i < ak.length - 1 ? ',' : ''))
-        }
-        lines.push('    }')
-        lines.push('}')
-        return lines.join('
-')
-    }
-
-    //--------------------------------------------------------------------------------
-    // Compact JSON formatters
-    //--------------------------------------------------------------------------------
-    function formatRegistryCompact(reg) {
-        var setNames = Object.keys(reg)
-        var lines = ['{']
-        for (var i = 0; i < setNames.length; ++i) {
-            var name = setNames[i]
-            var setObj = reg[name] || {}
-            lines.push('    ' + JSON.stringify(name) + ':{')
-            var innerLines = []
-            var innerKeys = Object.keys(setObj)
-            for (var j = 0; j < innerKeys.length; ++j) {
-                var k = innerKeys[j]
-                var v = setObj[k]
-                innerLines.push('        ' + JSON.stringify(k) + ':' + JSON.stringify(v))
-            }
-            if (innerLines.length)
-                lines.push(innerLines.join(',
-'))
-            lines.push('    }' + (i < setNames.length - 1 ? ',' : ''))
-        }
-        lines.push('}')
-        return lines.join('
-')
+    function formatJson(reg) {
+        // Pretty-print with 4-space indentation
+        return JSON.stringify(reg, null, 4)
     }
 
     // Select and color (accent) the line containing 'pos' in 'editor', then scroll that line into view.
@@ -618,7 +573,7 @@ MuseScore {
                 _pendingRegistryText = rawSets
         } else {
             keyswitchSets = defaultRegistryObj()
-            var defRegText = formatRegistryCompact(keyswitchSets)
+            var defRegText = formatJson(keyswitchSets)
             if (jsonArea)
                 jsonArea.text = defRegText
             else
@@ -632,7 +587,7 @@ MuseScore {
                 _pendingGlobalsText = rawGlobals
         } else {
             globalSettings = defaultGlobalSettingsObj()
-            var defGlobText = formatGlobalsCompact(globalSettings)
+            var defGlobText = formatJson(globalSettings)
             if (globalsArea)
                 globalsArea.text = defGlobText
             else
@@ -2409,9 +2364,9 @@ MuseScore {
 
                 onClicked: {
                     if (editorModeIndex === 0)
-                        jsonArea.text = formatRegistryCompact(defaultRegistryObj())
+                        jsonArea.text = formatJson(defaultRegistryObj())
                     else
-                        globalsArea.text = formatGlobalsCompact(defaultGlobalSettingsObj())
+                        globalsArea.text = formatJson(defaultGlobalSettingsObj())
                 }
             }
 
