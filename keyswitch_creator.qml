@@ -274,14 +274,11 @@ MuseScore {
 
     function chordArticulationNames(chord) {
         var names = []
-        if (!chord.articulations)
-            return names
-        for (var i in chord.articulations) {
-            var a = chord.articulations[i]
+
+        function considerArticulation(a) {
             var raw = ((a.articulationName ? a.articulationName() : "") + " " + (a.userName ? a.userName() : "") + " " + (a.subtypeName ? a.subtypeName(
                                                                                                                                               ) : "")).toLowerCase(
                         )
-
             var n = ""
             if (raw.indexOf("staccatissimo") >= 0)
                 n = "staccatissimo"
@@ -299,21 +296,43 @@ MuseScore {
                 n = "loure"
             else if (raw.indexOf("fermata") >= 0)
                 n = "fermata"
-            else
-                // ornaments as "articulations"
-                if (raw.indexOf("trill") >= 0)
-                    n = "trill"
-                else if (raw.indexOf("mordent inverted") >= 0 || raw.indexOf("prallprall") >= 0)
-                    n = "mordent inverted"
-                else if (raw.indexOf("mordent") >= 0)
-                    n = "mordent"
-                else if (raw.indexOf("turn") >= 0)
-                    n = "turn"
+            else if (raw.indexOf("trill") >= 0)
+                n = "trill"
+            else if (raw.indexOf("mordent inverted") >= 0 || raw.indexOf("prallprall") >= 0)
+                n = "mordent inverted"
+            else if (raw.indexOf("mordent") >= 0)
+                n = "mordent"
+            else if (raw.indexOf("turn") >= 0)
+                n = "turn"
 
             if (!n)
                 n = "unknown"
             names.push(n)
         }
+
+        // 1) Chord-level articulations
+        if (chord && chord.articulations) {
+            for (var i in chord.articulations)
+                considerArticulation(chord.articulations[i])
+        }
+
+        // 2) Note-level articulations (Element.ARTICULATION on note.elements)
+        if (chord && chord.notes) {
+            for (var j in chord.notes) {
+                var note = chord.notes[j]
+                if (!note || !note.elements)
+                    continue
+                for (var k in note.elements) {
+                    var el = note.elements[k]
+                    try {
+                        if (el && el.type === Element.ARTICULATION) {
+                            considerArticulation(el)
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+
         return names
     }
 
@@ -884,6 +903,292 @@ MuseScore {
         return false
     }
 
+    // Build a MIDI-set (pitch -> true) for all keyswitch pitches used by the active set.
+    function midiSetForActiveSet(activeSet) {
+        var setMap = {}
+        if (!activeSet)
+            return setMap
+        function consider(val) {
+            var spec = parseKsMapValue(val)
+            if (!spec)
+                return
+            setMap[spec.pitch] = true
+        }
+        if (activeSet.articulationKeyMap) {
+            for (var k in activeSet.articulationKeyMap)
+                consider(activeSet.articulationKeyMap[k])
+        }
+        if (activeSet.techniqueKeyMap) {
+            for (var t in activeSet.techniqueKeyMap)
+                consider(activeSet.techniqueKeyMap[t])
+        }
+        return setMap
+    }
+
+    // Reconcile the keyswitch chord at the KS staff for this source chord:
+    // - add missing desired pitches
+    // - update velocity for matching pitches
+    // - remove stale pitches that are part of the active set and look plugin-made
+    // Returns the count of newly added notes.
+    function applyKeyswitchSetAt(sourceChord, specs, activeSet, hasAnyDirective) {
+        try {
+            if (typeof hasAnyDirective !== 'boolean')
+                hasAnyDirective = false
+            var track = sourceChord.track
+            var startFrac = sourceChord.fraction
+            var srcStaff = staffIdxFromTrack(track)
+            var tgtStaff = targetStaffForKeyswitch(srcStaff)
+            if (tgtStaff < 0) {
+                preflightFailed = true
+                return 0
+            }
+
+            var c = curScore.newCursor()
+            c.track = tgtStaff * 4
+            c.rewindToFraction(startFrac);
+
+            // Respect de-duplication across voices before touching anything
+            if (dedupeAcrossVoices && wasEmittedCross(c.staffIdx, c.tick))
+                return 0
+
+            var fmtEnabled = (globalSettings && globalSettings.formatKeyswitchStaff !== undefined) ? globalSettings.formatKeyswitchStaff :
+                                                                                                     "true"
+
+            var fmtOn = flagIsTrue(fmtEnabled);
+
+            // Duration policy identical to addKeyswitchNoteAt
+            var policy = (activeSet && activeSet.durationPolicy) ? activeSet.durationPolicy : (globalSettings
+                                                                                               && globalSettings.durationPolicy)
+                                                                   ? globalSettings.durationPolicy : (useSourceDuration ? "source" :
+                                                                                                                          "fixed")
+            var dur = sourceChord.actualDuration
+            var num = (policy === "source" && dur) ? dur.numerator : ksNumerator
+            var den = (policy === "source" && dur) ? dur.denominator : ksDenominator
+            if (!num || !den) {
+                num = ksNumerator
+                den = ksDenominator
+            }
+            c.setDuration(num, den);
+
+            // Don't create a slot unless necessary (mirror your existing guard)
+            var existing = c.element
+            var existingIsChord = (existing && existing.type === Element.CHORD)
+            var existingIsRest = (existing && existing.type === Element.REST)
+            if (!existing || (!existingIsChord && !existingIsRest))
+                ensureWritableSlot(c, num, den);
+
+            // Build desired map pitch->velocity (first occurrence wins, keeps your deterministic behavior)
+            var desired = {}
+            for (var i = 0; i < specs.length; ++i) {
+                var s = specs[i]
+                if (!s)
+                    continue
+                if (desired[s.pitch] === undefined)
+                    desired[s.pitch] = clampInt(s.velocity, 0, 127)
+            }
+
+            // If there is a chord already, compute present KS notes and reconcile
+            c.rewindToFraction(startFrac)
+            var added = 0
+            var ch = (c.element && c.element.type === Element.CHORD) ? c.element : null
+
+            // Helper to ensure chord-level formatting once
+            function formatChordOnce(chordObj) {
+                if (!fmtOn || !chordObj)
+                    return
+                try {
+                    chordObj.noStem = true
+                } catch (e) {}
+            }
+            // Helper to apply per-note formatting + velocity
+            function applyPerNoteProps(noteObj, wantPitch) {
+                try {
+                    setKeyswitchNoteVelocity(noteObj, desired[wantPitch] !== undefined ? desired[wantPitch] : defaultKsVelocity)
+                } catch (e) {}
+                if (hideKeyswitchNotes) {
+                    try {
+                        noteObj.visible = false
+                    } catch (e1) {}
+                }
+                if (fmtOn) {
+                    try {
+                        noteObj.noStem = true
+                    } catch (e2) {}
+                    try {
+                        noteObj.fixed = true
+                    } catch (e3) {}
+                }
+            }
+
+            // One scan to gather state
+            c.rewindToFraction(startFrac)
+            var added = 0
+            var ch = (c.element && c.element.type === Element.CHORD) ? c.element : null
+
+            var existingKsPitch = {}
+            var toRemove = []
+            var activeMidi = midiSetForActiveSet(activeSet)
+            var missing = []
+
+            if (ch && ch.notes) {
+                formatChordOnce(ch)
+                for (var j in ch.notes) {
+                    var nn = ch.notes[j]
+                    if (!nn)
+                        continue
+                    var p = nn.pitch
+                    if (desired[p] !== undefined) {
+                        // desired now: keep & refresh velocity
+                        applyPerNoteProps(nn, p)
+                        existingKsPitch[p] = true
+                    } else if (activeMidi[p]) {
+                        // KS pitch of current set but not desired at this tick
+                        toRemove.push(nn)
+                    }
+                }
+            }
+
+            // If nothing is desired now, remove any active-set KS here.
+            // If the chord contains ONLY active-set KS notes, remove the WHOLE chord to avoid
+            // "Removal of final note is not allowed." Then add back a rest in this slot.
+
+            var desiredIsEmpty = true
+            for (var _k in desired) {
+                desiredIsEmpty = false
+                break
+            }
+
+            // Only perform removal when nothing is desired AND the source chord has no directive.
+            if (desiredIsEmpty && !hasAnyDirective) {
+                if (ch && ch.notes && ch.notes.length > 0) {
+                    var allActiveSet = true
+                    for (var _n = 0; _n < ch.notes.length; ++_n) {
+                        var _p = ch.notes[_n].pitch
+                        if (!activeMidi[_p]) {
+                            allActiveSet = false
+                            break
+                        }
+                    }
+                    if (allActiveSet) {
+                        // remove entire KS chord, then ensure a rest at this slot
+                        try {
+                            dbg("[KS] removed KS chord at tick=" + c.tick + " (no directive at source)")
+                            removeElement(ch)
+                        } catch (eWhole) {}
+                        ensureWritableSlot(c, num, den)
+                    } else if (toRemove.length > 0) {
+                        // remove only active-set KS notes; at least one non-active note remains
+                        c.rewindToFraction(startFrac)
+                        ch = (c.element && c.element.type === Element.CHORD) ? c.element : null
+                        for (var r0 = 0; r0 < toRemove.length; ++r0) {
+                            var stale0 = toRemove[r0]
+                            try {
+                                dbg("[KS] removed KS pitch=" + stale0.pitch + " at tick=" + c.tick)
+                                ch.remove(stale0)
+                            } catch (eRem0) {
+                                try {
+                                    removeElement(stale0)
+                                } catch (eRem02) {}
+                            }
+                        }
+                    }
+                }
+                return 0
+            }
+
+            // If desired is empty *but* the source still has some directive (unknown/unsupported),
+            // do nothing here. Leave any existing KS intact.
+            if (desiredIsEmpty && hasAnyDirective) {
+                return 0
+            }
+
+            // Compute missing desired pitches using a live check at this tick
+            // (so we only skip adding if a KS note is truly present on the KS staff)
+            missing = []
+            c.rewindToFraction(startFrac)
+            for (var wantPitch in desired) {
+                var p = Number(wantPitch)
+                if (isNaN(p))
+                    continue
+                if (!keyswitchExistsAt(c, p))
+                    missing.push(p)
+            }
+
+            // Debug: show what we plan to add at this tick
+            try {
+                dbg("[KS] missing@tick=" + c.tick + " => " + missing.join(","))
+            } catch (eDbgM) {}
+
+            // Pass 2: add missing desired FIRST (avoid "final note" removal error)
+            for (var m = 0; m < missing.length; ++m) {
+                var want = missing[m];
+
+                // Re-ensure a writable slot at this exact fraction (defensive)
+                c.rewindToFraction(startFrac)
+                c.setDuration(num, den)
+                var elNow = c.element
+                var isChordNow = (elNow && elNow.type === Element.CHORD)
+                var isRestNow = (elNow && elNow.type === Element.REST)
+                if (!elNow || (!isChordNow && !isRestNow)) {
+                    ensureWritableSlot(c, num, den)
+                    c.rewindToFraction(startFrac)
+                }
+
+                // Decide stacking based on what's currently there
+                var addToChord = !!(c.element && c.element.type === Element.CHORD)
+
+                try {
+                    c.addNote(want, addToChord)
+                    // Refresh element and apply formatting/velocity to the just-added note
+                    c.rewindToFraction(startFrac)
+                    var chNow = (c.element && c.element.type === Element.CHORD) ? c.element : null
+                    if (chNow && chNow.notes) {
+                        formatChordOnce(chNow)
+                        for (var k in chNow.notes) {
+                            var n2 = chNow.notes[k]
+                            if (n2 && n2.pitch === want)
+                                applyPerNoteProps(n2, want)
+                        }
+                    }
+                    try {
+                        dbg("[KS] added KS pitch=" + want + " at tick=" + c.tick)
+                    } catch (eDbgA) {}
+                    added++
+                } catch (eAdd) {
+                    dbg("applyKeyswitchSetAt: addNote failed at tick=" + c.tick + " pitch=" + want + " err=" + eAdd)
+                }
+            }
+
+            if (dedupeAcrossVoices && added > 0)
+                markEmittedCross(c.staffIdx, c.tick);
+
+            // Pass 3: remove stale active-set KS that remain (safe now that desired exists)
+            if (toRemove.length > 0) {
+                c.rewindToFraction(startFrac)
+                ch = (c.element && c.element.type === Element.CHORD) ? c.element : null
+                for (var r = 0; r < toRemove.length; ++r) {
+                    var stale = toRemove[r]
+                    try {
+                        dbg("[KS] removed KS pitch=" + stale.pitch + " at tick=" + c.tick)
+                        ch.remove(stale)
+                    } catch (eRem) {
+                        try {
+                            removeElement(stale)
+                        } catch (eRem2) {}
+                    }
+                }
+            }
+
+            if (dedupeAcrossVoices && added > 0)
+                markEmittedCross(c.staffIdx, c.tick)
+
+            return added
+        } catch (eTop) {
+            dbg("applyKeyswitchSetAt error: " + String(eTop))
+            return 0
+        }
+    }
+
     function loadRegistryAndAssignments() {
         var sets
         try {
@@ -1333,7 +1638,7 @@ MuseScore {
             var specs = [];
 
             // only use maps from the active set; no global fallback
-            var techMap = activeSet.techniqueKeyMap || null
+            var techMap = activeSet.techniqueKeyMap
             var aliasMap = activeSet.techniqueAliases
             if (!aliasMap && globalSettings && globalSettings.techniqueAliases)
                 aliasMap = globalSettings.techniqueAliases
@@ -1342,6 +1647,12 @@ MuseScore {
             var textsNoKsText = stripKsTextDirectivesFromList(texts)
             specs = specs.concat(findTechniqueKeyswitches(textsNoKsText, techMap, aliasMap))
             specs = specs.concat(findArticulationKeyswitches(artiNames, activeSet.articulationKeyMap || null));
+
+            // Debug: what articulations and how many KS specs we will emit at this tick
+            try {
+                var _tickHere = (chord.parent && chord.parent.tick) ? chord.parent.tick : 0
+                dbg("[KS] arti@tick=" + _tickHere + " => " + artiNames.join(", ") + " | specs=" + specs.length)
+            } catch (eDbgA) {}
 
             // Slur ⇒ legato (emit once at slur start)
             if (interpretSlurAsLegato && techMap && hasSlurStartAtChord(chord)) {
@@ -1369,23 +1680,31 @@ MuseScore {
                 }
             }
 
-            var seen = {}
-            for (var j = 0; j < specs.length; ++j) {
-                var spec = specs[j]
+            var seen = {};
+            // Determine if the source chord *has any* directive at all (articulation/text/slur→legato).
+            var hasAnyDirective = false
 
-                if (!spec)
-                    continue
-                var p = spec.pitch
-                if (seen[p])
-                    continue
-                var first = (j === 0)
-                if (addKeyswitchNoteAt(chord, p, spec.velocity, first, activeSet))
-                    created++
-
-                if (preflightFailed)
+            // 1) Any articulation other than "unknown"?
+            for (var __i = 0; __i < artiNames.length; ++__i)
+                if (artiNames[__i] && artiNames[__i] !== "unknown") {
+                    hasAnyDirective = true
                     break
-                seen[p] = true
-            }
+                }
+
+            // 2) Any Staff/System/Expression text at this segment?
+            if (!hasAnyDirective && texts && texts.length > 0)
+                hasAnyDirective = true;
+
+            // 3) Treat "slur start" as a directive if enabled
+            if (!hasAnyDirective && (interpretSlurAsLegato && hasSlurStartAtChord(chord)))
+                hasAnyDirective = true;
+
+            // Reconcile the entire desired set (add/update/remove),
+            // and only remove on empty 'specs' when hasAnyDirective === false.
+            var addedHere = applyKeyswitchSetAt(chord, specs, activeSet, hasAnyDirective)
+            created += addedHere
+            if (preflightFailed)
+                break
         }
 
         var partialParts = []
