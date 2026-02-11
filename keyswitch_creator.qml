@@ -292,6 +292,10 @@ MuseScore {
                 } catch (eCH) {}
             }
 
+            try {
+                forceNoBeamForChord(ch)
+            } catch (eNB1) {}
+
             if (ch.notes) {
                 for (var i in ch.notes) {
                     var nn = ch.notes[i]
@@ -774,6 +778,28 @@ MuseScore {
         return -1
     }
 
+    // Sets chord.beamMode = 1, verifies it, and refreshes layout.
+    // Returns true only if the write sticks (read-back equals 1).
+    function forceNoBeamForChord(chord) {
+        if (!chord)
+            return false
+        var OK = false
+        try {
+            chord.beamMode = 1
+            OK = (chord.beamMode === 1)
+        } catch (_) {
+            OK = false
+        }
+        try {
+            if (curScore && curScore.doLayout)
+                curScore.doLayout()
+        } catch (_) {}
+        try {
+            dbg("[KS] beam: chord.beamMode -> " + (OK ? "1 (OK)" : "failed"))
+        } catch (_) {}
+        return OK
+    }
+
     // Build a map of slur starts from curScore.spanners (Mu 4.7+).
     //   slurStartByStaff[staffIdx][tick] = true
     function buildSlurStartMapFromSpanners(startTick, endTick, allowedMap) {
@@ -1093,7 +1119,6 @@ MuseScore {
         try {
             if (!curScore || !curScore.selection || !curScore.selection.elements || !curScore.selection.elements.length)
                 return
-
             var endLim = (typeof endTick === 'number') ? endTick : (curScore.lastSegment ? (curScore.lastSegment.tick + 1) : 0)
 
             for (var ii = 0; ii < curScore.selection.elements.length; ++ii) {
@@ -1123,7 +1148,6 @@ MuseScore {
                 var label = normalizeEffectLabel_((" " + parts.join(" ")).replace(/\s+/g, " ").trim())
                 if (!label)
                     continue
-
                 var tok = pickEffectTokenFromLabel_(label)
                 if (!tok)
                     continue
@@ -1806,6 +1830,9 @@ MuseScore {
 
             if (ch && ch.notes) {
                 formatChordOnce(ch)
+                try {
+                    forceNoBeamForChord(ch)
+                } catch (eNB1) {}
                 for (var j in ch.notes) {
                     var nn = ch.notes[j]
                     if (!nn)
@@ -1918,6 +1945,9 @@ MuseScore {
                     var chNow = (c.element && c.element.type === Element.CHORD) ? c.element : null
                     if (chNow && chNow.notes) {
                         formatChordOnce(chNow)
+                        try {
+                            forceNoBeamForChord(chNow)
+                        } catch (eNB1) {}
                         for (var k in chNow.notes) {
                             var n2 = chNow.notes[k]
                             if (n2 && n2.pitch === want)
