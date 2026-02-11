@@ -34,8 +34,8 @@ MuseScore {
                                           "accent-staccato": 7,
                                           "marcato-staccato": 8,
                                           "marcato-tenuto": 9,
-                                          "stacatissimo stroke": 10,
-                                          "stacatissimo wedge": 11,
+                                          "staccatissimo stroke": 10,
+                                          "staccatissimo wedge": 11,
                                           "stress": 12,
                                           "tenuto-accent": 13,
                                           "unstress": 14,
@@ -125,8 +125,8 @@ MuseScore {
                                                     "accent-staccato": 7,
                                                     "marcato-staccato": 8,
                                                     "marcato-tenuto": 9,
-                                                    "stacatissimo stroke": 10,
-                                                    "stacatissimo wedge": 11,
+                                                    "staccatissimo stroke": 10,
+                                                    "staccatissimo wedge": 11,
                                                     "stress": 12,
                                                     "tenuto-accent": 13,
                                                     "unstress": 14,
@@ -194,6 +194,8 @@ MuseScore {
     property var setTagTimeline: ({})
     property bool skipIfExists: true
     property var slurStartByStaff: ({})
+    property var effectStartByStaff: ({})   // staffIdx(string) -> { tick -> ["fade in", "tremolo bar", ...] }
+    property var effectRangeByStaff: ({})    // staffIdx(string) -> [{start: tStart, end: tEnd, tokens: ["..."]}, ...]
     property var staffToSet: ({})
     property string staffToSetMetaTagKey: "keyswitch_creator.staffToSet"
     property var formattedKsStaff: ({}) // staffIdx (string) -> true once formatted this run
@@ -326,40 +328,206 @@ MuseScore {
 
     function chordArticulationNames(chord) {
         var names = []
+        function pushUnique(n) {
+            if (n && names.indexOf(n) === -1)
+                names.push(n)
+        }
 
         function considerArticulation(a) {
             var raw = ((a.articulationName ? a.articulationName() : "") + " " + (a.userName ? a.userName() : "") + " " + (a.subtypeName ? a.subtypeName(
                                                                                                                                               ) : "")).toLowerCase(
                         )
-            var n = ""
-            if (raw.indexOf("staccatissimo") >= 0)
-                n = "staccatissimo"
-            else if (raw.indexOf("staccato") >= 0)
-                n = "staccato"
-            else if (raw.indexOf("tenuto") >= 0)
-                n = "tenuto"
-            else if (raw.indexOf("accent") >= 0)
-                n = "accent"
-            else if (raw.indexOf("marcato") >= 0)
-                n = "marcato"
-            else if (raw.indexOf("sforzato") >= 0 || raw.indexOf("sfz") >= 0)
-                n = "sforzato"
-            else if (raw.indexOf("loure") >= 0 || raw.indexOf("tenuto-staccato") >= 0)
-                n = "loure"
-            else if (raw.indexOf("fermata") >= 0)
-                n = "fermata"
-            else if (raw.indexOf("trill") >= 0)
-                n = "trill"
-            else if (raw.indexOf("mordent inverted") >= 0 || raw.indexOf("prallprall") >= 0)
-                n = "mordent inverted"
-            else if (raw.indexOf("mordent") >= 0)
-                n = "mordent"
-            else if (raw.indexOf("turn") >= 0)
-                n = "turn"
 
-            if (!n)
-                n = "unknown"
-            names.push(n)
+            function has(s) {
+                return raw.indexOf(s) >= 0
+            }
+            function hasAny(arr) {
+                for (var i = 0; i < arr.length; ++i)
+                    if (has(arr[i]))
+                        return true
+                return false
+            }
+
+            // --- base flags used by combos ---
+            var softAccent = has("soft accent")
+            var accent = (has("accent")) && !softAccent
+            var marcato = has("marcato")
+            var tenuto = has("tenuto")
+            var staccatissimo = has("staccatissimo")
+            var staccato = has("staccato")
+            var loureGlyph = has("loure") || has("tenuto-staccato") || has("tenuto staccato");
+
+            // --- COMBINATIONS (most specific first) ---
+            if (softAccent && tenuto && staccato) {
+                pushUnique("soft accent-tenuto-staccato")
+                return
+            }
+            if (marcato && staccato) {
+                pushUnique("marcato-staccato")
+                return
+            }
+            if ((softAccent || accent) && staccato) {
+                pushUnique(softAccent ? "soft accent-staccato" : "accent-staccato")
+                return
+            }
+            if (marcato && tenuto) {
+                pushUnique("marcato-tenuto")
+                return
+            }
+            if ((softAccent || accent) && tenuto) {
+                // registry uses "tenuto-accent"
+                pushUnique(softAccent ? "soft accent-tenuto" : "tenuto-accent")
+                return
+            }
+            if (loureGlyph || (tenuto && staccato)) {
+                pushUnique("loure")
+                return
+            }
+
+            // --- SPECIFIC named articulations (ordered to avoid substring shadowing) ---
+
+            // 1) Sawtooth variants: check WIDE before the generic one
+            if (has("wide sawtooth line segment")) {
+                pushUnique("wide sawtooth line segment")
+                return
+            }
+            if (has("sawtooth line segment")) {
+                pushUnique("sawtooth line segment")
+                return
+            }
+
+            // 2) Half-open must precede "open" to avoid substring collisions
+            if (has("half-open 2")) {
+                pushUnique("half-open 2")
+                return
+            }
+            if (has("open") && !has("half-open")) {
+                pushUnique("open")
+                return
+            }
+
+            // Fade & swell (explicit literals)
+            if (has("fade in")) {
+                pushUnique("fade in")
+                return
+            }
+            if (has("fade out")) {
+                pushUnique("fade out")
+                return
+            }
+            if (has("volume swell")) {
+                pushUnique("volume swell")
+                return
+            }
+
+            // 3) Vibrato large variants (explicit literals)
+            if (has("vibrato large faster")) {
+                pushUnique("vibrato large faster")
+                return
+            }
+            if (has("vibrato large slowest")) {
+                pushUnique("vibrato large slowest")
+                return
+            }
+
+            // 4) Harmonic and tremolo bar (treat as articulations if presented as such)
+            if (has("harmonic")) {
+                pushUnique("harmonic")
+                return
+            }
+            if (has("tremolo bar")) {
+                pushUnique("tremolo bar")
+                return
+            }
+
+            // 5) Staccatissimo split glyphs
+            if (staccatissimo && hasAny(["wedge"])) {
+                pushUnique("staccatissimo wedge")
+                return
+            }
+            if (staccatissimo && hasAny(["stroke"])) {
+                pushUnique("staccatissimo stroke")
+                return
+            }
+
+            // 6) Other specific marks
+            if (has("stress") && !accent && !(has("unstress"))) {
+                pushUnique("stress")
+                return
+            }
+            if (has("unstress")) {
+                pushUnique("unstress")
+                return
+            }
+            if (has("muted") || has("mute") || has("stopped")) {
+                pushUnique("muted")
+                return
+            }
+            if (has("up bow") || has("up-bow") || has("upbow")) {
+                pushUnique("up bow")
+                return
+            }
+            if (has("down bow") || has("down-bow") || has("downbow")) {
+                pushUnique("down bow")
+                return
+            }
+            if (has("snap pizzicato") || has("bartok pizzicato")) {
+                pushUnique("snap pizzicato")
+                return
+            }
+
+            // --- SINGLE MARKS (fallbacks) ---
+            if (staccatissimo) {
+                pushUnique("staccatissimo")
+                return
+            }
+            if (staccato) {
+                pushUnique("staccato")
+                return
+            }
+            if (tenuto) {
+                pushUnique("tenuto")
+                return
+            }
+            if (marcato) {
+                pushUnique("marcato")
+                return
+            }
+            if (softAccent) {
+                pushUnique("soft accent")
+                return
+            }
+            if (accent) {
+                pushUnique("accent")
+                return
+            }
+
+            if (has("sforzato") || has("sfz")) {
+                pushUnique("sforzato")
+                return
+            }
+            if (has("fermata")) {
+                pushUnique("fermata")
+                return
+            }
+            if (has("trill")) {
+                pushUnique("trill")
+                return
+            }
+            if (has("mordent inverted") || has("prallprall")) {
+                pushUnique("mordent inverted")
+                return
+            }
+            if (has("mordent")) {
+                pushUnique("mordent")
+                return
+            }
+            if (has("turn")) {
+                pushUnique("turn")
+                return
+            }
+
+            pushUnique("unknown")
         }
 
         // 1) Chord-level articulations
@@ -377,9 +545,8 @@ MuseScore {
                 for (var k in note.elements) {
                     var el = note.elements[k]
                     try {
-                        if (el && el.type === Element.ARTICULATION) {
+                        if (el && el.type === Element.ARTICULATION)
                             considerArticulation(el)
-                        }
                     } catch (e) {}
                 }
             }
@@ -397,7 +564,23 @@ MuseScore {
                         // Harmonic mark (separate DOM type in MS4)
                         if (el2 && (el2.type === Element.HARMONIC_MARK || (el2.userName && String(el2.userName()).toLowerCase().indexOf(
                                                                                "harmonic") >= 0))) {
-                            names.push("harmonic")
+                            pushUnique("harmonic")
+                        }
+                        // name-based fallback for special symbols that show up as custom elements
+                        if (el2 && el2.userName) {
+                            var uname = String(el2.userName()).toLowerCase()
+                            if (uname.indexOf("tremolo bar") >= 0)
+                                pushUnique("tremolo bar")
+                            if (uname.indexOf("vibrato large faster") >= 0)
+                                pushUnique("vibrato large faster")
+                            if (uname.indexOf("vibrato large slowest") >= 0)
+                                pushUnique("vibrato large slowest")
+                            if (uname.indexOf("wide sawtooth line segment") >= 0)
+                                pushUnique("wide sawtooth line segment")
+                            else if (uname.indexOf("sawtooth line segment") >= 0)
+                                pushUnique("sawtooth line segment")
+                            if (uname.indexOf("half-open 2") >= 0)
+                                pushUnique("half-open 2")
                         }
                     } catch (eHM) {}
                 }
@@ -544,6 +727,31 @@ MuseScore {
         return 0
     }
 
+    function spEndTick(s) {
+        // prefer explicit end tick-ish properties; else fall back to endSegment.tick
+        try {
+            if (s.spannerTick2 !== undefined)
+                return fractionToTicks(s.spannerTick2)
+        } catch (e0) {}
+        try {
+            if (s.endTick !== undefined)
+                return fractionToTicks(s.endTick)
+        } catch (e1) {}
+        try {
+            if (s.tick2 !== undefined)
+                return fractionToTicks(s.tick2)
+        } catch (e2) {}
+        try {
+            if (s.endSegment && s.endSegment.tick !== undefined)
+                return fractionToTicks(s.endSegment.tick)
+        } catch (e3) {}
+        // As a last resort, return start tick
+        try {
+            return spStartTick(s)
+        } catch (_) {}
+        return 0
+    }
+
     function spStartStaffIdx(s) {
         // Prefer staff.index; else derive from 'track' (start track) or 'spannerTrack2' if present.
         try {
@@ -602,6 +810,496 @@ MuseScore {
         }
 
         dbg("slur-starts via spanners=" + collected)
+    }
+
+    // Build a map of effect starts from curScore.spanners for just the requested items.
+    // - HAIRPIN -> "fade in" (crescendo) / "fade out" (decrescendo)
+    // - Named lines by userName: "tremolo bar", "vibrato large faster", "vibrato large slowest", "volume swell" (or "swell").
+    function buildEffectStartMapFromSpanners(startTick, endTick, allowedMap) {
+        effectStartByStaff = ({})
+        if (!curScore || !curScore.spanners)
+            return
+        effectRangeByStaff = ({})
+        // clear ranges for this run
+        var sp = curScore.spanners
+        var collected = 0
+
+        function pushTok(staffIdx, tick, tok) {
+            var key = (staffIdx >= 0) ? String(staffIdx) : "_any"
+            if (!effectStartByStaff[key])
+                effectStartByStaff[key] = ({})
+            if (!effectStartByStaff[key][tick])
+                effectStartByStaff[key][tick] = []
+            if (effectStartByStaff[key][tick].indexOf(tok) === -1) {
+                effectStartByStaff[key][tick].push(tok)
+                collected++
+            }
+        }
+
+        function pushTokRange(staffIdx, tStart, tEnd, tok) {
+            var key = (staffIdx >= 0) ? String(staffIdx) : "_any"
+            if (!effectRangeByStaff[key])
+                effectRangeByStaff[key] = [];
+            // coerce sane order
+            var a = Math.min(tStart, tEnd), b = Math.max(tStart, tEnd)
+            effectRangeByStaff[key].push({
+                                             start: a,
+                                             end: b,
+                                             tokens: [tok]
+                                         })
+
+            dbg("[KS] effect-range: '" + tok + "' staff=" + key + " [" + a + ".." + b + ")")
+        }
+
+        for (var i = 0; i < sp.length; ++i) {
+            var s = sp[i]
+            if (!s)
+                continue
+            var tStart = spStartTick(s)
+            var tEnd = spEndTick(s)
+
+            if (typeof startTick === 'number' && typeof endTick === 'number') {
+                // keep spanners whose RANGE overlaps the window
+                var overlaps = (tEnd > startTick) && (tStart < endTick)
+                if (!overlaps)
+                    continue
+            }
+            var staffIdx = spStartStaffIdx(s)
+            if (allowedMap && staffIdx >= 0 && allowedMap.hasOwnProperty(staffIdx) && !allowedMap[staffIdx])
+                continue
+
+            // 1) Hairpins -> "fade in" / "fade out"
+            try {
+                if (s.type === Element.HAIRPIN) {
+                    var desc = ""
+                    try {
+                        if (s.hairpinType !== undefined)
+                            desc = String(s.hairpinType).toLowerCase()
+                    } catch (e0) {}
+                    try {
+                        if (!desc && s.subtypeName)
+                            desc = String(s.subtypeName()).toLowerCase()
+                    } catch (e1) {}
+                    try {
+                        if (!desc && s.userName)
+                            desc = String(s.userName()).toLowerCase()
+                    } catch (e2) {}
+
+                    if (desc.indexOf("crescendo") >= 0)
+                        pushTok(staffIdx, tStart, "fade in")
+                    else if (desc.indexOf("decrescendo") >= 0 || desc.indexOf("diminuendo") >= 0)
+                        pushTok(staffIdx, tStart, "fade out")
+                }
+            } catch (eH) {}
+
+            // 2) Named line spanners: look at multiple label fields, then push your exact registry keys
+            try {
+                // Collect every string-y label we can find for this spanner
+                var parts = []
+
+                try {
+                    if (s.userName)
+                        parts.push(String(s.userName()).toLowerCase())
+                } catch (eUN) {}
+                try {
+                    if (s.subtypeName)
+                        parts.push(String(s.subtypeName()).toLowerCase())
+                } catch (eST) {}
+                try {
+                    if (s.text)
+                        parts.push(String(s.text).toLowerCase())
+                } catch (eTX) {}
+                try {
+                    if (s.beginText) {
+                        var bt = (s.beginText && s.beginText.text) ? s.beginText.text : s.beginText
+                        parts.push(String(bt).toLowerCase())
+                    }
+                } catch (eBT) {}
+                try {
+                    if (s.endText) {
+                        var et = (s.endText && s.endText.text) ? s.endText.text : s.endText
+                        parts.push(String(et).toLowerCase())
+                    }
+                } catch (eET) {}
+                try {
+                    if (s.plainText)
+                        parts.push(String(s.plainText).toLowerCase())
+                } catch (ePT) {}
+
+                var label = (" " + parts.join(" ")).replace(/\s+/g, " ").trim();
+                // tolerant
+
+                function has(str) {
+                    return label.indexOf(str) >= 0
+                }
+                // Very small tolerance for punctuation: match by words-in-order
+                function hasSeq(a, b, c) {
+                    var norm = label.replace(/[^a-z0-9]+/g, " ").trim()
+                    var i = norm.indexOf(a)
+                    if (i < 0)
+                        return false
+                    var j = norm.indexOf(b, i + a.length)
+                    if (j < 0)
+                        return false
+                    var k = norm.indexOf(c, j + b.length)
+                    return k >= 0
+                }
+
+                if (has("tremolo bar")) {
+                    pushTok(staffIdx, tStart, "tremolo bar")
+                    pushTokRange(staffIdx, tStart, tEnd, "tremolo bar")
+                }
+
+                if (hasSeq("vibrato", "large", "faster")) {
+                    pushTok(staffIdx, tStart, "vibrato large faster")
+                    pushTokRange(staffIdx, tStart, tEnd, "vibrato large faster")
+                }
+
+                if (hasSeq("vibrato", "large", "slowest")) {
+                    pushTok(staffIdx, tStart, "vibrato large slowest")
+                    pushTokRange(staffIdx, tStart, tEnd, "vibrato large slowest")
+                }
+
+                // We already handle hairpins above; keep optional "swell" alias here too
+                if (has("volume swell") || has("swell"))
+                    pushTok(staffIdx, tStart, "volume swell")
+            } catch (eN) {}
+        }
+
+        dbg("[KS] effects via spanners=" + collected);
+
+        // if spanners are scarce (or simply missing our targets), also mine annotations in the same window
+        buildEffectRangesFromAnnotationsFallback(startTick, endTick, allowedMap);
+
+        // mine selection elements too (covers cases where those lines are not exposed as spanners or annotations)
+        buildEffectRangesFromSelectionElements(startTick, endTick, allowedMap)
+    }
+
+    // --- Fallback: synthesize effect ranges from segment annotations when spanners are missing ---
+    function normalizeEffectLabel_(s) {
+        try {
+            var t = (s || "").toString().toLowerCase();
+            // normalize punctuation/whitespace -> single spaces
+            t = t.replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
+            t = t.replace(/\u00A0/g, " ").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim()
+            return t
+        } catch (_) {
+            return ""
+        }
+    }
+
+    // Return the first matching effect token for a normalized label, or "" if none.
+    function pickEffectTokenFromLabel_(norm) {
+        // tolerate comma: "vibrato large, faster" -> "vibrato large faster" after normalization
+        function hasSeq(a, b, c) {
+            var i = norm.indexOf(a)
+            if (i < 0)
+                return false
+            var j = norm.indexOf(b, i + a.length)
+            if (j < 0)
+                return false
+            var k = norm.indexOf(c, j + b.length)
+            return k >= 0
+        }
+        if (norm.indexOf("tremolo bar") >= 0)
+            return "tremolo bar"
+        if (hasSeq("vibrato", "large", "faster"))
+            return "vibrato large faster"
+        if (hasSeq("vibrato", "large", "slowest"))
+            return "vibrato large slowest"
+        if (norm.indexOf("volume swell") >= 0 || norm === "swell")
+            return "volume swell"
+        return ""
+    }
+
+    function buildEffectRangesFromAnnotationsFallback(startTick, endTick, allowedMap) {
+        try {
+            if (!curScore || !curScore.staves)
+                return
+            // If endTick wasn't provided, cap at score end
+            var endLim = (typeof endTick === 'number') ? endTick : (curScore.lastSegment ? (curScore.lastSegment.tick + 1) : 0)
+
+            for (var s = 0; s < curScore.staves.length; ++s) {
+                if (allowedMap && !allowedMap[s])
+                    continue
+                var c = curScore.newCursor()
+                c.track = s * 4
+                c.rewindToTick(startTick)
+
+                while (c.segment && c.tick < endLim) {
+                    var seg = c.segment
+
+                    // look at segment-level annotations (Staff/System/Expression + "playing technique annotation" fallback)
+                    if (seg && seg.annotations) {
+                        for (var ai = 0; ai < seg.annotations.length; ++ai) {
+                            var ann = seg.annotations[ai]
+                            if (!ann)
+                                continue
+
+                            // best-effort staff match like in segmentTechniqueTexts(...)
+                            var annStaffIdx = -1
+                            try {
+                                if (ann.track !== undefined && ann.track !== -1)
+                                    annStaffIdx = Math.floor(ann.track / 4)
+                                else if (ann.staffIdx !== undefined)
+                                    annStaffIdx = ann.staffIdx
+                                else if (ann.type === Element.STAFF_TEXT || ann.type === Element.EXPRESSION_TEXT)
+                                    annStaffIdx = s
+                            } catch (eAS) {
+                                annStaffIdx = -1
+                            }
+
+                            // SYSTEM_TEXT is global; Staff/Expression must match this staff
+                            var staffOk = (ann.type === Element.SYSTEM_TEXT) || (annStaffIdx === s)
+                            if (!staffOk)
+                                continue
+                            var raw = ""
+                            try {
+                                raw = ann.text || ""
+                            } catch (_) {
+                                raw = ""
+                            }
+                            var norm = normalizeEffectLabel_(raw)
+                            if (!norm)
+                                continue
+                            var tok = pickEffectTokenFromLabel_(norm)
+                            if (!tok)
+                                continue
+
+                            // Found an effect start at this segment; synthesize a range to selection end (or score end)
+                            // Reuse your existing helpers
+                            // pushTokRange(staffIdx, tStart, tEnd, tok)
+                            pushTokRange(s, c.tick, endLim, tok);
+                            // Also record a start token for completeness (not strictly required)
+                            pushTok(s, c.tick, tok)
+
+                            dbg("[KS] fallback-range: '" + tok + "' staff=" + s + " [" + c.tick + ".." + endLim + ")")
+                        }
+                    }
+
+                    if (!c.next())
+                        break
+                }
+            }
+        } catch (eFB) {
+            try {
+                dbg("[KS] fallback error: " + String(eFB))
+            } catch (_) {}
+        }
+    }
+    // --- Selection fallback: synthesize effect ranges from selection elements ---
+    // Uses the same normalizer + token picker you already added for the annotations fallback.
+    function buildEffectRangesFromSelectionElements(startTick, endTick, allowedMap) {
+        try {
+            if (!curScore || !curScore.selection || !curScore.selection.elements || !curScore.selection.elements.length)
+                return
+
+            var endLim = (typeof endTick === 'number') ? endTick : (curScore.lastSegment ? (curScore.lastSegment.tick + 1) : 0)
+
+            for (var ii = 0; ii < curScore.selection.elements.length; ++ii) {
+                var el = curScore.selection.elements[ii]
+                if (!el)
+                    continue
+
+                // Gather every name-ish field the element might expose
+                var parts = []
+                try {
+                    if (el.userName)
+                        parts.push(String(el.userName()).toLowerCase())
+                } catch (_) {}
+                try {
+                    if (el.subtypeName)
+                        parts.push(String(el.subtypeName()).toLowerCase())
+                } catch (_) {}
+                try {
+                    if (el.text)
+                        parts.push(String(el.text).toLowerCase())
+                } catch (_) {}
+                try {
+                    if (el.plainText)
+                        parts.push(String(el.plainText).toLowerCase())
+                } catch (_) {}
+
+                var label = normalizeEffectLabel_((" " + parts.join(" ")).replace(/\s+/g, " ").trim())
+                if (!label)
+                    continue
+
+                var tok = pickEffectTokenFromLabel_(label)
+                if (!tok)
+                    continue
+
+                // Determine staff
+                var sIdx = -1
+                try {
+                    if (el.staffIdx !== undefined)
+                        sIdx = el.staffIdx
+                } catch (_) {}
+                if (sIdx < 0) {
+                    try {
+                        if (el.track !== undefined && el.track !== -1)
+                            sIdx = Math.floor(el.track / 4)
+                    } catch (_) {}
+                }
+                if (sIdx < 0)
+                    continue
+                if (allowedMap && !allowedMap[sIdx])
+                    continue
+
+                // Determine a time span for the token.
+                // Prefer spanner-like timing if present; else use element's parent segment; else use selection start.
+                var t0 = 0, t1 = endLim
+                try {
+                    t0 = spStartTick(el)
+                } catch (_) {}
+                try {
+                    t1 = spEndTick(el)
+                } catch (_) {}
+                if (!(t1 > t0)) {
+                    try {
+                        if (el.parent && el.parent.tick !== undefined)
+                            t0 = el.parent.tick
+                    } catch (_) {}
+                    t1 = endLim
+                }
+
+                pushTokRange(sIdx, t0, t1, tok)
+                pushTok(sIdx, t0, tok)
+                dbg("[KS] sel-fallback-range: '" + tok + "' staff=" + sIdx + " [" + t0 + ".." + t1 + ")")
+            }
+        } catch (eSF) {
+            try {
+                dbg("[KS] sel-fallback error: " + String(eSF))
+            } catch (_) {}
+        }
+    }
+
+    // Retrieve any effect tokens that start on this staff/tick.
+    function effectTokensAt(staffIdx, tick) {
+        try {
+            var key = String(staffIdx);
+
+            // Helper: collect keys for other staves in the same part
+            function samePartKeys(curStaff) {
+                var out = []
+                var pi0 = partInfoForStaff(curStaff)
+                if (!pi0)
+                    return out
+
+                // 1) keys present in start map
+                if (effectStartByStaff) {
+                    for (var k in effectStartByStaff) {
+                        if (k === "_any")
+                            continue
+                        var s2 = parseInt(k, 10)
+                        if (isNaN(s2))
+                            continue
+                        var pi2 = partInfoForStaff(s2)
+                        if (pi2 && pi2.index === pi0.index && s2 !== curStaff)
+                            out.push(k)
+                    }
+                }
+                // 2) keys present in range map that might not exist in start map
+                if (effectRangeByStaff) {
+                    for (var k2 in effectRangeByStaff) {
+                        if (k2 === "_any")
+                            continue
+                        // avoid duplicates from previous loop
+                        if (out.indexOf(k2) !== -1)
+                            continue
+                        var s3 = parseInt(k2, 10)
+                        if (isNaN(s3))
+                            continue
+                        var pi3 = partInfoForStaff(s3)
+                        if (pi3 && pi3.index === pi0.index && s3 !== curStaff)
+                            out.push(k2)
+                    }
+                }
+                return out
+            }
+
+            // 1) Exact-start tokens
+            var arr = (effectStartByStaff && effectStartByStaff[key] && effectStartByStaff[key][tick]) ? effectStartByStaff[key][tick] :
+                                                                                                         null
+
+            // 1b) fall back to _any
+            if (!arr && effectStartByStaff && effectStartByStaff["_any"] && effectStartByStaff["_any"][tick])
+                arr = effectStartByStaff["_any"][tick];
+
+            // 1c) NEW: fall back to other staves in the same part
+            if ((!arr || !arr.length) && effectStartByStaff) {
+                var sib = samePartKeys(staffIdx)
+                var hitsStart = []
+                for (var iS = 0; iS < sib.length; ++iS) {
+                    var kS = sib[iS]
+                    if (effectStartByStaff[kS] && effectStartByStaff[kS][tick]) {
+                        var aS = effectStartByStaff[kS][tick]
+                        for (var jS = 0; jS < aS.length; ++jS)
+                            if (hitsStart.indexOf(aS[jS]) === -1)
+                                hitsStart.push(aS[jS])
+                    }
+                }
+                if (hitsStart.length)
+                    arr = hitsStart
+            }
+
+            // 2) Ranges at this tick
+            if ((!arr || !arr.length) && effectRangeByStaff && effectRangeByStaff[key]) {
+                var hits = []
+                var ranges = effectRangeByStaff[key]
+                for (var i = 0; i < ranges.length; ++i) {
+                    var R = ranges[i]
+                    if (tick >= R.start && tick < R.end) {
+                        for (var j = 0; j < R.tokens.length; ++j)
+                            if (hits.indexOf(R.tokens[j]) === -1)
+                                hits.push(R.tokens[j])
+                    }
+                }
+                if (hits.length)
+                    arr = hits
+            }
+
+            // 2b) _any ranges
+            if ((!arr || !arr.length) && effectRangeByStaff && effectRangeByStaff["_any"]) {
+                var hits2 = []
+                var ranges2 = effectRangeByStaff["_any"]
+                for (var k = 0; k < ranges2.length; ++k) {
+                    var R2 = ranges2[k]
+                    if (tick >= R2.start && tick < R2.end) {
+                        for (var m = 0; m < R2.tokens.length; ++m)
+                            if (hits2.indexOf(R2.tokens[m]) === -1)
+                                hits2.push(R2.tokens[m])
+                    }
+                }
+                if (hits2.length)
+                    arr = hits2
+            }
+
+            // 2c) ranges from other staves in the same part
+            if ((!arr || !arr.length) && effectRangeByStaff) {
+                var sib2 = samePartKeys(staffIdx)
+                var hits3 = []
+                for (var i2 = 0; i2 < sib2.length; ++i2) {
+                    var k2 = sib2[i2]
+                    var ranges3 = effectRangeByStaff[k2]
+                    if (!ranges3)
+                        continue
+                    for (var r = 0; r < ranges3.length; ++r) {
+                        var R3 = ranges3[r]
+                        if (tick >= R3.start && tick < R3.end) {
+                            for (var n = 0; n < R3.tokens.length; ++n)
+                                if (hits3.indexOf(R3.tokens[n]) === -1)
+                                    hits3.push(R3.tokens[n])
+                        }
+                    }
+                }
+                if (hits3.length)
+                    arr = hits3
+            }
+
+            return arr ? arr.slice(0) : []
+        } catch (e) {
+            return []
+        }
     }
 
     function computeAllowedSourceStaves(startStaff, endStaff, effScope, effPartsMode) {
@@ -1650,7 +2348,36 @@ MuseScore {
         }
 
         dbg2("chords collected", chords.length)
-        collectSetTagsInRange()
+        collectSetTagsInRange();
+
+        // Probe A: how many spanners does the plugin actually see?
+        try {
+            var N = (curScore && curScore.spanners) ? curScore.spanners.length : 0
+            dbg("[KS] spanners.length = " + N)
+            for (var i = 0; i < N; ++i) {
+                var s = curScore.spanners[i]
+                var t0 = spStartTick(s), t1 = spEndTick(s), st = spStartStaffIdx(s)
+                var u = ""
+                try {
+                    u = s.userName ? String(s.userName()).toLowerCase() : ""
+                } catch (_) {}
+                var stn = ""
+                try {
+                    stn = s.subtypeName ? String(s.subtypeName()).toLowerCase() : ""
+                } catch (_) {}
+                var bt = ""
+                try {
+                    bt = (s.beginText && s.beginText.text) ? String(s.beginText.text).toLowerCase() : ""
+                } catch (_) {}
+                var et = ""
+                try {
+                    et = (s.endText && s.endText.text) ? String(s.endText.text).toLowerCase() : ""
+                } catch (_) {}
+                dbg("SP[" + i + "]: type=" + s.type + " [" + t0 + ".." + t1 + ") staff=" + st + " label='" + (u + " " + stn + " " + bt
+                                                                                                              + " " + et).trim() + "'")
+            }
+        } catch (e) {}
+
         if (debugEnabled && curScore && curScore.spanners && curScore.spanners.length) {
             for (var __i = 0; __i < Math.min(8, curScore.spanners.length); ++__i) {
                 var __s = curScore.spanners[__i]
@@ -1679,6 +2406,17 @@ MuseScore {
             _allow[_ch.staffIdx] = true
         }
         buildSlurStartMapFromSpanners(_haveT ? _minT : 0, _haveT ? (_maxT + 1) : 0, _allow)
+        buildEffectStartMapFromSpanners(_haveT ? _minT : 0, _haveT ? (_maxT + 1) : 0, _allow);
+
+        // Probe B: what did we actually record?
+        try {
+            var keys = Object.keys(effectRangeByStaff || {})
+            for (var i = 0; i < keys.length; ++i) {
+                var k = keys[i]
+                var L = effectRangeByStaff[k] ? effectRangeByStaff[k].length : 0
+                dbg("[KS] effectRangeByStaff[" + k + "] = " + L + " entries")
+            }
+        } catch (_) {}
 
         chords.sort(function (a, b) {
             if (a.fraction.lessThan(b.fraction))
@@ -1709,8 +2447,28 @@ MuseScore {
             }
 
             var texts = segmentTechniqueTexts(chord)
-            dbg("texts@tick=" + tickHere + " staff=" + chord.staffIdx + " => " + texts.join(" | "))
-            var artiNames = chordArticulationNames(chord)
+            dbg("texts@tick=" + tickHere + " staff=" + chord.staffIdx + " => " + texts.join(" | "));
+
+            // 1) Get base articulation tokens for this chord
+            var artiNames = chordArticulationNames(chord);
+
+            // 2) Add spanner-derived tokens (hairpins / named lines you requested) at this tick
+            if (debugEnabled) {
+                var __tok = effectTokensAt(chord.staffIdx, tickHere)
+                if (__tok && __tok.length)
+                    dbg("[KS] spanner/range tokens @" + tickHere + " -> " + __tok.join(", "))
+            }
+
+            (function () {
+                var tok = effectTokensAt(chord.staffIdx, tickHere)
+                if (tok && tok.length) {
+                    for (var i = 0; i < tok.length; ++i) {
+                        if (artiNames.indexOf(tok[i]) === -1)
+                            artiNames.push(tok[i])
+                    }
+                }
+            })()
+
             var specs = [];
 
             // only use maps from the active set; no global fallback
