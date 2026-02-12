@@ -795,7 +795,7 @@ MuseScore {
                 curScore.doLayout()
         } catch (_) {}
         try {
-            dbg("[KS] beam: chord.beamMode -> " + (OK ? "1 (OK)" : "failed"))
+            dbg("beam: chord.beamMode -> " + (OK ? "1 (OK)" : "failed"))
         } catch (_) {}
         return OK
     }
@@ -874,7 +874,7 @@ MuseScore {
                                              tokens: [tok]
                                          })
 
-            dbg("[KS] effect-range: '" + tok + "' staff=" + key + " [" + a + ".." + b + ")")
+            dbg("effect-range: '" + tok + "' staff=" + key + " [" + a + ".." + b + ")")
         }
 
         for (var i = 0; i < sp.length; ++i) {
@@ -992,7 +992,7 @@ MuseScore {
             } catch (eN) {}
         }
 
-        dbg("[KS] effects via spanners=" + collected);
+        dbg("effects via spanners=" + collected);
 
         // if spanners are scarce (or simply missing our targets), also mine annotations in the same window
         buildEffectRangesFromAnnotationsFallback(startTick, endTick, allowedMap);
@@ -1099,7 +1099,7 @@ MuseScore {
                             // Also record a start token for completeness (not strictly required)
                             pushTok(s, c.tick, tok)
 
-                            dbg("[KS] fallback-range: '" + tok + "' staff=" + s + " [" + c.tick + ".." + endLim + ")")
+                            dbg("fallback-range: '" + tok + "' staff=" + s + " [" + c.tick + ".." + endLim + ")")
                         }
                     }
 
@@ -1109,7 +1109,7 @@ MuseScore {
             }
         } catch (eFB) {
             try {
-                dbg("[KS] fallback error: " + String(eFB))
+                dbg("fallback error: " + String(eFB))
             } catch (_) {}
         }
     }
@@ -1188,11 +1188,11 @@ MuseScore {
 
                 pushTokRange(sIdx, t0, t1, tok)
                 pushTok(sIdx, t0, tok)
-                dbg("[KS] sel-fallback-range: '" + tok + "' staff=" + sIdx + " [" + t0 + ".." + t1 + ")")
+                dbg("sel-fallback-range: '" + tok + "' staff=" + sIdx + " [" + t0 + ".." + t1 + ")")
             }
         } catch (eSF) {
             try {
-                dbg("[KS] sel-fallback error: " + String(eSF))
+                dbg("sel-fallback error: " + String(eSF))
             } catch (_) {}
         }
     }
@@ -1447,14 +1447,14 @@ MuseScore {
                 return
             }
 
-            dbg("[KS] KS format: staff=" + tgtStaffIdx + " at tick=" + c.tick);
+            dbg("KS format: staff=" + tgtStaffIdx + " at tick=" + c.tick);
 
             // --- 1) Create and ADD the Staff type change element ---
             var stc = newElement(Element.STAFFTYPE_CHANGE)
             try {
                 c.add(stc)
             } catch (eAdd) {
-                dbg("[KS] add(STC) failed: " + String(eAdd))
+                dbg("add(STC) failed: " + String(eAdd))
                 formattedKsStaff[key] = true
                 return
             }
@@ -1873,7 +1873,7 @@ MuseScore {
                     if (allActiveSet) {
                         // remove entire KS chord, then ensure a rest at this slot
                         try {
-                            dbg("[KS] removed KS chord at tick=" + c.tick + " (no directive at source)")
+                            dbg("removed KS chord at tick=" + c.tick + " (no directive at source)")
                             removeElement(ch)
                         } catch (eWhole) {}
                         ensureWritableSlot(c, num, den)
@@ -1884,7 +1884,7 @@ MuseScore {
                         for (var r0 = 0; r0 < toRemove.length; ++r0) {
                             var stale0 = toRemove[r0]
                             try {
-                                dbg("[KS] removed KS pitch=" + stale0.pitch + " at tick=" + c.tick)
+                                dbg("removed KS pitch=" + stale0.pitch + " at tick=" + c.tick)
                                 ch.remove(stale0)
                             } catch (eRem0) {
                                 try {
@@ -1917,7 +1917,7 @@ MuseScore {
 
             // Debug: show what we plan to add at this tick
             try {
-                dbg("[KS] missing@tick=" + c.tick + " => " + missing.join(","))
+                dbg("missing@tick=" + c.tick + " => " + missing.join(","))
             } catch (eDbgM) {}
 
             // Pass 2: add missing desired FIRST (avoid "final note" removal error)
@@ -1955,7 +1955,7 @@ MuseScore {
                         }
                     }
                     try {
-                        dbg("[KS] added KS pitch=" + want + " at tick=" + c.tick)
+                        dbg("added KS pitch=" + want + " at tick=" + c.tick)
                     } catch (eDbgA) {}
                     added++
                 } catch (eAdd) {
@@ -1973,7 +1973,7 @@ MuseScore {
                 for (var r = 0; r < toRemove.length; ++r) {
                     var stale = toRemove[r]
                     try {
-                        dbg("[KS] removed KS pitch=" + stale.pitch + " at tick=" + c.tick)
+                        dbg("removed KS pitch=" + stale.pitch + " at tick=" + c.tick)
                         ch.remove(stale)
                     } catch (eRem) {
                         try {
@@ -2383,7 +2383,7 @@ MuseScore {
         // Probe A: how many spanners does the plugin actually see?
         try {
             var N = (curScore && curScore.spanners) ? curScore.spanners.length : 0
-            dbg("[KS] spanners.length = " + N)
+            dbg("spanners.length = " + N)
             for (var i = 0; i < N; ++i) {
                 var s = curScore.spanners[i]
                 var t0 = spStartTick(s), t1 = spEndTick(s), st = spStartStaffIdx(s)
@@ -2444,7 +2444,7 @@ MuseScore {
             for (var i = 0; i < keys.length; ++i) {
                 var k = keys[i]
                 var L = effectRangeByStaff[k] ? effectRangeByStaff[k].length : 0
-                dbg("[KS] effectRangeByStaff[" + k + "] = " + L + " entries")
+                dbg("effectRangeByStaff[" + k + "] = " + L + " entries")
             }
         } catch (_) {}
 
@@ -2486,7 +2486,7 @@ MuseScore {
             if (debugEnabled) {
                 var __tok = effectTokensAt(chord.staffIdx, tickHere)
                 if (__tok && __tok.length)
-                    dbg("[KS] spanner/range tokens @" + tickHere + " -> " + __tok.join(", "))
+                    dbg("spanner/range tokens @" + tickHere + " -> " + __tok.join(", "))
             }
 
             (function () {
@@ -2515,7 +2515,7 @@ MuseScore {
             // Debug: what articulations and how many KS specs we will emit at this tick
             try {
                 var _tickHere = (chord.parent && chord.parent.tick) ? chord.parent.tick : 0
-                dbg("[KS] arti@tick=" + _tickHere + " => " + artiNames.join(", ") + " | specs=" + specs.length)
+                dbg("arti@tick=" + _tickHere + " => " + artiNames.join(", ") + " | specs=" + specs.length)
             } catch (eDbgA) {}
 
             // Slur handling: prefer articulationKeyMap['slur'] at slur start; else fall back to technique 'legato'
