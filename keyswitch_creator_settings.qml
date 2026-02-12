@@ -340,11 +340,35 @@ MuseScore {
                     "volume swell": 26,
                     "sawtooth line segment": 27,
                     "wide sawtooth line segment": 28,
-                    "vibrato large faster": 29,
-                    "vibrato large slowest": 30,
                     "snap pizzicato": 31,
                     "half-open 2": 32,
-                    "tremolo bar": 33
+                    "fall": 60,
+                    "doit": 61,
+                    "plop": 62,
+                    "scoop": 63,
+                    "slide out down": 64,
+                    "slide out up": 65,
+                    "slide in above": 66,
+                    "slide in below": 67,
+                    "trill": 68,
+                    "trill line": 69,
+                    "sforzato": 70,
+                    "tremolo single 8": 71,
+                    "tremolo single 16": 72,
+                    "tremolo single 32": 73,
+                    "tremolo single 64": 74,
+                    "tremolo two 8": 75,
+                    "tremolo two 16": 76,
+                    "tremolo two 32": 77,
+                    "tremolo two 64": 78,
+                    "measured tremolo x2": 79,
+                    "measured tremolo x3": 80,
+                    "measured tremolo x4": 81,
+                    "measured tremolo x6": 82,
+                    // Generic tremolo / measured-trem fallbacks
+                    "tremolo single": 71,
+                    "tremolo two": 75,
+                    "measured tremolo": 79
                 },
                 techniqueKeyMap: {
                     "arco": 34,
@@ -359,11 +383,14 @@ MuseScore {
                     "sul tasto": 43,
                     "mute": 44,
                     "open": 45,
-                    "detache": 46,
-                    "martele": 47,
+                    "détaché": 46,
+                    "martelé": 47,
                     "jazz tone": 48,
                     "distort": 49,
-                    "overdrive": 50
+                    "overdrive": 50,
+                    "vibrato large faster": 29,
+                    "vibrato large slowest": 30,
+                    "tremolo bar": 33
                 }
             }
         }
