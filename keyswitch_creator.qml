@@ -53,32 +53,42 @@ MuseScore {
                                           "volume swell": 26,
                                           "sawtooth line segment": 27,
                                           "wide sawtooth line segment": 28,
-                                          "vibrato large faster": 29,
-                                          "vibrato large slowest": 30,
-                                          "snap pizzicato": 31,
-                                          "half-open 2": 32,
-                                          "tremolo bar": 33
+                                          "snap pizzicato": 29,
+                                          "half-open 2": 30,
+                                          "trill": 31,
+                                          "trill line": 32,
+                                          "fall": 60,
+                                          "doit": 61,
+                                          "plop": 62,
+                                          "scoop": 63,
+                                          "slide out down": 64,
+                                          "slide out up": 65,
+                                          "slide in above": 66,
+                                          "slide in below": 67
                                       })
 
     // Techniques (written)
     property var techniqueKeyMap: ({
-                                       "arco": 34,
-                                       "normal": 35,
-                                       "legato": 36,
-                                       "pizz.": 37,
-                                       "tremolo": 38,
-                                       "vibrato": 39,
-                                       "col legno": 40,
-                                       "harmonics": 41,
-                                       "sul pont.": 42,
-                                       "sul tasto": 43,
-                                       "mute": 44,
-                                       "open": 45,
-                                       "detache": 46,
-                                       "martele": 47,
-                                       "jazz tone": 48,
-                                       "distort": 49,
-                                       "overdrive": 50
+                                       "arco": 36,
+                                       "normal": 37,
+                                       "legato": 38,
+                                       "pizz.": 39,
+                                       "tremolo": 40,
+                                       "vibrato": 41,
+                                       "col legno": 42,
+                                       "harmonics": 43,
+                                       "sul pont.": 44,
+                                       "sul tasto": 45,
+                                       "mute": 46,
+                                       "open": 47,
+                                       "détaché": 48,
+                                       "martelé": 49,
+                                       "jazz tone": 50,
+                                       "distort": 51,
+                                       "overdrive": 52,
+                                       "vibrato large faster": 33,
+                                       "vibrato large slowest": 34,
+                                       "tremolo bar": 35
                                    })
 
     // Debug
@@ -144,30 +154,59 @@ MuseScore {
                                                     "volume swell": 26,
                                                     "sawtooth line segment": 27,
                                                     "wide sawtooth line segment": 28,
-                                                    "vibrato large faster": 29,
-                                                    "vibrato large slowest": 30,
-                                                    "snap pizzicato": 31,
-                                                    "half-open 2": 32,
-                                                    "tremolo bar": 33
+                                                    "snap pizzicato": 29,
+                                                    "half-open 2": 30,
+                                                    "trill": 31,
+                                                    "trill line": 32,
+                                                    "fall": 60,
+                                                    "doit": 61,
+                                                    "plop": 62,
+                                                    "scoop": 63,
+                                                    "slide out down": 64,
+                                                    "slide out up": 65,
+                                                    "slide in above": 66,
+                                                    "slide in below": 67
                                                 },
                                                 techniqueKeyMap: {
-                                                    "arco": 34,
-                                                    "normal": 35,
-                                                    "legato": 36,
-                                                    "pizz.": 37,
-                                                    "tremolo": 38,
-                                                    "vibrato": 39,
-                                                    "col legno": 40,
-                                                    "harmonics": 41,
-                                                    "sul pont.": 42,
-                                                    "sul tasto": 43,
-                                                    "mute": 44,
-                                                    "open": 45,
-                                                    "detache": 46,
-                                                    "martele": 47,
-                                                    "jazz tone": 48,
-                                                    "distort": 49,
-                                                    "overdrive": 50
+                                                    "arco": 36,
+                                                    "normal": 37,
+                                                    "legato": 38,
+                                                    "pizz.": 39,
+                                                    "tremolo": 40,
+                                                    "vibrato": 41,
+                                                    "col legno": 42,
+                                                    "harmonics": 43,
+                                                    "sul pont.": 44,
+                                                    "sul tasto": 45,
+                                                    "mute": 46,
+                                                    "open": 47,
+                                                    "détaché": 48,
+                                                    "martelé": 49,
+                                                    "jazz tone": 50,
+                                                    "distort": 51,
+                                                    "overdrive": 52,
+                                                    "vibrato large faster": 33,
+                                                    "vibrato large slowest": 34,
+                                                    "tremolo bar": 35
+                                                }
+                                            },
+                                            "English Horn": {
+                                                "articulationKeyMap": {
+                                                    "staccatissimo": 115,
+                                                    "tenuto": 116,
+                                                    "loure": 117,
+                                                    "marcato": 118,
+                                                    "accent-staccato": 119,
+                                                    "marcato-staccato": 120,
+                                                    "marcato-tenuto": 121,
+                                                    "staccatissimo stroke": 122
+                                                },
+                                                "techniqueKeyMap": {
+                                                    "arco": 123,
+                                                    "normal": 124,
+                                                    "legato": 125,
+                                                    "pizz.": 126,
+                                                    "tremolo": 127
                                                 }
                                             }
                                         })
@@ -335,6 +374,62 @@ MuseScore {
         function pushUnique(n) {
             if (n && names.indexOf(n) === -1)
                 names.push(n)
+        }
+
+        function _hasSeq3(lbl, a, b, c) {
+
+            // tolerate punctuation/extra spaces by normalizing to tokens
+            var norm = lbl.replace(/[^a-z0-9]+/g, " ").trim()
+            var i = norm.indexOf(a)
+            if (i < 0)
+                return false
+            var j = norm.indexOf(b, i + a.length)
+            if (j < 0)
+                return false
+            var k = norm.indexOf(c, j + b.length)
+            return k >= 0
+        }
+
+        function _pushJazzFromLabel(lbl) {
+            if (!lbl)
+                return
+            if (lbl.indexOf("fall") >= 0)
+                pushUnique("fall")
+            if (lbl.indexOf("doit") >= 0)
+                pushUnique("doit")
+            if (lbl.indexOf("plop") >= 0)
+                pushUnique("plop")
+            if (lbl.indexOf("scoop") >= 0)
+                pushUnique("scoop")
+            if (_hasSeq3(lbl, "slide", "out", "down"))
+                pushUnique("slide out down")
+            if (_hasSeq3(lbl, "slide", "out", "up"))
+                pushUnique("slide out up")
+            if (_hasSeq3(lbl, "slide", "in", "above"))
+                pushUnique("slide in above")
+            if (_hasSeq3(lbl, "slide", "in", "below"))
+                pushUnique("slide in below")
+        }
+
+        function _labelOf(el) {
+            var parts = []
+            try {
+                if (el.userName)
+                    parts.push(String(el.userName()).toLowerCase())
+            } catch (_) {}
+            try {
+                if (el.subtypeName)
+                    parts.push(String(el.subtypeName()).toLowerCase())
+            } catch (_) {}
+            try {
+                if (el.text)
+                    parts.push(String(el.text).toLowerCase())
+            } catch (_) {}
+            try {
+                if (el.plainText)
+                    parts.push(String(el.plainText).toLowerCase())
+            } catch (_) {}
+            return (" " + parts.join(" ")).replace(/\s+/g, " ").trim()
         }
 
         function considerArticulation(a) {
@@ -531,8 +626,57 @@ MuseScore {
                 return
             }
 
+            // --- Jazz bends & slides (explicit literals) ---
+            if (has("fall")) {
+                pushUnique("fall")
+                return
+            }
+            if (has("doit")) {
+                pushUnique("doit")
+                return
+            }
+            if (has("plop")) {
+                pushUnique("plop")
+                return
+            }
+            if (has("scoop")) {
+                pushUnique("scoop")
+                return
+            }
+            if (has("slide out down")) {
+                pushUnique("slide out down")
+                return
+            }
+            if (has("slide out up")) {
+                pushUnique("slide out up")
+                return
+            }
+            if (has("slide in above")) {
+                pushUnique("slide in above")
+                return
+            }
+            if (has("slide in below")) {
+                pushUnique("slide in below")
+                return
+            }
+
             pushUnique("unknown")
         }
+
+        // 0) Segment-level: mine any annotation-like elements for jazz bend/slide labels
+        (function scanSegmentAnnotations() {
+            try {
+                var seg = chord.parent
+                if (!seg || !seg.annotations)
+                    return
+                for (var ai = 0; ai < seg.annotations.length; ++ai) {
+                    var ann = seg.annotations[ai]
+                    try {
+                        _pushJazzFromLabel(_labelOf(ann))
+                    } catch (_) {}
+                }
+            } catch (_) {}
+        })();
 
         // 1) Chord-level articulations
         if (chord && chord.articulations) {
@@ -586,8 +730,50 @@ MuseScore {
                             if (uname.indexOf("half-open 2") >= 0)
                                 pushUnique("half-open 2")
                         }
+
+                        _pushJazzFromLabel(_labelOf(el2))
                     } catch (eHM) {}
                 }
+            }
+        }
+
+        // 4) Chord-level ORNAMENTS (e.g., "tr" above note from Ornaments palette)
+        if (chord && chord.elements) {
+            for (var oi = 0; oi < chord.elements.length; ++oi) {
+                var o = chord.elements[oi]
+                try {
+                    if (o && o.type === Element.ORNAMENT) {
+                        // Mine every label we can find
+                        var parts = []
+                        try {
+                            if (o.userName)
+                                parts.push(String(o.userName()).toLowerCase())
+                        } catch (_) {}
+                        try {
+                            if (o.subtypeName)
+                                parts.push(String(o.subtypeName()).toLowerCase())
+                        } catch (_) {}
+                        try {
+                            if (o.text)
+                                parts.push(String(o.text).toLowerCase())
+                        } catch (_) {}
+                        var label = (" " + parts.join(" ")).replace(/\s+/g, " ").trim()
+                        if (label.indexOf("tr") >= 0 || label.indexOf("trill") >= 0) {
+                            pushUnique("trill")
+                            // canonical token → map in articulationKeyMap
+                        }
+                    }
+                } catch (_) {}
+            }
+        }
+
+        // 4b) Chord-level name-based fallback for Jazz bends & slides
+        if (chord && chord.elements) {
+            for (var ce = 0; ce < chord.elements.length; ++ce) {
+                var elC = chord.elements[ce]
+                try {
+                    _pushJazzFromLabel(_labelOf(elC))
+                } catch (_) {}
             }
         }
 
@@ -990,6 +1176,14 @@ MuseScore {
                 if (has("volume swell") || has("swell"))
                     pushTok(staffIdx, tStart, "volume swell")
             } catch (eN) {}
+
+            // 3) TRILL line spanners: treat as a range token "trill line"
+            try {
+                if (s.type === Element.TRILL || s.type === Element.TRILL_SEGMENT) {
+                    pushTok(staffIdx, tStart, "trill line")
+                    pushTokRange(staffIdx, tStart, tEnd, "trill line")
+                }
+            } catch (_) {}
         }
 
         dbg("effects via spanners=" + collected);
