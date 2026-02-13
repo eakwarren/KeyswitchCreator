@@ -1,204 +1,204 @@
     "BFO Solo Violin": {
         "articulationKeyMap": {
-            "staccato": 26
+            "staccato": "26|127"
         },
         "techniqueKeyMap": {
-            "Long": 25,
-            "legato": 24
+            "Long": "25|127",
+            "legato": "24|127"
         }
     },
     "BFO String Ensemble": {
         "articulationKeyMap": {
-            "staccatissimo": 98
+            "staccatissimo": "98|127"
         },
         "techniqueKeyMap": {
-            "Long": 97
+            "Long": "97|127"
         }
     },
     "BFO Violas A5": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24,
-            "Pizzicato": 26,
-            "Tremolo": 27
+            "Long": "24|127",
+            "pizzicato": "26|127",
+            "tremolo": "27|127"
         }
     },
     "BFO Celli A5": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24,
-            "Pizzicato": 26,
-            "Tremolo": 27
+            "Long": "24|127",
+            "pizzicato": "26|127",
+            "tremolo": "27|127"
         }
     },
     "BFO Solo Cello": {
         "articulationKeyMap": {
-            "staccato": 26
+            "staccato": "26|127"
         },
         "techniqueKeyMap": {
-            "Long": 25,
-            "legato": 24
+            "Long": "25|127",
+            "legato": "24|127"
         }
     },
     "BFO Basses A4": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96,
-            "Pizzicato": 98
+            "Long": "96|127",
+            "pizzicato": "98|127"
         }
     },
     "BFO Violins A8": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24,
-            "Pizzicato": 26,
-            "Tremolo": 27
+            "Long": "24|127",
+            "pizzicato": "26|127",
+            "tremolo": "27|127"
         }
     },
     "BFO Solo Trombone": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Solo Trumpet": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24
+            "Long": "24|127"
         }
     },
     "BFO Solo French Horn": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Trombones A3": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96,
-            "Long Vibrato": 96
+            "Long": "96|127",
+            "Long Vibrato": "96|127"
         }
     },
     "BFO Trumpets A3": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24
+            "Long": "24|127"
         }
     },
     "BFO Brass Ensemble": {
         "articulationKeyMap": {
-            "staccato": 97
+            "staccato": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO French Horns A4": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Solo Tuba": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Solo Oboe": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24
+            "Long": "24|127"
         }
     },
     "BFO Solo English Horn": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24
+            "Long": "24|127"
         }
     },
     "BFO Solo Flute": {
         "articulationKeyMap": {
-            "staccatissimo": 26
+            "staccatissimo": "26|127"
         },
         "techniqueKeyMap": {
-            "Long": 25,
-            "legato": 24
+            "Long": "25|127",
+            "legato": "24|127"
         }
     },
     "BFO Solo Bass Clarinet": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Solo Piccolo Flute": {
         "articulationKeyMap": {
-            "staccatissimo": 25
+            "staccatissimo": "25|127"
         },
         "techniqueKeyMap": {
-            "Long": 24
+            "Long": "24|127"
         }
     },
     "BFO Solo Contrabassoon": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Solo Bassoon": {
         "articulationKeyMap": {
-            "staccatissimo": 97
+            "staccatissimo": "97|127"
         },
         "techniqueKeyMap": {
-            "Long": 96
+            "Long": "96|127"
         }
     },
     "BFO Solo Clarinet": {
         "articulationKeyMap": {
-            "staccatissimo": 26
+            "staccatissimo": "26|127"
         },
         "techniqueKeyMap": {
-            "Long": 25,
-            "legato": 24
+            "Long": "25|127",
+            "legato": "24|127"
         }
     },
     "BFO Woodwind Ensemble": {
         "articulationKeyMap": {
-            "staccato": 110
+            "staccato": "110|127"
         },
         "techniqueKeyMap": {
-            "Long": 109
+            "Long": "109|127"
         }
     }

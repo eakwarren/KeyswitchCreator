@@ -1,704 +1,704 @@
-    "VSP Bass Clarinet Flow": {
+    "VSP Bass Clarinet": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Universal": 91,
-            "Long Universal": 91,
-            "Portato": 86
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Universal": "91|127",
+            "Long Universal": "91|127",
+            "Portato": "86|127"
         }
     },
-    "VSP Bassoon 2 Flow": {
+    "VSP Bassoon 2": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Molto Vibrato": 88,
-            "Legato Universal": 91,
-            "Legato Universal Molto Vibrato": 91,
-            "Legato Universal Vibrato": 91,
-            "Legato Vibrato": 88,
-            "Long Molto Vibrato": 88,
-            "Long Universal": 91,
-            "Long Universal Molto Vibrato": 91,
-            "Long Universal Vibrato": 91,
-            "Long Vibrato": 88,
-            "Portato": 86
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Molto Vibrato": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Molto Vibrato": "91|127",
+            "Legato Universal Vibrato": "91|127",
+            "Legato Vibrato": "88|127",
+            "Long Molto Vibrato": "88|127",
+            "Long Universal": "91|127",
+            "Long Universal Molto Vibrato": "91|127",
+            "Long Universal Vibrato": "91|127",
+            "Long Vibrato": "88|127",
+            "Portato": "86|127"
         }
     },
-    "VSP Piccolo Flute Flow": {
+    "VSP Piccolo Flute": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Contra Bassoon Flow": {
+    "VSP Contra Bassoon": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Universal": 91,
-            "Long Universal": 91,
-            "Portato": 86
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Universal": "91|127",
+            "Long Universal": "91|127",
+            "Portato": "86|127"
         }
     },
-    "VSP Bassoon 1 Flow": {
+    "VSP Bassoon 1": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Molto Vibrato": 88,
-            "Legato Universal": 91,
-            "Legato Universal Molto Vibrato": 91,
-            "Legato Universal Vibrato": 91,
-            "Legato Vibrato": 88,
-            "Long Molto Vibrato": 88,
-            "Long Universal": 91,
-            "Long Universal Molto Vibrato": 91,
-            "Long Universal Vibrato": 91,
-            "Long Vibrato": 88,
-            "Portato": 86
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Molto Vibrato": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Molto Vibrato": "91|127",
+            "Legato Universal Vibrato": "91|127",
+            "Legato Vibrato": "88|127",
+            "Long Molto Vibrato": "88|127",
+            "Long Universal": "91|127",
+            "Long Universal Molto Vibrato": "91|127",
+            "Long Universal Vibrato": "91|127",
+            "Long Vibrato": "88|127",
+            "Portato": "86|127"
         }
     },
-    "VSP Clarinet Bb 1 Flow": {
+    "VSP Clarinet Bb 1": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Long Universal": 31,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Long Universal": "31|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Flute 1 Flow": {
+    "VSP Flute 1": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Clarinet Bb 2 Flow": {
+    "VSP Clarinet Bb 2": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Long Universal": 31,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Long Universal": "31|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Flute 2 Flow": {
+    "VSP Flute 2": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP English Horn Flow": {
+    "VSP English Horn": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Oboe 2 French Flow": {
+    "VSP Oboe 2 French": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Oboe 1 French Flow": {
+    "VSP Oboe 1 French": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Bansuri Flow": {
+    "VSP Bansuri": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Accent": 28,
-            "Legato Universal": 31,
-            "Legato Universal Accent": 31,
-            "Long Accent": 28,
-            "Long Universal": 31,
-            "Long Universal Accent": 31,
-            "Portato FX": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Accent": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Accent": "31|127",
+            "Long Accent": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Accent": "31|127",
+            "Portato FX": "26|127"
         }
     },
-    "VSP Dizi Flow": {
+    "VSP Dizi": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Accent": 28,
-            "Legato Universal": 31,
-            "Legato Universal Accent": 31,
-            "Long Accent": 28,
-            "Long Universal": 31,
-            "Long Universal Accent": 31,
-            "Portato FX": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Accent": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Accent": "31|127",
+            "Long Accent": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Accent": "31|127",
+            "Portato FX": "26|127"
         }
     },
-    "VSP Tin Whistle Flow": {
+    "VSP Tin Whistle": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Long Universal": 31,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Long Universal": "31|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Shakuhachi Flow": {
+    "VSP Shakuhachi": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Accent": 28,
-            "Legato Universal": 31,
-            "Legato Universal Accent": 31,
-            "Long Accent": 28,
-            "Long Universal": 31,
-            "Long Universal Accent": 31,
-            "Portato FX": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Accent": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Accent": "31|127",
+            "Long Accent": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Accent": "31|127",
+            "Portato FX": "26|127"
         }
     },
-    "VSP Strings 14-10 Compressed Flow": {
+    "VSP Strings 14-10 Compressed": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Viloncellos 8 Players Flow": {
+    "VSP Viloncellos 8 Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP 2nd Violins 10 Players Flow": {
+    "VSP 2nd Violins Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Double Basses 3 Players Flow": {
+    "VSP Double Basses 3 Players": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Soft Attack": 88,
-            "Legato Universal": 91,
-            "Legato Universal Soft Attack": 91,
-            "Long Soft Attack": 88,
-            "Pizzicato": 86,
-            "Tremolo": 89,
-            "Tremolo Universal": 91,
-            "Tremolo Universal Soft Attack": 91
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Soft Attack": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Soft Attack": "91|127",
+            "Long Soft Attack": "88|127",
+            "pizzicato": "86|127",
+            "tremolo": "89|127",
+            "Tremolo Universal": "91|127",
+            "Tremolo Universal Soft Attack": "91|127"
         }
     },
-    "VSP Double Basses 6 Players Flow": {
+    "VSP Double Basses 6 Players": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Soft Attack": 88,
-            "Legato Universal": 91,
-            "Legato Universal Soft Attack": 91,
-            "Long Soft Attack": 88,
-            "Pizzicato": 86,
-            "Tremolo": 89,
-            "Tremolo Universal": 91,
-            "Tremolo Universal Soft Attack": 91
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Soft Attack": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Soft Attack": "91|127",
+            "Long Soft Attack": "88|127",
+            "pizzicato": "86|127",
+            "tremolo": "89|127",
+            "Tremolo Universal": "91|127",
+            "Tremolo Universal Soft Attack": "91|127"
         }
     },
-    "VSP 1st Violins 14 Players Flow": {
+    "VSP 1st Violins Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Strings 6-5 Compressed Flow": {
+    "VSP Strings 6-5 Compressed": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP 2nd Violins 5 Players Flow": {
+    "VSP 2nd Violins 5 Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Violas 8 Players Flow": {
+    "VSP Violas 8 Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP 1st Violins 6 Players Flow": {
+    "VSP 1st Violins 6 Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Violas 4 Players Flow": {
+    "VSP Violas 4 Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Harp Flow": {
+    "VSP Harp": {
         "articulationKeyMap": {},
         "techniqueKeyMap": {
-            "Long": 21,
-            "Harmonics": 22
+            "Long": "21|127",
+            "Harmonics": "22|127"
         }
     },
-    "VSP Strings 14-10 Full Flow": {
+    "VSP Strings 14-10 Full": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Strings 6-5 Full Flow": {
+    "VSP Strings 6-5 Full": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Viloncellos 4 Players Flow": {
+    "VSP Viloncellos 4 Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Soft Attack": 28,
-            "Legato Universal": 31,
-            "Legato Universal Soft Attack": 31,
-            "Long Soft Attack": 28,
-            "Pizzicato": 26,
-            "Tremolo": 29,
-            "Tremolo Universal": 31,
-            "Tremolo Universal Soft Attack": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Soft Attack": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Soft Attack": "31|127",
+            "Long Soft Attack": "28|127",
+            "pizzicato": "26|127",
+            "tremolo": "29|127",
+            "Tremolo Universal": "31|127",
+            "Tremolo Universal Soft Attack": "31|127"
         }
     },
-    "VSP Suspended Cymbals Flow": {
+    "VSP Suspended Cymbals": {
         "articulationKeyMap": {},
         "techniqueKeyMap": {
-            "Soft Mallets": 26,
-            "Stick": 24
+            "Soft Mallets": "26|127",
+            "Stick": "24|127"
         }
     },
-    "VSP Glockenspiel Flow": {
+    "VSP Glockenspiel": {
         "articulationKeyMap": {},
         "techniqueKeyMap": {
-            "Original": 26,
-            "Transpose": 24
+            "Original": "26|127",
+            "Transpose": "24|127"
         }
     },
-    "VSP Celesta Flow": {
+    "VSP Celesta": {
         "articulationKeyMap": {},
         "techniqueKeyMap": {
-            "Original": 26,
-            "Transpose": 24
+            "Original": "26|127",
+            "Transpose": "24|127"
         }
     },
-    "VSP Timpani Flow": {
+    "VSP Timpani": {
         "articulationKeyMap": {},
         "techniqueKeyMap": {
-            "Hit": 24,
-            "Hit Octave": 26,
-            "Rolls": 28
+            "Hit": "24|127",
+            "Hit Octave": "26|127",
+            "Rolls": "28|127"
         }
     },
-    "VSP Tenor Trombone Flow": {
+    "VSP Tenor Trombone": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Vibrato": 31,
-            "Long Universal": 31,
-            "Long Universal Vibrato": 31,
-            "Portato": 25
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Long Universal": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Portato": "25|127"
         }
     },
-    "VSP Horn 1 Flow": {
+    "VSP Horn 1": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Vibrato": 31,
-            "Long Universal": 31,
-            "Long Universal Vibrato": 31,
-            "Portato": 25
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Long Universal": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Portato": "25|127"
         }
     },
-    "VSP Bass Trombones 4 Player Flow": {
+    "VSP Bass Trombones 4 Player": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Universal": 91,
-            "Legato Universal Vibrato": 91,
-            "Long Universal": 91,
-            "Long Universal Vibrato": 91
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Vibrato": "91|127",
+            "Long Universal": "91|127",
+            "Long Universal Vibrato": "91|127"
         }
     },
-    "VSP Bass Trombone Flow": {
+    "VSP Bass Trombone": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Universal": 91,
-            "Legato Universal Vibrato": 91,
-            "Long Universal": 91,
-            "Long Universal Vibrato": 91,
-            "Portato": 85
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Vibrato": "91|127",
+            "Long Universal": "91|127",
+            "Long Universal Vibrato": "91|127",
+            "Portato": "85|127"
         }
     },
-    "VSP Bass Tuba Flow": {
+    "VSP Bass Tuba": {
         "articulationKeyMap": {
-            "staccato": 84
+            "staccato": "84|127"
         },
         "techniqueKeyMap": {
-            "Long": 88,
-            "legato": 88,
-            "Legato Universal": 91,
-            "Legato Universal Vibrato": 91,
-            "Long Universal": 91,
-            "Long Universal Vibrato": 91,
-            "Portato": 85
+            "Long": "88|127",
+            "legato": "88|127",
+            "Legato Universal": "91|127",
+            "Legato Universal Vibrato": "91|127",
+            "Long Universal": "91|127",
+            "Long Universal Vibrato": "91|127",
+            "Portato": "85|127"
         }
     },
-    "VSP Horns 6 Player Flow": {
+    "VSP Horns 6 Player": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Vibrato": 31,
-            "Long Universal": 31,
-            "Long Universal Vibrato": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Long Universal": "31|127",
+            "Long Universal Vibrato": "31|127"
         }
     },
-    "VSP Trumpet Bb 4 Player Flow": {
+    "VSP Trumpet Bb 4 Player": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Vibrato": 31,
-            "Long Universal": 31,
-            "Long Universal Vibrato": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Long Universal": "31|127",
+            "Long Universal Vibrato": "31|127"
         }
     },
-    "VSP Trumpet Bb 2 Flow": {
+    "VSP Trumpet Bb 2": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Trumpet Bb 1 Flow": {
+    "VSP Trumpet Bb 1": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Molto Vibrato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Molto Vibrato": 31,
-            "Legato Universal Vibrato": 31,
-            "Legato Vibrato": 28,
-            "Long Molto Vibrato": 28,
-            "Long Universal": 31,
-            "Long Universal Molto Vibrato": 31,
-            "Long Universal Vibrato": 31,
-            "Long Vibrato": 28,
-            "Portato": 26
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Molto Vibrato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Molto Vibrato": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Legato Vibrato": "28|127",
+            "Long Molto Vibrato": "28|127",
+            "Long Universal": "31|127",
+            "Long Universal Molto Vibrato": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Long Vibrato": "28|127",
+            "Portato": "26|127"
         }
     },
-    "VSP Brass 15 Players Flow": {
+    "VSP Brass Players": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Vibrato": 31,
-            "Long Universal": 31,
-            "Long Universal Vibrato": 31
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Long Universal": "31|127",
+            "Long Universal Vibrato": "31|127"
         }
     },
-    "VSP Horn 2 Flow": {
+    "VSP Horn 2": {
         "articulationKeyMap": {
-            "staccato": 24
+            "staccato": "24|127"
         },
         "techniqueKeyMap": {
-            "Long": 28,
-            "legato": 28,
-            "Legato Universal": 31,
-            "Legato Universal Vibrato": 31,
-            "Long Universal": 31,
-            "Long Universal Vibrato": 31,
-            "Portato": 25
+            "Long": "28|127",
+            "legato": "28|127",
+            "Legato Universal": "31|127",
+            "Legato Universal Vibrato": "31|127",
+            "Long Universal": "31|127",
+            "Long Universal Vibrato": "31|127",
+            "Portato": "25|127"
         }
     }

@@ -27,6 +27,19 @@
             "Trill WT": "0|71"
         }
     },
+    "SSOD Clarinet Solo": {
+        "articulationKeyMap": {
+            "staccato": "0|40"
+        },
+        "techniqueKeyMap": {
+            "Long": "0|1",
+            "legato": "0|20",
+            "Multi Tongue": "0|75",
+            "Trill HT": "0|70",
+            "Trill WT": "0|71",
+            "FX Flutter": "0|11"
+        }
+    },
     "SSOD Piccolo Flute": {
         "articulationKeyMap": {
             "marcato": "0|52",
@@ -98,7 +111,7 @@
         },
         "techniqueKeyMap": {
             "Long": "0|1",
-            "Col Legno": "0|58",
+            "col legno": "0|58",
             "Flautando": "0|8",
             "FX": "0|90",
             "Harmonics": "0|10",
@@ -107,7 +120,7 @@
             "Long CS": "0|7",
             "Long Molto Vibrato": "0|16",
             "Marcato Shorter": "0|52",
-            "Pizzicato": "0|56",
+            "pizzicato": "0|56",
             "Pizzicato Bartok": "0|57",
             "Short Brushed": "0|48",
             "Short Brushed CS": "0|62",
@@ -115,7 +128,7 @@
             "Sul Pont": "0|18",
             "Sul Pont CS": "0|19",
             "Sul Tasto Super": "0|114",
-            "Tremolo": "0|11",
+            "tremolo": "0|11",
             "Tremolo 150": "0|81",
             "Tremolo 150 CS": "0|84",
             "Tremolo 180": "0|82",
@@ -135,7 +148,7 @@
         },
         "techniqueKeyMap": {
             "Long": "0|1",
-            "Col Legno": "0|58",
+            "col legno": "0|58",
             "Flautando": "0|8",
             "FX": "0|90",
             "Harmonics": "0|10",
@@ -144,7 +157,7 @@
             "Long CS": "0|7",
             "Long Molto Vibrato": "0|16",
             "Marcato Shorter": "0|52",
-            "Pizzicato": "0|56",
+            "pizzicato": "0|56",
             "Pizzicato Bartok": "0|57",
             "Short Brushed": "0|48",
             "Short Brushed CS": "0|62",
@@ -152,7 +165,7 @@
             "Sul Pont": "0|18",
             "Sul Pont CS": "0|19",
             "Sul Tasto Super": "0|114",
-            "Tremolo": "0|11",
+            "tremolo": "0|11",
             "Tremolo 150": "0|81",
             "Tremolo 180": "0|82",
             "Tremolo Mute": "0|12",
@@ -172,19 +185,19 @@
         },
         "techniqueKeyMap": {
             "Long": "0|1",
-            "Col Legno": "0|58",
+            "col legno": "0|58",
             "Flautando": "0|8",
             "FX": "0|90",
             "Harmonics": "0|10",
             "Harmonics Shorter": "0|61",
             "Marcato Shorter": "0|52",
-            "Pizzicato": "0|56",
+            "pizzicato": "0|56",
             "Pizzicato Bartok": "0|57",
             "Spiccato Overlay": "0|41",
             "Sul Pont": "0|18",
             "Sul Pont Distorted": "0|113",
             "Sul Tasto Super": "0|114",
-            "Tremolo": "0|11",
+            "tremolo": "0|11",
             "Tremolo 150": "0|81",
             "Tremolo 180": "0|82",
             "Tremolo Sul Pont": "0|13",
@@ -200,7 +213,7 @@
         },
         "techniqueKeyMap": {
             "Long": "0|1",
-            "Col Legno": "0|58",
+            "col legno": "0|58",
             "Flautando": "0|8",
             "FX": "0|90",
             "Harmonics": "0|10",
@@ -210,16 +223,16 @@
             "Long Molto Vibrato": "0|16",
             "Long Sul-G": "0|112",
             "Marcato Shorter": "0|52",
-            "Pizzicato": "0|56",
+            "pizzicato": "0|56",
             "Pizzicato Bartok": "0|57",
             "Short Brushed": "0|48",
             "Short Brushed CS": "0|62",
             "Short CS": "0|47",
             "Sul Pont": "0|18",
             "Sul Pont CS": "0|19",
-            "Sul Tasto": "0|17",
+            "sul tasto": "0|17",
             "Sul Tasto Super": "0|114",
-            "Tremolo": "0|11",
+            "tremolo": "0|11",
             "Tremolo 150": "0|81",
             "Tremolo 150 CS": "0|84",
             "Tremolo 180": "0|82",
@@ -296,7 +309,7 @@
             "FX Rip": "0|100",
             "Long Cuivre": "0|9",
             "Multi Tongue": "0|75",
-            "Tremolo": "0|11"
+            "tremolo": "0|11"
         }
     },
     "SSOD Trumpet A2": {
