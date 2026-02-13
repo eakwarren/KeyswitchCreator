@@ -333,7 +333,7 @@ MuseScore {
     // It’s not an articulation
     function defaultRegistryObj() {
         return {
-            "Default": {
+            "Default Example": {
                 articulationKeyMap: {
                     "slur": 0,
                     "accent": 1,
@@ -368,33 +368,33 @@ MuseScore {
                     "half-open 2": 30,
                     "trill": 31,
                     "trill line": 32,
-                    "fall": 36,
-                    "doit": 37,
-                    "plop": 38,
-                    "scoop": 39,
-                    "slide out down": 40,
-                    "slide out up": 41,
-                    "slide in above": 42,
-                    "slide in below": 43
+                    "fall": "127|36",
+                    "doit": "127|37",
+                    "plop": "127|38",
+                    "scoop": "127|39",
+                    "slide out down": "127|40",
+                    "slide out up": "127|41",
+                    "slide in above": "127|42",
+                    "slide in below": "127|43"
                 },
                 techniqueKeyMap: {
-                    "arco": 44,
-                    "normal": 45,
-                    "legato": 46,
-                    "pizz.": 47,
-                    "tremolo": 48,
-                    "vibrato": 49,
-                    "col legno": 50,
-                    "harmonics": 51,
-                    "sul pont.": 52,
-                    "sul tasto": 53,
-                    "mute": 54,
-                    "open": 55,
-                    "détaché": 56,
-                    "martelé": 57,
-                    "jazz tone": 58,
-                    "distort": 59,
-                    "overdrive": 60,
+                    "arco": 108,
+                    "normal": 109,
+                    "legato": 110,
+                    "pizz.": 111,
+                    "tremolo": 112,
+                    "vibrato": 113,
+                    "col legno": 114,
+                    "harmonics": 115,
+                    "sul pont.": 116,
+                    "sul tasto": 117,
+                    "mute": 118,
+                    "open": 119,
+                    "détaché": 120,
+                    "martelé": 121,
+                    "jazz tone": 122,
+                    "distort": 123,
+                    "overdrive": 124,
                     "vibrato large faster": 33,
                     "vibrato large slowest": 34,
                     "tremolo bar": 35
@@ -412,11 +412,11 @@ MuseScore {
                     "staccatissimo stroke": 122
                 },
                 "techniqueKeyMap": {
-                    "arco": 123,
-                    "normal": 124,
-                    "legato": 125,
-                    "pizz.": 126,
-                    "tremolo": 127
+                    "arco": 108,
+                    "normal": 109,
+                    "legato": 110,
+                    "pizz.": 111,
+                    "tremolo": 112
                 }
             }
         }
@@ -842,6 +842,88 @@ MuseScore {
         }
     }
 
+    // Canonicalize an object by sorting keys (to enable stable deep-compare)
+    function _canonicalize(o) {
+        if (o === null || o === undefined)
+            return o
+        if (Array.isArray(o)) {
+            var arr = []
+            for (var i = 0; i < o.length; ++i)
+                arr.push(_canonicalize(o[i]))
+            return arr
+        }
+        if (typeof o === "object") {
+            var keys = Object.keys(o).sort()
+            var out = {}
+            for (var k = 0; k < keys.length; ++k) {
+                var key = keys[k]
+                out[key] = _canonicalize(o[key])
+            }
+            return out
+        }
+        return o
+    }
+
+    function _deepEqualCanonical(a, b) {
+        try {
+            return JSON.stringify(_canonicalize(a)) === JSON.stringify(_canonicalize(b))
+        } catch (e) {
+            return false
+        }
+    }
+
+    // If the registry changed by exactly one removed name and one added name,
+    // and their contents are (canonically) equal, treat it as a rename and
+    // migrate staffToSet assignments from oldName -> newName.
+    function migrateStaffAssignmentsOnRename(prevReg, nextReg) {
+        try {
+            var prevNames = Object.keys(prevReg || {})
+            var nextNames = Object.keys(nextReg || {})
+            var removed = []
+            var added = []
+
+            for (var i = 0; i < prevNames.length; ++i) {
+                var n = prevNames[i]
+                if (!nextReg.hasOwnProperty(n))
+                    removed.push(n)
+            }
+            for (var j = 0; j < nextNames.length; ++j) {
+                var m = nextNames[j]
+                if (!prevReg.hasOwnProperty(m))
+                    added.push(m)
+            }
+
+            if (removed.length === 1 && added.length === 1) {
+                var oldName = removed[0]
+                var newName = added[0]
+                var same = _deepEqualCanonical(prevReg[oldName], nextReg[newName])
+                if (same) {
+                    var keys = Object.keys(staffToSet || {})
+                    var changed = false
+                    for (var k = 0; k < keys.length; ++k) {
+                        var sid = keys[k]
+                        if (staffToSet[sid] === oldName) {
+                            staffToSet[sid] = newName
+                            changed = true
+                        }
+                    }
+                    if (changed) {
+                        notifyStaffAssignmentChanged()
+                        dbg("migrated staff assignments: '" + oldName + "' -> '" + newName + "'")
+                    }
+                    return {
+                        oldName: oldName,
+                        newName: newName,
+                        migrated: changed
+                    }
+                }
+            }
+        } catch (e) {
+            // no-op
+        }
+        return null
+    }
+
     function partForStaff(staffIdx) {
         if (!curScore || !curScore.parts)
             return null
@@ -981,8 +1063,14 @@ MuseScore {
         var parsed = parseRegistrySafely(jsonArea.text);
         // returns null on error
         if (parsed) {
+            // keep previous in-memory registry to detect a rename
+            var prevReg = keyswitchSets
+
             // update in-memory registry
             keyswitchSets = parsed;
+
+            // Attempt a one-to-one rename migration for staff assignments
+            migrateStaffAssignmentsOnRename(prevReg, parsed);
 
             // rebuild the list used by the buttons
             var prevSelected = (setButtonsFlow && setButtonsFlow.uiSelectedSet) ? setButtonsFlow.uiSelectedSet : "__none__"
