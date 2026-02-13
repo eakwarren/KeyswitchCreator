@@ -1881,8 +1881,22 @@ MuseScore {
         return specs
     }
 
+    function eligibleStatusForStaff(staffIdx) {
+        // IMPORTANT: treat UNASSIGNED first so it never triggers a "no-target" modal.
+        var key = String(staffIdx)
+        if (!staffToSet || !staffToSet.hasOwnProperty(key) || !staffToSet[key])
+            return "unassigned"
+        // keyswitch staff, exclude from processing/modal
+
+        // Only if assigned do we care whether a KS target exists below
+        if (targetStaffForKeyswitch(staffIdx) === -1)
+            return "no-target"
+
+        return "ok"
+    }
+
     function isEligibleSourceStaff(staffIdx) {
-        return targetStaffForKeyswitch(staffIdx) !== -1
+        return eligibleStatusForStaff(staffIdx) === "ok"
     }
 
     function keyswitchExistsAt(cursor, pitch) {
@@ -2536,12 +2550,16 @@ MuseScore {
                 }
 
                 if (!eligible && hadNormalChord) {
-                    sawIneligible = true
-                    if (firstIneligibleStaffIdx < 0)
-                        firstIneligibleStaffIdx = trackStaff
-                    var piN = partInfoForStaff(trackStaff)
-                    if (piN)
-                        ineligiblePartIdx[piN.index] = true
+                    var reason = eligibleStatusForStaff(trackStaff)
+                    if (reason === "no-target") {
+                        sawIneligible = true
+                        if (firstIneligibleStaffIdx < 0)
+                            firstIneligibleStaffIdx = trackStaff
+                        var piN = partInfoForStaff(trackStaff)
+                        if (piN)
+                            ineligiblePartIdx[piN.index] = true
+                    }
+                    // reason === "unassigned" -> keyswitch staff: ignore for modal purposes
                 }
             }
         } else {
@@ -2561,12 +2579,16 @@ MuseScore {
                 if (ok2)
                     chords.push(chord)
                 else {
-                    sawIneligible = true
-                    if (firstIneligibleStaffIdx < 0)
-                        firstIneligibleStaffIdx = sIdx2
-                    var pi2 = partInfoForStaff(sIdx2)
-                    if (pi2)
-                        ineligiblePartIdx[pi2.index] = true
+                    var reason2 = eligibleStatusForStaff(sIdx2)
+                    if (reason2 === "no-target") {
+                        sawIneligible = true
+                        if (firstIneligibleStaffIdx < 0)
+                            firstIneligibleStaffIdx = sIdx2
+                        var pi2 = partInfoForStaff(sIdx2)
+                        if (pi2)
+                            ineligiblePartIdx[pi2.index] = true
+                    }
+                    // "unassigned" (keyswitch staff) -> do not mark ineligible
                 }
             }
         }

@@ -53,8 +53,8 @@ MuseScore {
     //   "fromPos"-> highlight from the error character to right edge
     property string errorHighlightStyle: "line"
     property var globalSettings: ({})
-    property color globalsBorderColor: themeSeparator
-    property int globalsBorderWidth: 1
+    property color globalsBorderColor: warningColor
+    property int globalsBorderWidth: 0
     property int globalsErrorLine: 0
     property int globalsErrorPos: 0
     property bool hasGlobalsJsonError: false
@@ -70,8 +70,8 @@ MuseScore {
     property int leftTextMargin: 12
 
     // Per-editor border state (each tab can reflect its own validity)
-    property color registryBorderColor: themeSeparator
-    property int registryBorderWidth: 1
+    property color registryBorderColor: warningColor
+    property int registryBorderWidth: 0
     property int registryErrorLine: 0
 
     // Error character positions (used with positionToRectangle())
@@ -84,7 +84,9 @@ MuseScore {
     // Error overlays (line index -> y = lineIndex * lineHeight)
     property bool showRegistryErrorOverlay: false
     property var staffToSet: ({})
+    property var staffAssigned: ({})
     property string staffToSetMetaTagKey: "keyswitch_creator.staffToSet"
+    property string staffAssignedMetaTagKey: "keyswitch_creator.staffAssigned" // persisted font-color/assignment state
 
     // Theme colors (safe fallbacks)
     readonly property color themeAccent: (ui && ui.theme && ui.theme.accentColor) ? ui.theme.accentColor : "#2E7DFF"
@@ -201,6 +203,28 @@ MuseScore {
 
     function bumpSelection() {
         selectedCountProp = Object.keys(selectedStaff).length
+    }
+
+    function isStaffAssignedByIdx(staffIdx) {
+        var key = String(staffIdx);
+        // primary truth: assignment exists in staffToSet
+        if (staffToSet && staffToSet.hasOwnProperty(key) && staffToSet[key])
+            return true
+        // fallback: explicit persisted state (back-compat when staffToSet was empty string)
+        return !!(staffAssigned && staffAssigned[key])
+    }
+
+    function assignedColorForIdx(staffIdx) {
+        var assigned = isStaffAssignedByIdx(staffIdx)
+        var primary = (ui && ui.theme && ui.theme.fontPrimaryColor) ? ui.theme.fontPrimaryColor : "#000000"
+        var secondary = (ui && ui.theme && ui.theme.fontSecondaryColor) ? ui.theme.fontSecondaryColor : "#6E6E6E"
+        return assigned ? primary : secondary
+    }
+
+    // force QML bindings to re-evaluate after mutating plain JS objects
+    function notifyStaffAssignmentChanged() {
+        staffToSet = Object.assign({}, staffToSet)
+        staffAssigned = Object.assign({}, staffAssigned)
     }
 
     //--------------------------------------------------------------------------------
@@ -699,10 +723,16 @@ MuseScore {
         validateRegistryText()
         validateGlobalsText()
         loadStaffAssignmentsFromScore();
-
+        // Ensure staffAssigned has explicit booleans for every staff in the model
+        for (var _i = 0; _i < staffListModel.count; ++_i) {
+            var sIdx = String(staffListModel.get(_i).idx)
+            if (!staffAssigned.hasOwnProperty(sIdx))
+                staffAssigned[sIdx] = !!(staffToSet[sIdx])
+        }
+        notifyStaffAssignmentChanged()
         // quick visibility check in the console
         dbg("[KS] staffListModel.count =", staffListModel.count)
-        dbg("[KS] setsListModel.count  =", setsListModel.count)
+        dbg("[KS] setsListModel.count =", setsListModel.count)
     }
 
     function nameForPart(p, tick) {
@@ -993,15 +1023,34 @@ MuseScore {
             return false
         curScore.startCmd()
         try {
+            // Always persist the canonical mapping
             curScore.setMetaTag(staffToSetMetaTagKey, JSON.stringify(staffToSet))
+            // Persist explicit assignment state for UI color
+            // Build staffAssigned from staffToSet if empty
+            var assignOut = {}
+            try {
+                var keys = Object.keys(staffToSet)
+                for (var i = 0; i < keys.length; ++i) {
+                    var k = keys[i]
+                    if (staffToSet[k])
+                        assignOut[k] = true
+                }
+                // include any explicit persisted false states already present
+                for (var j in staffAssigned) {
+                    if (staffAssigned.hasOwnProperty(j) && !assignOut.hasOwnProperty(j))
+                        assignOut[j] = !!staffAssigned[j]
+                }
+            } catch (e0) {}
+            curScore.setMetaTag(staffAssignedMetaTagKey, JSON.stringify(assignOut))
+
             curScore.endCmd()
-            dbg("[KS] wrote staffToSet to score meta tag")
+            dbg("[KS] wrote staffToSet + staffAssigned to score meta tags")
             return true
         } catch (e) {
             try {
                 curScore.endCmd(true)
             } catch (e2) {}
-            dbg("[KS] failed to write staffToSet to score meta tag: " + String(e))
+            dbg("[KS] failed to write staff assignment meta tags: " + String(e))
             return false
         }
     }
@@ -1011,19 +1060,51 @@ MuseScore {
         if (!curScore || !curScore.metaTag)
             return false
         try {
+            // 1) staffToSet (canonical)
             var raw = curScore.metaTag(staffToSetMetaTagKey)
-            if (!raw || !raw.length)
-                return false
-            var parsed = JSON.parse(raw)
-            if (!parsed || typeof parsed !== "object")
-                return false
-            staffToSet = parsed
+            if (raw && raw.length) {
+                var parsed = JSON.parse(raw)
+                if (parsed && typeof parsed === "object")
+                    staffToSet = parsed
+            } else {
+                staffToSet = {}
+            }
+
+            // 2) staffAssigned (UI color/assignment state; back-compat if not present)
+            var raw2 = curScore.metaTag(staffAssignedMetaTagKey)
+            var parsed2 = null
+            try {
+                parsed2 = raw2 && raw2.length ? JSON.parse(raw2) : null
+            } catch (e0) {
+                parsed2 = null
+            }
+            if (parsed2 && typeof parsed2 === "object") {
+                staffAssigned = parsed2
+            } else {
+                // derive from staffToSet
+                staffAssigned = {}
+                var keys = Object.keys(staffToSet)
+                for (var i = 0; i < keys.length; ++i) {
+                    var k = keys[i]
+                    if (staffToSet[k])
+                        staffAssigned[k] = true
+                }
+            }
+
+            // normalize: ensure any staff present in model has a boolean
+            for (var i2 = 0; i2 < staffListModel.count; ++i2) {
+                var sIdx = String(staffListModel.get(i2).idx)
+                if (!staffAssigned.hasOwnProperty(sIdx))
+                    staffAssigned[sIdx] = !!(staffToSet[sIdx])
+            }
+
             refreshUISelectedSet()
             updateKeyboardActiveNotes()
-            dbg("[KS] loaded staffToSet from score meta tag")
+            notifyStaffAssignmentChanged()
+            dbg("[KS] loaded staffToSet/staffAssigned from score meta tags")
             return true
         } catch (e) {
-            dbg("[KS] failed to load staffToSet from score meta tag: " + String(e))
+            dbg("[KS] failed to load staff assignment meta tags: " + String(e))
             return false
         }
     }
@@ -1187,11 +1268,22 @@ MuseScore {
     }
 
     function setGlobalsBorder(valid) {
-        root.globalsBorderColor = valid ? themeSeparator : warningColor
+        if (valid) {
+            root.globalsBorderWidth = 0
+            // color is irrelevant when hidden
+        } else {
+            root.globalsBorderColor = warningColor
+            root.globalsBorderWidth = 1
+        }
     }
 
     function setRegistryBorder(valid) {
-        root.registryBorderColor = valid ? themeSeparator : warningColor
+        if (valid) {
+            root.registryBorderWidth = 0
+        } else {
+            root.registryBorderColor = warningColor
+            root.registryBorderWidth = 1
+        }
     }
 
     function setRowSelected(rowIndex, on) {
@@ -1520,9 +1612,29 @@ MuseScore {
                                 radius: 6
                             }
 
+                            // ensure accent bar doesn't overlap text
+                            leftPadding: 10
+
+                            // vertical accent bar for assigned staves
+                            Rectangle {
+                                id: assignedBar
+                                anchors {
+                                    left: parent.left
+                                    top: parent.top
+                                    bottom: parent.bottom
+                                }
+                                width: 3
+                                radius: 1
+                                color: themeAccent
+                                visible: !!staffToSet[String(model.idx)]
+                                z: 2
+                            }
+
                             // render the row label as literal text (no mnemonics / HTML)
                             contentItem: Text {
                                 color: ui.theme.fontPrimaryColor
+                                // Bold = assigned; Normal = unassigned
+                                font.bold: !!staffToSet[String(model.idx)]
                                 elide: Text.ElideRight
                                 text: cleanName(model.name)
                                 textFormat: Text.PlainText
@@ -1888,7 +2000,9 @@ MuseScore {
 
                         onClicked: {
                             // clear in-memory
-                            staffToSet = {};
+                            staffToSet = {}
+                            staffAssigned = {}
+                            notifyStaffAssignmentChanged();
 
                             // clear persisted JSON (explicitly to "{}" for clarity)
                             ksPrefs.staffToSetJSON = "{}"
@@ -1901,7 +2015,21 @@ MuseScore {
                             // reset UI state
                             setButtonsFlow.uiSelectedSet = "__none__"
                             refreshUISelectedSet()
-                            updateKeyboardActiveNotes()
+                            updateKeyboardActiveNotes();
+
+                            // also clear per-score meta tags now (optional but nice)
+                            if (curScore && curScore.setMetaTag) {
+                                curScore.startCmd()
+                                try {
+                                    curScore.setMetaTag(staffToSetMetaTagKey, "{}")
+                                    curScore.setMetaTag(staffAssignedMetaTagKey, "{}")
+                                    curScore.endCmd()
+                                } catch (e2) {
+                                    try {
+                                        curScore.endCmd(true)
+                                    } catch (e3) {}
+                                }
+                            }
                         }
                     }
 
@@ -1991,7 +2119,6 @@ MuseScore {
                                         var keys = Object.keys(selectedStaff)
                                         var hasSelection = keys.length > 0
                                         var targetStaffIds = []
-
                                         if (hasSelection) {
                                             targetStaffIds = keys
                                         } else if (currentStaffIdx >= 0) {
@@ -2002,27 +2129,23 @@ MuseScore {
 
                                         if (togglingOff) {
                                             for (var i = 0; i < targetStaffIds.length; ++i)
-                                                delete staffToSet[targetStaffIds[i]];
-
-                                            // no button selected
+                                                delete staffToSet[targetStaffIds[i]]
                                             setButtonsFlow.uiSelectedSet = "__none__"
                                         } else {
-                                            // first click: assign this set
                                             for (var j = 0; j < targetStaffIds.length; ++j)
-                                                staffToSet[targetStaffIds[j]] = model.name;
-
-                                            // this button selected
+                                                staffToSet[targetStaffIds[j]] = model.name
                                             setButtonsFlow.uiSelectedSet = model.name
                                             scrollToSetInRegistry(model.name, {
                                                                       focus: true
                                                                   })
                                         }
 
-                                        updateKeyboardActiveNotes();
+                                        // Force QML to re-evaluate bindings that depend on staffToSet
+                                        staffToSet = Object.assign({}, staffToSet)
 
+                                        updateKeyboardActiveNotes();
                                         // persist immediately (uncomment to auto-save on click)
                                         // saveData()
-
                                         setSearchField.focus = false
                                     }
                                 }
@@ -2084,7 +2207,7 @@ MuseScore {
                                 anchors.fill: parent
                                 border.color: root.registryBorderColor
                                 border.width: root.registryBorderWidth
-                                color: "transparent"
+                                color: ui.theme.textFieldColor
                                 radius: 4
 
                                 Flickable {
@@ -2237,7 +2360,7 @@ MuseScore {
                                 anchors.fill: parent
                                 border.color: root.globalsBorderColor
                                 border.width: root.globalsBorderWidth
-                                color: "transparent"
+                                color: ui.theme.textFieldColor
                                 radius: 4
 
                                 Flickable {
