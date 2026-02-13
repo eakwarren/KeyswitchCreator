@@ -87,7 +87,7 @@ def split_filename_for_setname(filename: str) -> str:
     prefix = " ".join(t.strip() for t in tags if t.strip())
     return f"{prefix} {instrument}".strip() if prefix else instrument
 
-# ---------- MuseScore default symbols (lowercase) ----------
+# ---------- Logic default symbols (lowercase) ----------
 MS_DEFAULT_SYMBOLS = {
     "staccato",
     "staccatissimo",
@@ -103,6 +103,16 @@ MS_DEFAULT_SYMBOLS = {
     "turn",
     "harmonics",
     "mute",
+}
+
+# Technique names that should be lowered when used as technique keys
+TECHNIQUE_LOWERCASE = {
+    "legato",
+    "tremolo",
+    "pizzicato",
+    "col legno",
+    "sul pont.",
+    "sul tasto",
 }
 
 # ---------- plist helpers ----------
@@ -140,6 +150,18 @@ def get_symbol_lower(a: Dict[str, Any]) -> Optional[str]:
     if isinstance(sym, str) and sym.strip():
         return sym.strip().lower()
     return None
+
+def maybe_lower_technique_key(exact_name: str) -> str:
+    # Preserve the original for non-matching cases
+    original = exact_name.strip()
+    # Normalize for matching: collapse spaces, case-insensitive
+    normalized = re.sub(r"\s+", " ", original).strip()
+    probe = normalized.lower()
+    # Try exact, and a variant without trailing dot for robustness
+    if probe in TECHNIQUE_LOWERCASE or probe.rstrip(".") in TECHNIQUE_LOWERCASE:
+        # Return a lowercased key; keep the trailing dot if present in the source
+        return probe
+    return original
 
 def _parse_int_0_127(value: Any) -> Optional[int]:
     """
@@ -221,14 +243,14 @@ def process_plist(path: str) -> Optional[Tuple[str, Dict[str, Dict[str, Any]]]]:
         if sym_lower and sym_lower in MS_DEFAULT_SYMBOLS:
             if sym_lower in used_ms_symbols:
                 # Fall back to technique map with the original exact name
-                key = exact_name if exact_name != "Legato" else "legato"
+                key = maybe_lower_technique_key(exact_name)
                 technique_map[key] = value
             else:
                 articulation_map[sym_lower] = value
                 used_ms_symbols.add(sym_lower)
         else:
             # No recognized symbol: technique map with exact name (except Legato → legato)
-            key = exact_name if exact_name != "Legato" else "legato"
+            key = maybe_lower_technique_key(exact_name)
             technique_map[key] = value
 
     if dup_exact_names:
