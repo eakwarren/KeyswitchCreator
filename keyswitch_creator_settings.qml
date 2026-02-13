@@ -27,7 +27,7 @@ MuseScore {
     pluginType: "dialog"
     thumbnailName: "keyswitch_creator_settings.png"
     title: qsTr("Keyswitch Creator Settings")
-    version: "0.9.7"
+    version: "0.9.8"
     width: 1385
 
     property bool _globUserInteracted: false
@@ -675,7 +675,7 @@ MuseScore {
         }
 
         // quick visibility check in the console
-        dbg("[KS] staffListModel.count =", staffListModel.count);
+        dbg("staffListModel.count =", staffListModel.count);
 
         // staffToSet (safe parse)
         try {
@@ -731,8 +731,8 @@ MuseScore {
         }
         notifyStaffAssignmentChanged()
         // quick visibility check in the console
-        dbg("[KS] staffListModel.count =", staffListModel.count)
-        dbg("[KS] setsListModel.count =", setsListModel.count)
+        dbg("staffListModel.count =", staffListModel.count)
+        dbg("setsListModel.count =", setsListModel.count)
     }
 
     function nameForPart(p, tick) {
@@ -1044,13 +1044,13 @@ MuseScore {
             curScore.setMetaTag(staffAssignedMetaTagKey, JSON.stringify(assignOut))
 
             curScore.endCmd()
-            dbg("[KS] wrote staffToSet + staffAssigned to score meta tags")
+            dbg("wrote staffToSet + staffAssigned to score meta tags")
             return true
         } catch (e) {
             try {
                 curScore.endCmd(true)
             } catch (e2) {}
-            dbg("[KS] failed to write staff assignment meta tags: " + String(e))
+            dbg("failed to write staff assignment meta tags: " + String(e))
             return false
         }
     }
@@ -1101,10 +1101,10 @@ MuseScore {
             refreshUISelectedSet()
             updateKeyboardActiveNotes()
             notifyStaffAssignmentChanged()
-            dbg("[KS] loaded staffToSet/staffAssigned from score meta tags")
+            dbg("loaded staffToSet/staffAssigned from score meta tags")
             return true
         } catch (e) {
-            dbg("[KS] failed to load staff assignment meta tags: " + String(e))
+            dbg("failed to load staff assignment meta tags: " + String(e))
             return false
         }
     }
@@ -1386,7 +1386,7 @@ MuseScore {
 
             root.globalsErrorPos = Math.max(0, Math.min(pos, (globalsArea.text || "").length))
             root.globalsErrorLine = lineIndexForPos(globalsArea.text, root.globalsErrorPos)
-            dbg("[KS] globals JSON error:", String(e), "rawPos=", raw, "candidate=", candidate, "chosen=", root.globalsErrorPos)
+            dbg("globals JSON error:", String(e), "rawPos=", raw, "candidate=", candidate, "chosen=", root.globalsErrorPos)
         }
         setGlobalsBorder(ok)
         root.hasGlobalsJsonError = !ok
@@ -1415,7 +1415,7 @@ MuseScore {
 
             root.registryErrorPos = Math.max(0, Math.min(pos, (jsonArea.text || "").length))
             root.registryErrorLine = lineIndexForPos(jsonArea.text, root.registryErrorPos)
-            dbg("[KS] registry JSON error:", String(e), "rawPos=", raw, "candidate=", candidate, "chosen=", root.registryErrorPos)
+            dbg("registry JSON error:", String(e), "rawPos=", raw, "candidate=", candidate, "chosen=", root.registryErrorPos)
         }
         setRegistryBorder(ok)
         root.hasRegistryJsonError = !ok
@@ -1520,7 +1520,7 @@ MuseScore {
             sequences: ["Meta+A", "Ctrl+A"]
 
             onActivated: {
-                dbg("[KS] Shortcut fired: SelectAll (Meta/Ctrl+A)")
+                dbg("Shortcut fired: SelectAll (Meta/Ctrl+A)")
                 selectAll()
                 if (staffList.currentIndex < 0 && staffListModel.count > 0)
                     staffList.currentIndex = 0
@@ -1673,7 +1673,7 @@ MuseScore {
                             // sometimes delivered instead
                             const isShift = !!(event.modifiers & Qt.ShiftModifier)
                             if ((isCmd || isCtrl) && event.key === Qt.Key_A) {
-                                dbg("[KS] Keys.onPressed fallback: SelectAll")
+                                dbg("Keys.onPressed fallback: SelectAll")
                                 selectAll()
                                 if (staffList.currentIndex < 0 && staffListModel.count > 0)
                                     staffList.currentIndex = 0
@@ -1709,7 +1709,7 @@ MuseScore {
                         // Cmd/Ctrl + A         : ensure the list handles Select All locally
                         // Do NOT accept when an editor/search field has focus (so those get ⌘A as text select).
                         Keys.onShortcutOverride: function (event) {
-                            dbg("[KS] override:", event.key, "mods:", event.modifiers, "accepted?", event.accepted)
+                            dbg("override:", event.key, "mods:", event.modifiers, "accepted?", event.accepted)
 
                             if ((jsonArea && jsonArea.activeFocus) || (globalsArea && globalsArea.activeFocus) || (setSearchField
                                                                                                                    && setSearchField.activeFocus)) {
