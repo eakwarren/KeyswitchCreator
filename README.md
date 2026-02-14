@@ -27,20 +27,20 @@ Keyswitch Creator has two parts:
 
 4. Open the Keyswitch Creator Settings plugin from the Plugins menu. Select a staff in the left column, then select a keyswitch set in the right column to assign/unassign it. Click **Save** to apply the changes.
 
+    <img width="961" height="360" alt="assign" src="https://github.com/user-attachments/assets/f2c491e9-957b-49e6-8fea-5c49631205e2" />
+    
 > [!IMPORTANT]  
 > Do not assign keyswitch sets to the last staff in VST instruments (created in Step 2 above).
 
 > [!TIP]
 > Select multiple staves quickly to assign them to the same keyswitch set. Shift-click selects a range of staves. Cmd/Ctrl-click selects multiple staves. Cmd/Ctrl+A selects all staves.
 
-    <img width="961" height="360" alt="assign" src="https://github.com/user-attachments/assets/f2c491e9-957b-49e6-8fea-5c49631205e2" />
-
 5. Make a selection in the score (no selection runs on the entire score) and run the Keyswitch Creator plugin.
 
+    <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" />
+    
 > [!TIP]
 > Set a keyboard shortcut in MuseScore's Preferences > Shortcuts panel. Search for "keyswitch" and define a shortcut. For example, ⌘⇧+K.
-
-    <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" />
 
 
 
