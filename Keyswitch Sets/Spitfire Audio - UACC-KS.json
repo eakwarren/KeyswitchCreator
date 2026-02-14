@@ -1,5 +1,13 @@
     "Spitfire UACC-KS":{ 
-        "articulationKeyMap":{"staccato":"0|40","staccatissimo":"0|42","tenuto":"0|50","marcato":"0|52","trill":"0|70","harmonics":"0|10","mute":"0|7"},
+        "articulationKeyMap":{
+            "staccato":"0|40",
+            "staccatissimo":"0|42",
+            "tenuto":"0|50",
+            "marcato":"0|52",
+            "trill":"0|70",
+            "harmonics":"0|10",
+            "mute":"0|7"
+        },
         "techniqueKeyMap":{
             "long": "0|1",
             "long_generic": "0|1",
