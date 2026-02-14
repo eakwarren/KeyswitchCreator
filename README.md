@@ -4,10 +4,9 @@ A MuseScore Studio (v4.7+) plugin that automates the creation of keyswitch notes
 
 Keyswitch Creator has two parts:
 1. A settings panel to manage assigning keyswitch sets to staves, including a map of keyswitches and editors for set creation and global customization.
-   <img width="1497" height="950" alt="v0 9 8 Settings Window" src="https://github.com/user-attachments/assets/20a45f77-b5b1-438b-9a39-a55a67552ce9" />
+    <img width="1385" height="838" alt="v0 9 8 Settings Window" src="https://github.com/user-attachments/assets/94860ef3-4c61-4cb0-b228-e7f01c06856d" />
 2. A headless plugin that scans a selection (or entire score) and applies keyswitches to the staff **_directly below_** the main staff, within the same instrument/part.
-
-   <img width="1497" height="448" alt="v0 9 8 Example Score" src="https://github.com/user-attachments/assets/f632c9eb-3046-4adb-8a6b-8ca9aad82fbc" />
+    <img width="1497" height="448" alt="v0 9 8 Example Score" src="https://github.com/user-attachments/assets/f632c9eb-3046-4adb-8a6b-8ca9aad82fbc" />
 
 
 
@@ -15,27 +14,21 @@ Keyswitch Creator has two parts:
 
 ## Setup
 1. Download the latest release from the panel on the right. Unzip to your MuseScore Plugins directory. (Documents/MuseScore4/Plugins)
-
 2. Open a score and expand each VST instrument in the Layout panel. Click **Add staff** at the bottom of each VST instrument.
-
-   <img width="299" height="150" alt="add staff" src="https://github.com/user-attachments/assets/f387bf01-9d3f-4e50-988a-1249a8c2012a" />
-   
-3. Double-click the first VST instrument name in the score to open Staff properties. Use the arrows at the bottom left to select the _last staff_ in each VST instrument. Customize the staff to your liking and click **Apply**. Next, use the arrows again to move to the next VST instrument's _last staff_ and apply the same customizations. 
-   <img width="862" height="781" alt="staff properties" src="https://github.com/user-attachments/assets/2917d30f-96aa-44a0-a25c-08d8ea16dedb" />
-
+    <img width="299" height="150" alt="add staff" src="https://github.com/user-attachments/assets/f387bf01-9d3f-4e50-988a-1249a8c2012a" />
+3. Double-click the first VST instrument name in the score to open Staff properties. Use the arrows at the bottom left to select the _last staff_ in each VST instrument. Customize the staff to your liking and click **Apply**. Next, use the arrows again to move to the next VST instrument's _last staff_ and apply the same customizations.
+    <img width="751" height="670" alt="staff properties" src="https://github.com/user-attachments/assets/aadf10f2-7a35-4fae-9187-cfb593f8168e" />
 4. Click Home > Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
-
-   <img width="1248" height="441" alt="plugins_enabled" src="https://github.com/user-attachments/assets/2248db16-c155-49d1-b96e-6473b0bd2ab1" />
-
+    <img width="1248" height="441" alt="plugins_enabled" src="https://github.com/user-attachments/assets/2248db16-c155-49d1-b96e-6473b0bd2ab1" />
 5. Open the Keyswitch Creator Settings plugin from the Plugins menu. Select a staff in the left column, then select a keyswitch set on the right to assign/unassign it. Click **Save** to apply the changes.
 
-   <img width="530" height="311" alt="assign staff to set" src="https://github.com/user-attachments/assets/808e3b5b-3923-4f3a-b41d-432a07324fdb" />
-    
+    <img width="530" height="311" alt="assign staff to set" src="https://github.com/user-attachments/assets/900db4ad-3649-4635-90b5-bd63508dfb25" />
+
 > [!IMPORTANT]  
 > Do not assign keyswitch sets to the last staff in each VST instrument (created in Step 2 above).
 
 > [!TIP]
-> Select multiple staves quickly to assign them to the same keyswitch set. Shift-click selects a range of staves. Cmd/Ctrl-click selects multiple staves. Cmd/Ctrl+A selects all staves.
+> Select multiple staves with Cmd/Ctrl+click to quickly assign them to the same keyswitch set.
 
 6. Select part of the score (no selection processes the entire score) with articulations or technique text and run the Keyswitch Creator plugin.
 
@@ -73,7 +66,7 @@ In range selections, `staff` restricts keyswitch processing to the selected staf
 #### Piano Keyboard
 The piano keyboard shows keyswitches in the active set. Hover on a key to view midi note info and keyswitch name.
     
-   <img width="1155" height="117" alt="keyboard" src="https://github.com/user-attachments/assets/cbb9b0e9-23df-43ba-adce-e2f78fb77e35" />
+<img width="1155" height="117" alt="keyboard" src="https://github.com/user-attachments/assets/cbb9b0e9-23df-43ba-adce-e2f78fb77e35" />
 
 > [!NOTE]
 > MuseScore displays midi note 60 as C4 (full range is C-1 to G9). To change note 60 to display as C3 (C-2 to G8) in Keyswitch Creator, set `property bool middleCIsC4: false` in the Settings plugin file.
@@ -151,7 +144,8 @@ Without auto-formatting (false)
 #### JSON Error Highlighting
 Pinpoint bad JSON formatting like missing quotation marks, commas, or unmatched braces / brackets in the editor windows.
 
-<img width="387" height="177" alt="json error" src="https://github.com/user-attachments/assets/ec4315b0-c8c7-4af6-ac17-6b32fbbf62f6" />
+<img width="228" height="109" alt="json error" src="https://github.com/user-attachments/assets/215d0262-f8d8-4428-bc79-41102d15a380" />
+
 
 
 
