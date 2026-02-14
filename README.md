@@ -63,11 +63,6 @@ In range selections, `staff` restricts keyswitch processing to the selected staf
 
 `KS:Scope=part` or `KS:Scope=staff` 
 
-~~#### KS:Parts
-In range selections, `all` processes every selected instrument. `anchor` restricts selection’s starting staff. Without a tag, multi‑part selections auto‑widen to `all`.
-
-`KS:Parts=all` or `KS:Parts=anchor`~~
-
 
 
 
