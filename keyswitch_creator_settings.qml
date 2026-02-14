@@ -1324,6 +1324,48 @@ MuseScore {
         })
     }
 
+    // Scroll the "Assign set to..." Flow (buttons) so the button for 'setName' is visible.
+    // Works with Flow wrapping: we only need vertical scrolling (Flow width == setsScroll.availableWidth).
+    function scrollToSetInButtons(setName) {
+        if (!setName || setName === "__none__")
+            return
+        if (!setsScroll || !setButtonsFlow)
+            return
+
+        // Find the FlatButton delegate whose text matches setName
+        function findTarget() {
+            var ch = setButtonsFlow.children || []
+            for (var i = 0; i < ch.length; ++i) {
+                var it = ch[i]
+                try {
+                    if (it && typeof it.text === "string" && it.text === setName)
+                        return it
+                } catch (e) {}
+            }
+            return null
+        }
+
+        // Defer so delegates/layout are up-to-date (especially after filter changes)
+        Qt.callLater(function () {
+            var target = findTarget()
+            if (!target)
+                return
+
+            // Scroll the internal Flickable of ScrollView
+            var flk = setsScroll.contentItem
+            if (!flk)
+                return
+            var topPad = 6
+            var targetY = Math.max(0, (target.y || 0) - topPad);
+
+            // Double-defer to ensure contentHeight/height are final before clamping
+            Qt.callLater(function () {
+                var maxY = Math.max(0, (flk.contentHeight || 0) - (flk.height || 0))
+                flk.contentY = Math.max(0, Math.min(targetY, maxY))
+            })
+        })
+    }
+
     function selectAll() {
         clearSelection()
         for (var r = 0; r < staffListModel.count; ++r)
@@ -2181,6 +2223,8 @@ MuseScore {
                         Flow {
                             id: setButtonsFlow
 
+                            // when true, suppress auto-scrolling of set buttons (used during button clicks)
+                            property bool suppressButtonsAutoscroll: false
                             // local UI-selected set; updated by refreshUISelectedSet() and on clicks
                             property string uiSelectedSet: "__none__"
 
@@ -2204,6 +2248,7 @@ MuseScore {
                                     width: _sizeProbe.implicitWidth
 
                                     onClicked: {
+                                        setButtonsFlow.suppressButtonsAutoscroll = true
                                         var keys = Object.keys(selectedStaff)
                                         var hasSelection = keys.length > 0
                                         var targetStaffIds = []
@@ -2227,6 +2272,11 @@ MuseScore {
                                                                       focus: true
                                                                   })
                                         }
+
+                                        // suppress set-buttons autoscroll for this click; clear on next tick
+                                        Qt.callLater(function () {
+                                            setButtonsFlow.suppressButtonsAutoscroll = false
+                                        });
 
                                         // Force QML to re-evaluate bindings that depend on staffToSet
                                         staffToSet = Object.assign({}, staffToSet)
@@ -2696,6 +2746,8 @@ MuseScore {
                 scrollToSetInRegistry(setButtonsFlow.uiSelectedSet, {
                                           focus: false
                                       })
+            if (setButtonsFlow.uiSelectedSet && setButtonsFlow.uiSelectedSet !== "__none__" && !setButtonsFlow.suppressButtonsAutoscroll)
+                scrollToSetInButtons(setButtonsFlow.uiSelectedSet)
         }
 
         target: setButtonsFlow
