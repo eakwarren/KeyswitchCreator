@@ -50,18 +50,22 @@ Add any of the following text tags (Cmd/Ctrl+T) to the score to customize keyswi
 
 #### KS:Set
 Activates a certain keyswitch set on an instrument from that point forward. (Helpful when changing instruments.)
+
 `KS:Set="English Horn"` or `KS:Set Custom-Set` 
 
 #### KS:Text
 Assigns custom keyswitches based on matching entries in the set's `techniqueKeyMap`.
+
 `KS:Text=CustomTechnique` or `KS:Text="con sord" KS:Text=legato`
 
 #### KS:Scope
 In range selections, `staff` restricts keyswitch processing to the selected staff only (default), `part` processes all staves of an instrument (like a grand staff). The first tag found at a particular time wins.
+
 `KS:Scope=part` or `KS:Scope=staff` 
 
 ~~#### KS:Parts
 In range selections, `all` processes every selected instrument. `anchor` restricts selection’s starting staff. Without a tag, multi‑part selections auto‑widen to `all`.
+
 `KS:Parts=all` or `KS:Parts=anchor`~~
 
 
