@@ -120,7 +120,7 @@ Without auto-formatting (false)
 `techniqueAliases` Match variations on technique spelling.
 
 ```
-        "techniqueAliases": {
+    "techniqueAliases": {
         "legato": [
             "legato",
             "leg.",
@@ -136,7 +136,8 @@ Without auto-formatting (false)
             "ord.",
             "standard",
             "std."
-        ],
+        ]
+    }
 ```
 
 
