@@ -15,6 +15,7 @@ Keyswitch Creator has two parts:
 ## Setup
 1. Download the latest release from the panel on the right. Unzip to your MuseScore Plugins directory. (Documents/MuseScore4/Plugins)
 2. Open a score and expand each VST instrument in the Layout panel. Click **Add staff** at the bottom of each VST instrument.
+
     <img width="299" height="150" alt="add staff" src="https://github.com/user-attachments/assets/f387bf01-9d3f-4e50-988a-1249a8c2012a" />
 3. Double-click the first VST instrument name in the score to open Staff properties. Use the arrows at the bottom left to select the _last staff_ in each VST instrument. Customize the staff to your liking and click **Apply**. Next, use the arrows again to move to the next VST instrument's _last staff_ and apply the same customizations.
     <img width="751" height="670" alt="staff properties" src="https://github.com/user-attachments/assets/aadf10f2-7a35-4fae-9187-cfb593f8168e" />
