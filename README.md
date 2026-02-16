@@ -1,6 +1,8 @@
 # Keyswitch Creator
 A MuseScore Studio (v4.7+) plugin that automates the creation of keyswitch notes for VST instruments based on articulation symbols and technique text in the score.
 
+> [!CAUTION]
+> The MuseScore 4.7 beta [changed the order that notes are sent to the VST](https://github.com/musescore/MuseScore/issues/32150). When the final version is released, I'll update the KS plugin logic. Until then, drag the keyswitch staff to the top of each instrument in the Layout panel to send the keyswitch note before the source note.
 
 Keyswitch Creator has two parts:
 1. A settings panel to manage assigning keyswitch sets to staves, including a map of keyswitches and editors for set creation and global customization.
