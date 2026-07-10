@@ -32,7 +32,9 @@ Keyswitch Creator has two parts:
 > [!TIP]
 > Select multiple staves with Cmd/Ctrl+click to quickly assign them to the same keyswitch set.
 
-6. Select part of the score (no selection processes the entire score) with articulations or technique text and run the Keyswitch Creator plugin. Keyswitch notes show up red because they're outside the instrument's range. Uncheck **Preferences > Note input > Note colors > Color notes outside of usable pitch range** to turn this off globally, or adjust the usable pitch range per instrument in its Staff/Part properties panel.
+6. Select part of the score (no selection processes the entire score) with articulations or technique text and run the Keyswitch Creator plugin.
+
+   Keyswitch notes may be red because they're outside the instrument's range. Uncheck **Preferences > Note input > Note colors > Color notes outside of usable pitch range** to turn this off globally, or adjust the usable pitch range per instrument in its Staff/Part properties panel.
 
     <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" />
     
