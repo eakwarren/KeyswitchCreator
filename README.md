@@ -1,5 +1,5 @@
 # Keyswitch Creator
-A MuseScore Studio (v4.7+) plugin that automates the creation of keyswitch notes for VST instruments based on articulation symbols and technique text in the score.
+A MuseScore Studio 4.7+ plugin that automates the creation of keyswitch notes for VST instruments based on articulation symbols and technique text in the score.
 
 
 
