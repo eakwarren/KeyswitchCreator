@@ -20,8 +20,7 @@ MuseScore {
     description: qsTr("Creates keyswitch notes on a staff below in the same instrument.")
     thumbnailName: "keyswitch_creator.png"
     title: qsTr("Keyswitch Creator")
-    version: "0.9.8"
-
+    version: "1.0"
     // Articulations (note-attached symbols)
     property var articulationKeyMap: ({
                                           "slur": 0,
@@ -92,7 +91,7 @@ MuseScore {
                                    })
 
     // Debug
-    property bool debugEnabled: true
+    property bool debugEnabled: false
     property bool dedupeAcrossVoices: true
 
     // Global Settings

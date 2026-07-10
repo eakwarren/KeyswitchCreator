@@ -27,7 +27,7 @@ MuseScore {
     pluginType: "dialog"
     thumbnailName: "keyswitch_creator_settings.png"
     title: qsTr("Keyswitch Creator Settings")
-    version: "0.9.8"
+    version: "1.0"
     width: 1385
 
     property bool _globUserInteracted: false
@@ -43,7 +43,7 @@ MuseScore {
     property int currentStaffIdx: -1
 
     // Debug
-    property bool debugEnabled: true
+    property bool debugEnabled: false
 
     // Mode selector: 0 = registry, 1 = globals
     property int editorModeIndex: 0
