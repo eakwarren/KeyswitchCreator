@@ -1,8 +1,7 @@
 # Keyswitch Creator
 A MuseScore Studio (v4.7+) plugin that automates the creation of keyswitch notes for VST instruments based on articulation symbols and technique text in the score.
 
-> [!CAUTION]
-> The MuseScore 4.7 beta [changed the order that notes are sent to the VST](https://github.com/musescore/MuseScore/issues/32150), but it appears that may be [reverted](https://github.com/musescore/MuseScore/pull/32253#issue-3958193032) to 4.6.5 behavior. When the final version is released, I'll update the KS plugin logic if needed. Until then, when testing in 4.7, drag the keyswitch staff to the top of each instrument in the Layout panel to send the keyswitch note before the source note.
+
 
 Keyswitch Creator has two parts:
 1. A settings panel to manage assigning keyswitch sets to staves, including a map of keyswitches and editors for set creation and global customization.
@@ -19,7 +18,7 @@ Keyswitch Creator has two parts:
 2. Open a score and expand each VST instrument in the Layout panel. Click **Add staff** at the bottom of each VST instrument.
 
     <img width="299" height="150" alt="add staff" src="https://github.com/user-attachments/assets/f387bf01-9d3f-4e50-988a-1249a8c2012a" />
-3. Double-click the first VST instrument name in the score to open Staff properties. Use the arrows at the bottom left to select the _last staff_ in each VST instrument. Customize the staff to your liking and click **Apply**. Next, use the arrows again to move to the next VST instrument's _last staff_ and apply the same customizations.
+3. Double-click the first VST instrument name in the score to open Staff/Part properties. Use the arrows at the bottom left to select the _last staff_ in each VST instrument. Customize the staff to your liking and click **Apply**. Next, use the arrows again to move to the next VST instrument's _last staff_ and apply the same customizations.
     <img width="751" height="670" alt="staff properties" src="https://github.com/user-attachments/assets/aadf10f2-7a35-4fae-9187-cfb593f8168e" />
 4. Click Home > Plugins and enable both Keyswitch Creator and Keyswitch Creator Settings.
     <img width="1248" height="441" alt="plugins_enabled" src="https://github.com/user-attachments/assets/2248db16-c155-49d1-b96e-6473b0bd2ab1" />
@@ -33,7 +32,7 @@ Keyswitch Creator has two parts:
 > [!TIP]
 > Select multiple staves with Cmd/Ctrl+click to quickly assign them to the same keyswitch set.
 
-6. Select part of the score (no selection processes the entire score) with articulations or technique text and run the Keyswitch Creator plugin.
+6. Select part of the score (no selection processes the entire score) with articulations or technique text and run the Keyswitch Creator plugin. Keyswitch notes show up red because they're outside the instrument's range. Uncheck **Preferences > Note input > Note colors > Color notes outside of usable pitch range** to turn this off globally, or adjust the usable pitch range per instrument in its Staff/Part properties panel.
 
     <img width="220" height="124" alt="updated keyswitches added" src="https://github.com/user-attachments/assets/8ed0803c-d7f2-49ec-92c5-28d602ec013c" />
     
@@ -191,10 +190,12 @@ MuseScore Studio and VST instrument developers, wherever they may roam.
 
 
 ## Release Notes
+v1.0 7/10/26 Initial release.
+
 v0.9.8 2/14/26
 - Add keyswitch update handling
 - Skip processing unassigned staves
 - Improve python script matching
 - Auto-scroll to active set
 
-v0.9.7 2/6/26 Initial release.
+v0.9.7 2/6/26 Beta release.
