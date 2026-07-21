@@ -2,12 +2,16 @@
 # -*- coding: utf-8 -*-
 """
 cubase_expressionmap_to_keyswitchcreator_sets.py
+v1.1
 Build Keyswitch Creator set entries from Cubase .expressionmap files.
 Requires Python 3.9+ (stdlib only).
 
 Behavior:
 - Read PSoundSlot objects from InstrumentMap/member[@name="slots"].
 - Name = the embedded USlotVisuals description, preserving exact case.
+- If a PSoundSlot does not contain an embedded USlotVisuals object, use its
+  member[@name="name"]/string[@name="s"] display name. Some Cubase expression
+  maps store visual definitions only in the top-level slotvisuals collection.
 - By default, include only simple primary articulations: exactly one visual
   whose group is 0, with no modifier visuals. This excludes modifier-only and
   compound slots such as "Soft release" and "Long soft rel.".
@@ -217,29 +221,59 @@ def extract_slots(root: ET.Element, include_composites: bool = False) -> List[Tu
         raise ValueError("No InstrumentMap member named 'slots' was found")
 
     result: List[Tuple[str, int]] = []
+
+    total_slots = 0
+    slots_without_name = 0
+    slots_without_note = 0
+    filtered_visual_slots = 0
+
     for slot in direct_sound_slots(slots_member):
+        total_slots += 1
         visuals = slot_visuals(slot)
         primary = [name for name, group in visuals if group == 0]
         modifiers = [name for name, group in visuals if group != 0]
+        member_name = slot_member_name(slot)
 
         if len(primary) == 1 and not modifiers:
             name = primary[0]
         elif include_composites and (primary or modifiers):
-            name = slot_member_name(slot) or " + ".join(primary + modifiers)
+            name = (member_name or " + ".join(primary + modifiers))
+
+        elif not visuals and member_name:
+            # Cubase maps may keep visual definitions solely in the
+            # top-level slotvisuals collection.
+            name = member_name
+
         else:
+            filtered_visual_slots += 1
+            continue
+
+        if not name or not name.strip():
+            slots_without_name += 1
             continue
 
         note = slot_keyswitch(slot)
-        if note is not None:
-            result.append((name, note))
+        if note is None:
+            slots_without_note += 1
+            continue
+
+        result.append((name.strip(), note))
+
+    if not result:
+        raise ValueError(
+            "No convertible PSoundSlot articulations with keyswitches "
+            f"were found. PSoundSlot count={total_slots}; "
+            f"filtered by visual structure={filtered_visual_slots}; "
+            f"missing name={slots_without_name}; "
+            f"missing keyswitch={slots_without_note}."
+        )
+
     return result
 
 
 def process_expressionmap(path: str, include_composites: bool = False) -> Tuple[str, Dict[str, Dict[str, int]]]:
     root = load_xml(path)
     pairs = extract_slots(root, include_composites=include_composites)
-    if not pairs:
-        raise ValueError("No convertible PSoundSlot articulations with keyswitches were found")
 
     duplicates = sorted(name for name, count in Counter(name for name, _ in pairs).items() if count > 1)
     if duplicates:
@@ -252,7 +286,10 @@ def process_expressionmap(path: str, include_composites: bool = False) -> Tuple[
         if symbol in MS_DEFAULT_SYMBOLS and symbol not in articulation_map:
             articulation_map[symbol] = note
         else:
-            technique_map[maybe_lower_technique_key(exact_name)] = note
+            technique_key = maybe_lower_technique_key(
+                exact_name
+            )
+            technique_map[technique_key] = note
 
     return split_filename_for_setname(path), {
         "articulationKeyMap": articulation_map,
